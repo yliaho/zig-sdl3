@@ -1,4 +1,5 @@
 pub const blend_mode = @import("blend_mode.zig");
+pub const camera = @import("camera.zig");
 pub const clipboard = @import("clipboard.zig");
 pub const errors = @import("errors.zig");
 pub const GUID = @import("guid.zig").GUID;

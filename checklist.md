@@ -10,6 +10,7 @@ For monitoring how close various subsystems are to completion.
 
 ## Needs Testing
 * Blend Mode
+* Camera
 * Clipboard
 * GUID
 * Keycode
@@ -35,7 +36,6 @@ For monitoring how close various subsystems are to completion.
 
 ## Not Started
 * Audio
-* Camera
 * Dialog
 * EGL
 * Events
