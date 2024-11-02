@@ -6,6 +6,7 @@ pub const GUID = @import("guid.zig").GUID;
 pub const hints = @import("hints.zig");
 pub const init = @import("init.zig");
 pub const joystick = @import("joystick.zig");
+pub const keyboard = @import("keyboard.zig");
 pub const keycode = @import("keycode.zig");
 pub const SharedObject = @import("loadso.zig").SharedObject;
 pub const Locale = @import("locale.zig").Locale;

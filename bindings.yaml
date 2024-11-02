@@ -2468,6 +2468,171 @@ Subsystems:
           }
     Typedefs: []
     Tests: []
+  - Name: keyboard
+    Callbacks: []
+    Enums: []
+    Errors: []
+    Values:
+      - SdlName: SDL_KeyboardID
+        ZigName: ID
+        Type: $SDL.SDL_KeyboardID
+        IsOpaque: false
+        Comment: "This is a unique ID for a keyboard for the time it is connected to the system, and is never reused for the lifetime of the application."
+        Presets: []
+        Functions:
+          - SdlName: SDL_GetKeyboardNameForID
+            ZigName: getName
+            Comment: "Get the name of a keyboard."
+            Return:
+              Sdl: string
+              Zig: "![]const u8"
+              Convert: null
+              Checks:
+                - Mode: ReturnErrIfEq
+                  ComparisonVal: null
+            Arguments:
+              - Name: self
+                Type: SDL_KeyboardID
+                Value: null
+                Mode: null
+        CustomFunctions:
+          - Code: |
+              /// Get a list of currently connected camera devices. Result must be freed.
+                  pub fn getAll(
+                      allocator: std.mem.Allocator,
+                  ) ![]ID {
+                      var count: c_int = undefined;
+                      const ret = C.SDL_GetKeyboards(
+                          &count,
+                      );
+                      if (ret == null)
+                          return error.SdlError;
+                      defer C.SDL_free(ret);
+                      var converted_ret = try allocator.alloc(ID, @intCast(count));
+                      for (0..count) |ind| {
+                          converted_ret[ind].value = ret[ind];
+                      }
+                      return converted_ret;
+                  }
+    Flags: []
+    StringMap: []
+    Structs: []
+    Functions:
+      - SdlName: SDL_TextInputActive
+        ZigName: textInputActive
+        Comment: "Check whether or not Unicode text input events are enabled for a window."
+        Return:
+          Sdl: bool
+          Zig: bool
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: window
+            Type: SDL_Window
+            Value: null
+            Mode: null
+      - SdlName: SDL_StopTextInput
+        ZigName: stopTextInput
+        Comment: "Stop receiving any text input events in a window."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Mode: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: window
+            Type: SDL_Window
+            Value: null
+            Mode: null
+      - SdlName: SDL_ClearComposition
+        ZigName: clearComposition
+        Comment: "Dismiss the composition window/IME without disabling the subsystem."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Mode: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: window
+            Type: SDL_Window
+            Value: null
+            Mode: null
+      - SdlName: SDL_SetTextInputArea
+        ZigName: setTextInputArea
+        Comment: "Set the area used to type Unicode text input."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Mode: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: window
+            Type: SDL_Window
+            Value: null
+            Mode: null
+          - Name: input_area
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: cursor
+            Type: int
+            Value: null
+            Mode: null
+      - SdlName: SDL_GetTextInputArea
+        ZigName: getTextInputArea
+        Comment: "Get the area used to type Unicode text input."
+        Return:
+          Sdl: bool
+          Zig: |
+            struct { input_area: rect.IRect, cursor_offset: i32 }
+          Convert: .{ .input_area = rect.IRect.fromSdl(input_area), .cursor_offset = @intCast(cursor_offset) }
+          Checks:
+            - Mode: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: window
+            Type: SDL_Window
+            Value: null
+            Mode: null
+          - Name: input_area
+            Type: SDL_Rect
+            Value: "&input_area"
+            Mode: out
+          - Name: cursor_offset
+            Type: c_int
+            Value: "&cursor_offset"
+            Mode: out
+      - SdlName: SDL_HasScreenKeyboardSupport
+        ZigName: hasScreenKeyboardSupport
+        Comment: "Check whether the platform has screen keyboard support."
+        Return:
+          Sdl: bool
+          Zig: bool
+          Convert: null
+          Checks: []
+        Arguments: []
+      - SdlName: SDL_ScreenKeyboardShown
+        ZigName: screenKeyboardShown
+        Comment: "Check whether the screen keyboard is shown for given window."
+        Return:
+          Sdl: bool
+          Zig: bool
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: window
+            Type: SDL_Window
+            Value: null
+            Mode: null
+    CustomFunctions: []
+    Typedefs: []
+    Tests: []
   - Name: keycode
     Callbacks: []
     Enums: []
