@@ -31,6 +31,7 @@ For monitoring how close various subsystems are to completion.
 ## In Progress
 * Hints
 * Joystick (Needs properties, virtual attach)
+* Keyboard (Needs properties)
 * Surface (Needs properties)
 * Video
 
@@ -43,7 +44,6 @@ For monitoring how close various subsystems are to completion.
 * GPU
 * Haptic
 * HID
-* Keyboard
 * Main
 * Metal
 * Mouse
