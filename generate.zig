@@ -133,6 +133,11 @@ const Subsystem = struct {
     },
     typedefs: []const Typedef,
     tests: []const Test,
+
+    pub fn lessThan(ctx: void, lhs: Subsystem, rhs: Subsystem) bool {
+        _ = ctx;
+        return std.mem.lessThan(u8, lhs.name, rhs.name);
+    }
 };
 
 const File = struct {
@@ -145,6 +150,11 @@ const File = struct {
             arg: []const u8,
         },
     },
+
+    pub fn lessThan(ctx: void, lhs: File, rhs: File) bool {
+        _ = ctx;
+        return std.mem.lessThan(u8, lhs.name, rhs.name);
+    }
 };
 
 const Bindings = struct {
@@ -1394,6 +1404,10 @@ pub fn main() !void {
             continue;
         try result.files.append(try yml_file.loadFile(try files_dir.realpathAlloc(allocator, file.name)));
     }
+
+    // Sort items.
+    std.mem.sort(Subsystem, result.subsystems.items, {}, Subsystem.lessThan);
+    std.mem.sort(File, result.files.items, {}, File.lessThan);
 
     // Fetch SDL types.
     var sdl_types = std.StringHashMap(SdlData).init(allocator);
