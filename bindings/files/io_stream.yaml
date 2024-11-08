@@ -1,0 +1,7 @@
+Name: io_stream
+Exports:
+  - SdlName: SDL_IOStream
+    ZigName: Stream
+    Kind: value
+    Extra:
+      - Arg: true

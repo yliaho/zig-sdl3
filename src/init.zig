@@ -175,22 +175,22 @@ pub fn getAppMetadataProperty(
 
 // Ensure initialization and shutdown works as expected. Also app properties for some reason.
 test "Init" {
-	  defer shutdown();
-	  const flags = Flags{
-	      .video = true,
-	      .events = true,
-	      .camera = true,
-	  };
-	  try setAppMetadata("SDL3 Test", null, "!Testing");
-	  try init(flags);
-	  defer quit(flags);
-	  try std.testing.expect(std.meta.eql(flags, wasInit(flags)));
-	  try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Name).?, "SDL3 Test"));
-	  try std.testing.expect(getAppMetadataProperty(.Version) == null);
-	  try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Identifier).?, "!Testing"));
-	  try setAppMetadataProperty(.Creator, "Gota7");
-	  try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Creator).?, "Gota7"));
-	  try setAppMetadataProperty(.Creator, null);
-	  try std.testing.expect(getAppMetadataProperty(.Creator) == null);
-	  try std.testing.expect(getAppMetadataProperty(.Url) == null);
+	defer shutdown();
+	const flags = Flags{
+	    .video = true,
+	    .events = true,
+	    .camera = true,
+	};
+	try setAppMetadata("SDL3 Test", null, "!Testing");
+	try init(flags);
+	defer quit(flags);
+	try std.testing.expect(std.meta.eql(flags, wasInit(flags)));
+	try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Name).?, "SDL3 Test"));
+	try std.testing.expect(getAppMetadataProperty(.Version) == null);
+	try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Identifier).?, "!Testing"));
+	try setAppMetadataProperty(.Creator, "Gota7");
+	try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Creator).?, "Gota7"));
+	try setAppMetadataProperty(.Creator, null);
+	try std.testing.expect(getAppMetadataProperty(.Creator) == null);
+	try std.testing.expect(getAppMetadataProperty(.Url) == null);
 }

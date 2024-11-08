@@ -135,19 +135,21 @@ const Subsystem = struct {
     tests: []const Test,
 };
 
-const Bindings = struct {
-    subsystems: []const Subsystem,
-    files: []const struct {
-        name: []const u8,
-        exports: []const struct {
-            sdlName: []const u8,
-            zigName: []const u8,
-            kind: []const u8,
-            extra: []const struct {
-                arg: []const u8,
-            },
+const File = struct {
+    name: []const u8,
+    exports: []const struct {
+        sdlName: []const u8,
+        zigName: []const u8,
+        kind: []const u8,
+        extra: []const struct {
+            arg: []const u8,
         },
     },
+};
+
+const Bindings = struct {
+    subsystems: std.ArrayList(Subsystem),
+    files: std.ArrayList(File),
 };
 
 const WriteError = error{InvalidEnumValue};
@@ -668,8 +670,8 @@ fn writeFlag(
     indent: usize,
     sdl_types: std.StringHashMap(SdlData),
     imports: *std.StringHashMap(void),
-    curr_subsystem: []const u8,)
-!void {
+    curr_subsystem: []const u8,
+) !void {
 
     //
     // /// <comment>
@@ -1371,13 +1373,31 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    // Load the bindings YAML file. Don't worry, if it's formatted incorrectly the program will randomly segfault (it's a ymlz thing).
-    var yml = try ymlz.Ymlz(Bindings).init(allocator);
-    const result = try yml.loadFile(try std.fs.cwd().realpathAlloc(allocator, "bindings.yaml"));
+    // Load the bindings YAML files. Don't worry, if it's formatted incorrectly the program will randomly segfault (it's a ymlz thing).
+    var result = Bindings{
+        .subsystems = std.ArrayList(Subsystem).init(allocator),
+        .files = std.ArrayList(File).init(allocator),
+    };
+    var yml_subsystem = try ymlz.Ymlz(Subsystem).init(allocator);
+    var yml_file = try ymlz.Ymlz(File).init(allocator);
+    const subsystems_dir = try std.fs.cwd().openDir("bindings/subsystems", .{ .iterate = true });
+    var subsystems_iter = subsystems_dir.iterate();
+    while (try subsystems_iter.next()) |subsystem| {
+        if (subsystem.kind != .file or !std.mem.endsWith(u8, subsystem.name, ".yaml"))
+            continue;
+        try result.subsystems.append(try yml_subsystem.loadFile(try subsystems_dir.realpathAlloc(allocator, subsystem.name)));
+    }
+    const files_dir = try std.fs.cwd().openDir("bindings/files", .{ .iterate = true });
+    var files_iter = files_dir.iterate();
+    while (try files_iter.next()) |file| {
+        if (file.kind != .file or !std.mem.endsWith(u8, file.name, ".yaml"))
+            continue;
+        try result.files.append(try yml_file.loadFile(try files_dir.realpathAlloc(allocator, file.name)));
+    }
 
     // Fetch SDL types.
     var sdl_types = std.StringHashMap(SdlData).init(allocator);
-    for (result.subsystems) |subsystem| {
+    for (result.subsystems.items) |subsystem| {
         for (subsystem.callbacks) |cb| {
             var name = try allocator.alloc(u8, cb.zigName.len);
             @memcpy(name, cb.zigName);
@@ -1406,7 +1426,7 @@ pub fn main() !void {
             try sdl_types.put(ty.sdlName, SdlData{ .subsystem = subsystem.name, .type_data = SdlTypeData{ .Typedef = ty } });
         }
     }
-    for (result.files) |file| {
+    for (result.files.items) |file| {
         for (file.exports) |exp| {
             if (std.mem.eql(u8, exp.kind, "callback")) {
                 try sdl_types.put(exp.sdlName, SdlData{ .subsystem = file.name, .type_data = SdlTypeData{ .Callback = .{
@@ -1487,7 +1507,7 @@ pub fn main() !void {
 
     // Open main library file and generate subsystems.
     const sdl_file = try dir.createFile("sdl3.zig", .{ .truncate = true });
-    for (result.subsystems) |subsystem| {
+    for (result.subsystems.items) |subsystem| {
         const file = try dir.createFile(try std.fmt.allocPrint(
             allocator,
             "{s}.zig",
@@ -1590,10 +1610,10 @@ pub fn main() !void {
             try sdl_file.writer().print("pub const {s} = @import(\"{s}.zig\");\n", .{ subsystem.name, subsystem.name });
         } else try sdl_file.writer().print("pub const {s} = @import(\"{s}.zig\").{s};\n", .{ single_name, subsystem.name, single_name });
     }
-    if (result.files.len > 0)
+    if (result.files.items.len > 0)
         try nextLine(sdl_file.writer().any(), 0);
-    for (result.files) |file| {
-        try (try std.fs.cwd().openDir("custom", .{})).copyFile(
+    for (result.files.items) |file| {
+        try (try std.fs.cwd().openDir("bindings/files", .{})).copyFile(
             try std.fmt.allocPrint(allocator, "{s}.zig", .{file.name}),
             try std.fs.cwd().openDir("src", .{}),
             try std.fmt.allocPrint(allocator, "{s}.zig", .{file.name}),

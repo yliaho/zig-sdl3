@@ -17,8 +17,8 @@ Some advantages of SDL3 include windowing, audio, gamepad, keyboard, mouse, rend
 ### Binding Generator
 
 A custom wrapper generator program is used to create the wrapper for SDL3.
-The source for this program is located in `generate.zig`, and the information used to generate the wrapper is in `bindings.yaml`.
-Note that certain subsystems are too complex to automatically generate bindings for (such as `rect` or `iostream`), and so the handwritten code to them is located in `custom`.
+The source for this program is located in `generate.zig`, and the information used to generate the wrapper is in the `bindings` folder.
+Note that certain subsystems are too complex to automatically generate bindings for (such as `rect` or `iostream`), and so the handwritten code to them is located in `bindings/files`.
 Bindings can be generated using `zig build bindings`. This will update the `src` directory to be up to date with the latest bindings.
 
 ### Examples
@@ -36,7 +36,7 @@ In the future, we may look into bundling SDL3 and building it with this library 
 Doing so can also help potentially decouple parts of SDL3 from libc.
 
 ### Tests
-Tests are embedded directly into the `bindings.yaml` file to be put in their destination subsystem.
+Tests are embedded directly into the YAML files to be put in their destination subsystem.
 Tests for the library can be ran by running `zig build test`.
 
 ## Features
