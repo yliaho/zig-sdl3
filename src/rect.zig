@@ -6,7 +6,7 @@ pub const IntegerType = i32;
 
 /// A positional point.
 pub fn Point(comptime Type: type) type {
-    return struct {
+    return extern struct {
         const Self = @This();
         x: Type,
         y: Type,
@@ -58,7 +58,7 @@ pub const IPoint = Point(IntegerType);
 
 /// Rectangle with position and size.
 pub fn Rect(comptime Type: type) type {
-    return struct {
+    return extern struct {
         const Self = @This();
         x: Type,
         y: Type,

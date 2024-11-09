@@ -17,6 +17,7 @@ pub const pen = @import("pen.zig");
 pub const pixels = @import("pixels.zig");
 pub const PowerState = @import("power.zig").PowerState;
 pub const properties = @import("properties.zig");
+pub const render = @import("render.zig");
 pub const Scancode = @import("scancode.zig").Scancode;
 pub const sensor = @import("sensor.zig");
 pub const surface = @import("surface.zig");

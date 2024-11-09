@@ -32,6 +32,7 @@ For monitoring how close various subsystems are to completion.
 * Hints
 * Joystick (Needs properties, virtual attach)
 * Keyboard (Needs properties)
+* Render (Needs properties, functions)
 * Surface (Needs properties)
 * Video
 
@@ -48,7 +49,6 @@ For monitoring how close various subsystems are to completion.
 * Metal
 * Mouse
 * Open GL (All variants)
-* Render
 * Storage
 * System
 * Touch
