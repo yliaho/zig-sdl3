@@ -234,18 +234,161 @@ pub const Renderer = struct {
 			return error.SdlError;
 		return Texture{ .value = ret };
 	}
+
+	/// Set a texture as the current rendering target.
+	pub fn setTarget(
+		self: Renderer,
+		target: ?Texture,
+	) !void {
+		const ret = C.SDL_SetRenderTarget(
+			self.value,
+			if (target) |target_val| target_val.value else null,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the current render target.
+	pub fn getTarget(
+		self: Renderer,
+	) ?Texture {
+		const ret = C.SDL_GetRenderTarget(
+			self.value,
+		);
+		if (ret == null)
+			return null;
+		return Texture{ .value = ret };
+	}
+
+	/// Set a device independent resolution and presentation mode for rendering.
+	pub fn setLogicalPresentation(
+		self: Renderer,
+		width: usize,
+		height: usize,
+		presentation_mode: ?LogicalPresentation,
+	) !void {
+		const ret = C.SDL_SetRenderLogicalPresentation(
+			self.value,
+			@intCast(width),
+			@intCast(height),
+			if (presentation_mode) |val| @intFromEnum(val) else C.SDL_LOGICAL_PRESENTATION_DISABLED,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get device independent resolution and presentation mode for rendering.
+	pub fn getLogicalPresentation(
+		self: Renderer,
+	) !struct { width: usize, height: usize, presentation_mode: ?LogicalPresentation } {
+		var w: c_int = undefined;
+		var h: c_int = undefined;
+		var presentation_mode: C.SDL_RendererLogicalPresentation = undefined;
+		const ret = C.SDL_GetRenderLogicalPresentation(
+			self.value,
+			&w,
+			&h,
+			&presentation_mode,
+		);
+		if (!ret)
+			return error.SdlError;
+		return .{ .width = @intCast(w), .height = @intCast(h), .presentation_mode = if (presentation_mode == C.SDL_LOGICAL_PRESENTATION_DISABLED) null else @enumFromInt(presentation_mode) };
+	}
+
+	/// Get the final presentation rectangle for rendering.
+	pub fn getLogicalPresentationRect(
+		self: Renderer,
+	) !rect.FRect {
+		var presentation_rect: C.SDL_FRect = undefined;
+		const ret = C.SDL_GetRenderLogicalPresentationRect(
+			self.value,
+			&presentation_rect,
+		);
+		if (!ret)
+			return error.SdlError;
+		return rect.FRect.fromSdl(presentation_rect);
+	}
+
+	/// Force the rendering context to flush any pending commands and state.
+	pub fn flush(
+		self: Renderer,
+	) !void {
+		const ret = C.SDL_FlushRenderer(
+			self.value,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the CAMetalLayer associated with the given Metal renderer.
+	pub fn getMetalLayer(
+		self: Renderer,
+	) ?*anyopaque {
+		const ret = C.SDL_GetRenderMetalLayer(
+			self.value,
+		);
+		return ret;
+	}
+
+	/// Get the Metal command encoder for the current frame.
+	pub fn getMetalCommandEncoder(
+		self: Renderer,
+	) ?*anyopaque {
+		const ret = C.SDL_GetRenderMetalCommandEncoder(
+			self.value,
+		);
+		return ret;
+	}
+
+	/// Add a set of synchronization semaphores for the current frame.
+	pub fn addVulkanSemaphores(
+		self: Renderer,
+		wait_stage_mask: u32,
+		wait_semaphore: i64,
+		signal_semaphore: i64,
+	) !void {
+		const ret = C.SDL_AddVulkanRenderSemaphores(
+			self.value,
+			@intCast(wait_stage_mask),
+			@intCast(wait_semaphore),
+			@intCast(signal_semaphore),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Set VSync of the given renderer.
+    pub fn setVSync(
+        self: Renderer,
+        vsync: ?VSync,
+    ) !void {
+        const ret = C.SDL_SetRenderVSync(self.value, VSync.toSdl(vsync));
+        if (!ret)
+            return error.SdlError;
+    }
+
+	/// Get VSync of the given renderer.
+    pub fn getVSync(
+        self: Renderer,
+    ) !?VSync {
+        var vsync: c_int = undefined;
+        const ret = C.SDL_GetRenderVSync(self.value, &vsync);
+        if (!ret)
+            return error.SdlError;
+        return VSync.fromSdl(vsync);
+    }
 };
 
 /// An efficient driver-specific representation of pixel data.
 pub const Texture = struct {
-	value: C.SDL_Texture,
+	value: *C.SDL_Texture,
 
 	/// Get the properties associated with a texture.
 	pub fn getProperties(
 		self: Texture,
 	) !properties.Group {
 		const ret = C.SDL_GetTextureProperties(
-			&self.value,
+			self.value,
 		);
 		if (ret == 0)
 			return error.SdlError;
@@ -257,7 +400,7 @@ pub const Texture = struct {
 		self: Texture,
 	) !Renderer {
 		const ret = C.SDL_GetRendererFromTexture(
-			&self.value,
+			self.value,
 		);
 		if (ret == null)
 			return error.SdlError;
@@ -271,7 +414,7 @@ pub const Texture = struct {
 		var w: f32 = undefined;
 		var h: f32 = undefined;
 		const ret = C.SDL_GetTextureSize(
-			&self.value,
+			self.value,
 			&w,
 			&h,
 		);
@@ -288,7 +431,7 @@ pub const Texture = struct {
 		b: u8,
 	) !void {
 		const ret = C.SDL_SetTextureColorMod(
-			&self.value,
+			self.value,
 			@intCast(r),
 			@intCast(g),
 			@intCast(b),
@@ -305,7 +448,7 @@ pub const Texture = struct {
 		b: f32,
 	) !void {
 		const ret = C.SDL_SetTextureColorModFloat(
-			&self.value,
+			self.value,
 			@floatCast(r),
 			@floatCast(g),
 			@floatCast(b),
@@ -322,7 +465,7 @@ pub const Texture = struct {
 		var g: u8 = undefined;
 		var b: u8 = undefined;
 		const ret = C.SDL_GetTextureColorMod(
-			&self.value,
+			self.value,
 			&r,
 			&g,
 			&b,
@@ -340,7 +483,7 @@ pub const Texture = struct {
 		var g: f32 = undefined;
 		var b: f32 = undefined;
 		const ret = C.SDL_GetTextureColorModFloat(
-			&self.value,
+			self.value,
 			&r,
 			&g,
 			&b,
@@ -356,7 +499,7 @@ pub const Texture = struct {
 		alpha: u8,
 	) !void {
 		const ret = C.SDL_SetTextureAlphaMod(
-			&self.value,
+			self.value,
 			@intCast(alpha),
 		);
 		if (!ret)
@@ -369,7 +512,7 @@ pub const Texture = struct {
 		alpha: f32,
 	) !void {
 		const ret = C.SDL_SetTextureAlphaModFloat(
-			&self.value,
+			self.value,
 			@floatCast(alpha),
 		);
 		if (!ret)
@@ -382,7 +525,7 @@ pub const Texture = struct {
 	) !u8 {
 		var alpha: u8 = undefined;
 		const ret = C.SDL_GetTextureAlphaMod(
-			&self.value,
+			self.value,
 			&alpha,
 		);
 		if (!ret)
@@ -396,7 +539,7 @@ pub const Texture = struct {
 	) !f32 {
 		var alpha: f32 = undefined;
 		const ret = C.SDL_GetTextureAlphaModFloat(
-			&self.value,
+			self.value,
 			&alpha,
 		);
 		if (!ret)
@@ -410,7 +553,7 @@ pub const Texture = struct {
 		mode: blend_mode.Mode,
 	) !void {
 		const ret = C.SDL_SetTextureBlendMode(
-			&self.value,
+			self.value,
 			mode.value,
 		);
 		if (!ret)
@@ -423,7 +566,7 @@ pub const Texture = struct {
 	) !?blend_mode.Mode {
 		var mode: C.SDL_BlendMode = undefined;
 		const ret = C.SDL_GetTextureBlendMode(
-			&self.value,
+			self.value,
 			&mode,
 		);
 		if (!ret)
@@ -439,7 +582,7 @@ pub const Texture = struct {
 		mode: surface.ScaleMode,
 	) !void {
 		const ret = C.SDL_SetTextureScaleMode(
-			&self.value,
+			self.value,
 			@intFromEnum(mode),
 		);
 		if (!ret)
@@ -452,7 +595,7 @@ pub const Texture = struct {
 	) !surface.ScaleMode {
 		var mode: C.SDL_ScaleMode = undefined;
 		const ret = C.SDL_GetTextureScaleMode(
-			&self.value,
+			self.value,
 			&mode,
 		);
 		if (!ret)
@@ -468,13 +611,102 @@ pub const Texture = struct {
 	) !void {
 		const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
 		const ret = C.SDL_UpdateTexture(
-			&self.value,
+			self.value,
 			if (update_area_sdl == null) null else &(update_area_sdl.?),
 			data.ptr,
 			@intCast(data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight())),
 		);
 		if (!ret)
 			return error.SdlError;
+	}
+
+	/// Update a rectangle within a planar YV12 or IYUV texture with new pixel data.
+	pub fn updateYUV(
+		self: Texture,
+		update_area: ?rect.IRect,
+		y_data: []const u8,
+		u_data: []const u8,
+		v_data: []const u8,
+	) !void {
+		const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+		const ret = C.SDL_UpdateYUVTexture(
+			self.value,
+			if (update_area_sdl == null) null else &(update_area_sdl.?),
+			y_data.ptr,
+			@intCast(y_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight())),
+			u_data.ptr,
+			@intCast(u_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight())),
+			v_data.ptr,
+			@intCast(v_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight())),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Update a rectangle within a planar NV12 or NV21 texture with new pixels.
+	pub fn updateNV(
+		self: Texture,
+		update_area: ?rect.IRect,
+		y_data: []const u8,
+		uv_data: []const u8,
+	) !void {
+		const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+		const ret = C.SDL_UpdateNVTexture(
+			self.value,
+			if (update_area_sdl == null) null else &(update_area_sdl.?),
+			y_data.ptr,
+			@intCast(y_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight())),
+			uv_data.ptr,
+			@intCast(uv_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight())),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Lock a portion of the texture for write-only pixel access.
+	pub fn lock(
+		self: Texture,
+		update_area: ?rect.IRect,
+	) ![]u8 {
+		const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+		var data: ?*anyopaque = undefined;
+		var pitch: c_int = undefined;
+		const ret = C.SDL_LockTexture(
+			self.value,
+			if (update_area_sdl == null) null else &(update_area_sdl.?),
+			&data,
+			&pitch,
+		);
+		if (!ret)
+			return error.SdlError;
+		return .{ .ptr = @ptrCast(@alignCast(pixels)), .len = self.getHeight() * @as(usize, @intCast(pitch)) };
+	}
+
+	/// Lock a portion of the texture for write-only pixel access, and expose it as a SDL surface.
+	pub fn lockToSurface(
+		self: Texture,
+		update_area: ?rect.IRect,
+	) !surface.Surface {
+		const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+		var target_surface: C.SDL_Surface = undefined;
+		const ret = C.SDL_LockTextureToSurface(
+			self.value,
+			if (update_area_sdl == null) null else &(update_area_sdl.?),
+			&target_surface,
+		);
+		if (!ret)
+			return error.SdlError;
+		return target_surface;
+	}
+
+	/// Unlock a texture, uploading the changes to video memory, if needed.
+	pub fn unlock(
+		self: Texture,
+	) void {
+		const ret = C.SDL_UnlockTexture(
+			self.value,
+		);
+		_ = ret;
 	}
 
 	/// Get the pixel format for the texture.
@@ -507,6 +739,25 @@ pub const Texture = struct {
 //     /// Normalize texture coordinates.
 //     tex_coord: rect.FPoint,
 // };
+
+/// VSync mode.
+pub const VSync = union {
+    OnEachNumRefresh: usize,
+    Adaptive: void,
+    pub fn fromSdl(val: c_int) ?VSync {
+        return if (val == 0) null else if (val == -1) .Apdative else .OnEachNumRefresh(@intCast(val));
+    }
+    /// Convert to an SDL value.
+    pub fn toSdl(self: ?VSync) c_int {
+        return if (self) |sync|
+            switch (sync) {
+                .OnEachNumRefresh => |val| @intCast(val),
+                .Adaptive => -1,
+            }
+        else
+            0;
+    }
+};
 
 /// The name of the software renderer.
 pub const software_renderer_name = C.SDL_SOFTWARE_RENDERER;

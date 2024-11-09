@@ -329,10 +329,207 @@ Values:
             Type: SDL_PropertiesID
             Value: null
             Mode: null
-    CustomFunctions: []
+      - SdlName: SDL_SetRenderTarget
+        ZigName: setTarget
+        Comment: "Set a texture as the current rendering target."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: target
+            Type: ?SDL_Texture
+            Value: null
+            Mode: null
+      - SdlName: SDL_GetRenderTarget
+        ZigName: getTarget
+        Comment: "Get the current render target."
+        Return:
+          Sdl: SDL_Texture
+          Zig: "?Texture"
+          Convert: null
+          Checks:
+            - Method: ReturnNullIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_SetRenderLogicalPresentation
+        ZigName: setLogicalPresentation
+        Comment: "Set a device independent resolution and presentation mode for rendering."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: width
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: height
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: presentation_mode
+            Type: ?SDL_RendererLogicalPresentation
+            Value: if (presentation_mode) |val| @intFromEnum(val) else C.SDL_LOGICAL_PRESENTATION_DISABLED
+            Mode: null
+      - SdlName: SDL_GetRenderLogicalPresentation
+        ZigName: getLogicalPresentation
+        Comment: "Get device independent resolution and presentation mode for rendering."
+        Return:
+          Sdl: bool
+          Zig: |
+            !struct { width: usize, height: usize, presentation_mode: ?LogicalPresentation }
+          Convert: .{ .width = @intCast(w), .height = @intCast(h), .presentation_mode = if (presentation_mode == C.SDL_LOGICAL_PRESENTATION_DISABLED) null else @enumFromInt(presentation_mode) }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: w
+            Type: c_int
+            Value: "&w"
+            Mode: out
+          - Name: h
+            Type: c_int
+            Value: "&h"
+            Mode: out
+          - Name: presentation_mode
+            Type: SDL_RendererLogicalPresentation
+            Value: "&presentation_mode"
+            Mode: out
+      - SdlName: SDL_GetRenderLogicalPresentationRect
+        ZigName: getLogicalPresentationRect
+        Comment: "Get the final presentation rectangle for rendering."
+        Return:
+          Sdl: bool
+          Zig: "!rect.FRect"
+          Convert: rect.FRect.fromSdl(presentation_rect)
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: presentation_rect
+            Type: SDL_FRect
+            Value: "&presentation_rect"
+            Mode: out
+      - SdlName: SDL_FlushRenderer
+        ZigName: flush
+        Comment: "Force the rendering context to flush any pending commands and state."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_GetRenderMetalLayer
+        ZigName: getMetalLayer
+        Comment: "Get the CAMetalLayer associated with the given Metal renderer."
+        Return:
+          Sdl: "*void"
+          Zig: "?*anyopaque"
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_GetRenderMetalCommandEncoder
+        ZigName: getMetalCommandEncoder
+        Comment: "Get the Metal command encoder for the current frame."
+        Return:
+          Sdl: "*void"
+          Zig: "?*anyopaque"
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_AddVulkanRenderSemaphores
+        ZigName: addVulkanSemaphores
+        Comment: "Add a set of synchronization semaphores for the current frame."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: wait_stage_mask
+            Type: u32
+            Value: null
+            Mode: null
+          - Name: wait_semaphore
+            Type: i64
+            Value: null
+            Mode: null
+          - Name: signal_semaphore
+            Type: i64
+            Value: null
+            Mode: null
+    CustomFunctions:
+      - Code: |
+          /// Set VSync of the given renderer.
+              pub fn setVSync(
+                  self: Renderer,
+                  vsync: ?VSync,
+              ) !void {
+                  const ret = C.SDL_SetRenderVSync(self.value, VSync.toSdl(vsync));
+                  if (!ret)
+                      return error.SdlError;
+              }
+      - Code: |
+          /// Get VSync of the given renderer.
+              pub fn getVSync(
+                  self: Renderer,
+              ) !?VSync {
+                  var vsync: c_int = undefined;
+                  const ret = C.SDL_GetRenderVSync(self.value, &vsync);
+                  if (!ret)
+                      return error.SdlError;
+                  return VSync.fromSdl(vsync);
+              }
   - SdlName: SDL_Texture
     ZigName: Texture
-    Type: $SDL.SDL_Texture
+    Type: "*$SDL.SDL_Texture"
     IsOpaque: false
     Comment: "An efficient driver-specific representation of pixel data."
     Presets: []
@@ -350,7 +547,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
       - SdlName: SDL_GetRendererFromTexture
         ZigName: getRenderer
@@ -365,7 +562,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
       - SdlName: SDL_GetTextureSize
         ZigName: getSize
@@ -381,7 +578,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: w
             Type: f32
@@ -404,7 +601,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: r
             Type: u8
@@ -431,7 +628,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: r
             Type: f32
@@ -459,7 +656,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: r
             Type: u8
@@ -487,7 +684,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: r
             Type: f32
@@ -514,7 +711,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: alpha
             Type: u8
@@ -533,7 +730,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: alpha
             Type: f32
@@ -552,7 +749,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: alpha
             Type: u8
@@ -571,7 +768,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: alpha
             Type: f32
@@ -590,7 +787,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: mode
             Type: SDL_BlendMode
@@ -613,7 +810,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: mode
             Type: SDL_BlendMode
@@ -632,7 +829,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: mode
             Type: SDL_ScaleMode
@@ -651,7 +848,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: mode
             Type: SDL_ScaleMode
@@ -670,7 +867,7 @@ Values:
         Arguments:
           - Name: self
             Type: SDL_Texture
-            Value: "&self.value"
+            Value: null
             Mode: null
           - Name: update_area
             Type: SDL_Rect
@@ -683,6 +880,147 @@ Values:
           - Name: pitch
             Type: null
             Value: "@intCast(data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight()))"
+            Mode: null
+      - SdlName: SDL_UpdateYUVTexture
+        ZigName: updateYUV
+        Comment: "Update a rectangle within a planar YV12 or IYUV texture with new pixel data."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: bool
+        Arguments:
+          - Name: self
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: update_area
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: y_data
+            Type: "[]const u8"
+            Value: y_data.ptr
+            Mode: verbatim
+          - Name: y_pitch
+            Type: null
+            Value: "@intCast(y_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight()))"
+            Mode: null
+          - Name: u_data
+            Type: "[]const u8"
+            Value: u_data.ptr
+            Mode: verbatim
+          - Name: u_pitch
+            Type: null
+            Value: "@intCast(u_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight()))"
+            Mode: null
+          - Name: v_data
+            Type: "[]const u8"
+            Value: v_data.ptr
+            Mode: verbatim
+          - Name: v_pitch
+            Type: null
+            Value: "@intCast(v_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight()))"
+            Mode: null
+      - SdlName: SDL_UpdateNVTexture
+        ZigName: updateNV
+        Comment: "Update a rectangle within a planar NV12 or NV21 texture with new pixels."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: bool
+        Arguments:
+          - Name: self
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: update_area
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: y_data
+            Type: "[]const u8"
+            Value: y_data.ptr
+            Mode: verbatim
+          - Name: y_pitch
+            Type: null
+            Value: "@intCast(y_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight()))"
+            Mode: null
+          - Name: uv_data
+            Type: "[]const u8"
+            Value: uv_data.ptr
+            Mode: verbatim
+          - Name: uv_pitch
+            Type: null
+            Value: "@intCast(uv_data.len / (if (update_area_sdl) |val| @as(usize, @intCast(val.h)) else self.getHeight()))"
+            Mode: null
+      - SdlName: SDL_LockTexture
+        ZigName: lock
+        Comment: "Lock a portion of the texture for write-only pixel access."
+        Return:
+          Sdl: bool
+          Zig: "![]u8"
+          Convert: .{ .ptr = @ptrCast(@alignCast(pixels)), .len = self.getHeight() * @as(usize, @intCast(pitch)) }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: bool
+        Arguments:
+          - Name: self
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: update_area
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: data
+            Type: "?*anyopaque"
+            Value: "&data"
+            Mode: out
+          - Name: pitch
+            Type: c_int
+            Value: "&pitch"
+            Mode: out
+      - SdlName: SDL_LockTextureToSurface
+        ZigName: lockToSurface
+        Comment: "Lock a portion of the texture for write-only pixel access, and expose it as a SDL surface."
+        Return:
+          Sdl: bool
+          Zig: "!surface.Surface"
+          Convert: target_surface
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: bool
+        Arguments:
+          - Name: self
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: update_area
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: target_surface
+            Type: SDL_Surface
+            Value: "&target_surface"
+            Mode: out
+      - SdlName: SDL_UnlockTexture
+        ZigName: unlock
+        Comment: "Unlock a texture, uploading the changes to video memory, if needed."
+        Return:
+          Sdl: void
+          Zig: void
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: self
+            Type: SDL_Texture
+            Value: null
             Mode: null
     CustomFunctions:
       - Code: |
@@ -720,6 +1058,27 @@ CustomFunctions:
       //     /// Normalize texture coordinates.
       //     tex_coord: rect.FPoint,
       // };
+  - Code: |
+      /// VSync mode.
+      pub const VSync = union {
+          OnEachNumRefresh: usize,
+          Adaptive: void,
+
+          pub fn fromSdl(val: c_int) ?VSync {
+              return if (val == 0) null else if (val == -1) .Apdative else .OnEachNumRefresh(@intCast(val));
+          }
+
+          /// Convert to an SDL value.
+          pub fn toSdl(self: ?VSync) c_int {
+              return if (self) |sync|
+                  switch (sync) {
+                      .OnEachNumRefresh => |val| @intCast(val),
+                      .Adaptive => -1,
+                  }
+              else
+                  0;
+          }
+      };
 Typedefs:
   - SdlName: SDL_SOFTWARE_RENDERER
     ZigName: software_renderer_name
