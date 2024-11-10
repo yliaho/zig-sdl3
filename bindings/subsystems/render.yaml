@@ -437,6 +437,490 @@ Values:
             Type: SDL_FRect
             Value: "&presentation_rect"
             Mode: out
+      - SdlName: SDL_RenderClear
+        ZigName: clear
+        Comment: "Clear the current rendering target with the drawing color."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_RenderPoint
+        ZigName: renderPoint
+        Comment: "Draw a point on the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: p1
+            Type: SDL_FPoint
+            Value: p1.x
+            Mode: null
+          - Name: p1_y
+            Type: null
+            Value: p1.y
+            Mode: null
+      - SdlName: SDL_RenderPoints
+        ZigName: renderPoints
+        Comment: "Draw multiple points on the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: points
+            Type: "[]const rect.FPoint"
+            Value: "@ptrCast(points.ptr)"
+            Mode: verbatim
+          - Name: count
+            Type: null
+            Value: "@intCast(points.len)"
+            Mode: null
+      - SdlName: SDL_RenderLine
+        ZigName: renderLine
+        Comment: "Draw a line on the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: p1
+            Type: SDL_FPoint
+            Value: p1.x
+            Mode: null
+          - Name: p1_y
+            Type: null
+            Value: p1.y
+            Mode: null
+          - Name: p2
+            Type: SDL_FPoint
+            Value: p2.x
+            Mode: null
+          - Name: p2_y
+            Type: null
+            Value: p2.y
+            Mode: null
+      - SdlName: SDL_RenderLines
+        ZigName: renderLines
+        Comment: "Draw a series of connected lines on the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: points
+            Type: "[]const rect.FPoint"
+            Value: "@ptrCast(points.ptr)"
+            Mode: verbatim
+          - Name: count
+            Type: null
+            Value: "@intCast(points.len)"
+            Mode: null
+      - SdlName: SDL_RenderRect
+        ZigName: renderRect
+        Comment: "Draw a rectangle on the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: dst
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_RenderRects
+        ZigName: renderRects
+        Comment: "Draw some number of rectangles on the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: rects
+            Type: "[]const rect.FRect"
+            Value: "@ptrCast(rects.ptr)"
+            Mode: verbatim
+          - Name: count
+            Type: null
+            Value: "@intCast(rects.len)"
+            Mode: null
+      - SdlName: SDL_RenderFillRect
+        ZigName: renderFillRect
+        Comment: "Fill a rectangle on the current rendering target with the drawing color at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: dst
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_RenderFillRects
+        ZigName: renderFillRects
+        Comment: "Fill some number of rectangles on the current rendering target with the drawing color at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: rects
+            Type: "[]const rect.FRect"
+            Value: "@ptrCast(rects.ptr)"
+            Mode: verbatim
+          - Name: count
+            Type: null
+            Value: "@intCast(rects.len)"
+            Mode: null
+      - SdlName: SDL_RenderTexture
+        ZigName: renderTexture
+        Comment: "Copy a portion of the texture to the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: texture
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: src_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: dst_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_RenderTextureRotated
+        ZigName: renderTextureRotated
+        Comment: "Copy a portion of the source texture to the current rendering target, with rotation and flipping, at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: texture
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: src_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: dst_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: angle
+            Type: f64
+            Value: null
+            Mode: null
+          - Name: center
+            Type: SDL_FPoint
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: flip_mode
+            Type: ?SDL_FlipMode
+            Value: if (flip_mode) |val| @intFromEnum(val) else C.SDL_FLIP_NONE
+            Mode: null
+      - SdlName: SDL_RenderTextureTiled
+        ZigName: renderTextureTiled
+        Comment: "Tile a portion of the texture to the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: texture
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: src_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: scale
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: dst_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_RenderTexture9Grid
+        ZigName: renderTexture9Grid
+        Comment: "Perform a scaled copy using the 9-grid algorithm to the current rendering target at subpixel precision."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: texture
+            Type: SDL_Texture
+            Value: null
+            Mode: null
+          - Name: src_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+          - Name: left_width
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: right_width
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: top_height
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: bottom_height
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: scale
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: dst_rect
+            Type: SDL_FRect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_RenderGeometry
+        ZigName: renderGeometry
+        Comment: "Render a list of triangles, optionally using a texture and indices into the vertex arrays Color and alpha modulation is done per vertex."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: texture
+            Type: ?SDL_Texture
+            Value: null
+            Mode: null
+          - Name: vertices
+            Type: "[*]const Vertex"
+            Value: vertices
+            Mode: verbatim
+          - Name: num_vertices
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: indices
+            Type: "?[*]const c_int"
+            Value: if (indices) |val| val else null
+            Mode: verbatim
+          - Name: num_indices
+            Type: usize
+            Value: null
+            Mode: null
+      - SdlName: SDL_RenderGeometryRaw
+        ZigName: renderGeometryRaw
+        Comment: "Render a list of triangles, optionally using a texture and indices into the vertex arrays Color and alpha modulation is done per vertex."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: texture
+            Type: ?SDL_Texture
+            Value: null
+            Mode: null
+          - Name: xy_positions
+            Type: "[*]const f32"
+            Value: xy_positions
+            Mode: verbatim
+          - Name: xy_positions_stride
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: colors
+            Type: "[*]const pixels.FColor"
+            Value: colors
+            Mode: verbatim
+          - Name: colors_stride
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: uv_coords
+            Type: "[*]const f32"
+            Value: uv_coords
+            Mode: verbatim
+          - Name: uv_coords_stride
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: num_vertices
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: indices
+            Type: "?*const anyopaque"
+            Value: indices
+            Mode: verbatim
+          - Name: num_indices
+            Type: usize
+            Value: null
+            Mode: null
+          - Name: bytes_per_index
+            Type: usize
+            Value: null
+            Mode: null
+      - SdlName: SDL_RenderReadPixels
+        ZigName: readPixels
+        Comment: "Read pixels from the current rendering target."
+        Return:
+          Sdl: SDL_Surface
+          Zig: "!surface.Surface"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: capture_area
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_RenderPresent
+        ZigName: present
+        Comment: "Update the screen with any rendering performed since the previous call."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_DestroyRenderer
+        ZigName: deinit
+        Comment: "Destroy the rendering context for a window and free all associated textures."
+        Return:
+          Sdl: void
+          Zig: void
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
       - SdlName: SDL_FlushRenderer
         ZigName: flush
         Comment: "Force the rendering context to flush any pending commands and state."
@@ -1022,6 +1506,19 @@ Values:
             Type: SDL_Texture
             Value: null
             Mode: null
+      - SdlName: SDL_DestroyTexture
+        ZigName: deinit
+        Comment: "Destroy the specified texture."
+        Return:
+          Sdl: void
+          Zig: void
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: self
+            Type: SDL_Texture
+            Value: null
+            Mode: null
     CustomFunctions:
       - Code: |
           /// Get the pixel format for the texture.
@@ -1049,15 +1546,15 @@ Structs: []
 Functions: []
 CustomFunctions:
   - Code: |
-      // /// Vertex for rendering.
-      // pub const Vertex = extern struct {
-      //     /// Position in SDL renderer coordinates.
-      //     position: rect.FPoint,
-      //     /// Vertex color.
-      //     color: pixels.FColor,
-      //     /// Normalize texture coordinates.
-      //     tex_coord: rect.FPoint,
-      // };
+      /// Vertex for rendering.
+      pub const Vertex = extern struct {
+          /// Position in SDL renderer coordinates.
+          position: rect.FPoint,
+          /// Vertex color.
+          color: pixels.FColor,
+          /// Normalize texture coordinates.
+          tex_coord: rect.FPoint,
+      };
   - Code: |
       /// VSync mode.
       pub const VSync = union {

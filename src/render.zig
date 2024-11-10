@@ -309,6 +309,306 @@ pub const Renderer = struct {
 		return rect.FRect.fromSdl(presentation_rect);
 	}
 
+	/// Draw a point on the current rendering target at subpixel precision.
+	pub fn renderPoint(
+		self: Renderer,
+		p1: rect.FPoint,
+	) !void {
+		const ret = C.SDL_RenderPoint(
+			self.value,
+			p1.x,
+			p1.y,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Draw multiple points on the current rendering target at subpixel precision.
+	pub fn renderPoints(
+		self: Renderer,
+		points: []const rect.FPoint,
+	) !void {
+		const ret = C.SDL_RenderPoints(
+			self.value,
+			@ptrCast(points.ptr),
+			@intCast(points.len),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Draw a line on the current rendering target at subpixel precision.
+	pub fn renderLine(
+		self: Renderer,
+		p1: rect.FPoint,
+		p2: rect.FPoint,
+	) !void {
+		const ret = C.SDL_RenderLine(
+			self.value,
+			p1.x,
+			p1.y,
+			p2.x,
+			p2.y,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Draw a series of connected lines on the current rendering target at subpixel precision.
+	pub fn renderLines(
+		self: Renderer,
+		points: []const rect.FPoint,
+	) !void {
+		const ret = C.SDL_RenderLines(
+			self.value,
+			@ptrCast(points.ptr),
+			@intCast(points.len),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Draw a rectangle on the current rendering target at subpixel precision.
+	pub fn renderRect(
+		self: Renderer,
+		dst: ?rect.FRect,
+	) !void {
+		const dst_sdl: ?C.SDL_FRect = if (dst == null) null else dst.?.toSdl();
+		const ret = C.SDL_RenderRect(
+			self.value,
+			if (dst_sdl == null) null else &(dst_sdl.?),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Draw some number of rectangles on the current rendering target at subpixel precision.
+	pub fn renderRects(
+		self: Renderer,
+		rects: []const rect.FRect,
+	) !void {
+		const ret = C.SDL_RenderRects(
+			self.value,
+			@ptrCast(rects.ptr),
+			@intCast(rects.len),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Fill a rectangle on the current rendering target with the drawing color at subpixel precision.
+	pub fn renderFillRect(
+		self: Renderer,
+		dst: ?rect.FRect,
+	) !void {
+		const dst_sdl: ?C.SDL_FRect = if (dst == null) null else dst.?.toSdl();
+		const ret = C.SDL_RenderFillRect(
+			self.value,
+			if (dst_sdl == null) null else &(dst_sdl.?),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Fill some number of rectangles on the current rendering target with the drawing color at subpixel precision.
+	pub fn renderFillRects(
+		self: Renderer,
+		rects: []const rect.FRect,
+	) !void {
+		const ret = C.SDL_RenderFillRects(
+			self.value,
+			@ptrCast(rects.ptr),
+			@intCast(rects.len),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Copy a portion of the texture to the current rendering target at subpixel precision.
+	pub fn renderTexture(
+		self: Renderer,
+		texture: Texture,
+		src_rect: ?rect.FRect,
+		dst_rect: ?rect.FRect,
+	) !void {
+		const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+		const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+		const ret = C.SDL_RenderTexture(
+			self.value,
+			texture.value,
+			if (src_rect_sdl == null) null else &(src_rect_sdl.?),
+			if (dst_rect_sdl == null) null else &(dst_rect_sdl.?),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Copy a portion of the source texture to the current rendering target, with rotation and flipping, at subpixel precision.
+	pub fn renderTextureRotated(
+		self: Renderer,
+		texture: Texture,
+		src_rect: ?rect.FRect,
+		dst_rect: ?rect.FRect,
+		angle: f64,
+		center: ?rect.FPoint,
+		flip_mode: ?surface.FlipMode,
+	) !void {
+		const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+		const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+		const center_sdl: ?C.SDL_FPoint = if (center == null) null else center.?.toSdl();
+		const ret = C.SDL_RenderTextureRotated(
+			self.value,
+			texture.value,
+			if (src_rect_sdl == null) null else &(src_rect_sdl.?),
+			if (dst_rect_sdl == null) null else &(dst_rect_sdl.?),
+			@floatCast(angle),
+			if (center_sdl == null) null else &(center_sdl.?),
+			if (flip_mode) |val| @intFromEnum(val) else C.SDL_FLIP_NONE,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Tile a portion of the texture to the current rendering target at subpixel precision.
+	pub fn renderTextureTiled(
+		self: Renderer,
+		texture: Texture,
+		src_rect: ?rect.FRect,
+		scale: f32,
+		dst_rect: ?rect.FRect,
+	) !void {
+		const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+		const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+		const ret = C.SDL_RenderTextureTiled(
+			self.value,
+			texture.value,
+			if (src_rect_sdl == null) null else &(src_rect_sdl.?),
+			@floatCast(scale),
+			if (dst_rect_sdl == null) null else &(dst_rect_sdl.?),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Perform a scaled copy using the 9-grid algorithm to the current rendering target at subpixel precision.
+	pub fn renderTexture9Grid(
+		self: Renderer,
+		texture: Texture,
+		src_rect: ?rect.FRect,
+		left_width: f32,
+		right_width: f32,
+		top_height: f32,
+		bottom_height: f32,
+		scale: f32,
+		dst_rect: ?rect.FRect,
+	) !void {
+		const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+		const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+		const ret = C.SDL_RenderTexture9Grid(
+			self.value,
+			texture.value,
+			if (src_rect_sdl == null) null else &(src_rect_sdl.?),
+			@floatCast(left_width),
+			@floatCast(right_width),
+			@floatCast(top_height),
+			@floatCast(bottom_height),
+			@floatCast(scale),
+			if (dst_rect_sdl == null) null else &(dst_rect_sdl.?),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Render a list of triangles, optionally using a texture and indices into the vertex arrays Color and alpha modulation is done per vertex.
+	pub fn renderGeometry(
+		self: Renderer,
+		texture: ?Texture,
+		vertices: [*]const Vertex,
+		num_vertices: usize,
+		indices: ?[*]const c_int,
+		num_indices: usize,
+	) !void {
+		const ret = C.SDL_RenderGeometry(
+			self.value,
+			if (texture) |texture_val| texture_val.value else null,
+			vertices,
+			@intCast(num_vertices),
+			if (indices) |val| val else null,
+			@intCast(num_indices),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Render a list of triangles, optionally using a texture and indices into the vertex arrays Color and alpha modulation is done per vertex.
+	pub fn renderGeometryRaw(
+		self: Renderer,
+		texture: ?Texture,
+		xy_positions: [*]const f32,
+		xy_positions_stride: usize,
+		colors: [*]const pixels.FColor,
+		colors_stride: usize,
+		uv_coords: [*]const f32,
+		uv_coords_stride: usize,
+		num_vertices: usize,
+		indices: ?*const anyopaque,
+		num_indices: usize,
+		bytes_per_index: usize,
+	) !void {
+		const ret = C.SDL_RenderGeometryRaw(
+			self.value,
+			if (texture) |texture_val| texture_val.value else null,
+			xy_positions,
+			@intCast(xy_positions_stride),
+			colors,
+			@intCast(colors_stride),
+			uv_coords,
+			@intCast(uv_coords_stride),
+			@intCast(num_vertices),
+			indices,
+			@intCast(num_indices),
+			@intCast(bytes_per_index),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Read pixels from the current rendering target.
+	pub fn readPixels(
+		self: Renderer,
+		capture_area: ?rect.IRect,
+	) !surface.Surface {
+		const capture_area_sdl: ?C.SDL_Rect = if (capture_area == null) null else capture_area.?.toSdl();
+		const ret = C.SDL_RenderReadPixels(
+			self.value,
+			if (capture_area_sdl == null) null else &(capture_area_sdl.?),
+		);
+		if (ret == null)
+			return error.SdlError;
+		return surface.Surface{ .value = ret };
+	}
+
+	/// Update the screen with any rendering performed since the previous call.
+	pub fn present(
+		self: Renderer,
+	) !void {
+		const ret = C.SDL_RenderPresent(
+			self.value,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Destroy the rendering context for a window and free all associated textures.
+	pub fn deinit(
+		self: Renderer,
+	) void {
+		const ret = C.SDL_DestroyRenderer(
+			self.value,
+		);
+		_ = ret;
+	}
+
 	/// Force the rendering context to flush any pending commands and state.
 	pub fn flush(
 		self: Renderer,
@@ -709,6 +1009,16 @@ pub const Texture = struct {
 		_ = ret;
 	}
 
+	/// Destroy the specified texture.
+	pub fn deinit(
+		self: Texture,
+	) void {
+		const ret = C.SDL_DestroyTexture(
+			self.value,
+		);
+		_ = ret;
+	}
+
 	/// Get the pixel format for the texture.
     pub fn getPixelFormat(self: Texture) ?pixels.Format {
         return if (self.value.format == C.SDL_PIXELFORMAT_UNKNOWN) null else @enumFromInt(self.value.format);
@@ -730,15 +1040,15 @@ pub const Texture = struct {
     }
 };
 
-// /// Vertex for rendering.
-// pub const Vertex = extern struct {
-//     /// Position in SDL renderer coordinates.
-//     position: rect.FPoint,
-//     /// Vertex color.
-//     color: pixels.FColor,
-//     /// Normalize texture coordinates.
-//     tex_coord: rect.FPoint,
-// };
+/// Vertex for rendering.
+pub const Vertex = extern struct {
+    /// Position in SDL renderer coordinates.
+    position: rect.FPoint,
+    /// Vertex color.
+    color: pixels.FColor,
+    /// Normalize texture coordinates.
+    tex_coord: rect.FPoint,
+};
 
 /// VSync mode.
 pub const VSync = union {
