@@ -437,6 +437,446 @@ Values:
             Type: SDL_FRect
             Value: "&presentation_rect"
             Mode: out
+      - SdlName: SDL_RenderCoordinatesFromWindow
+        ZigName: renderCoordinatesFromWindowCoordinates
+        Comment: "Get a point in render coordinates when given a point in window coordinates."
+        Return:
+          Sdl: bool
+          Zig: |
+            struct { x: f32, y: f32 }
+          Convert: .{ .x = render_x, .y = render_y }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: x
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: y
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: render_x
+            Type: f32
+            Value: "&render_x"
+            Mode: out
+          - Name: render_y
+            Type: f32
+            Value: "&render_y"
+            Mode: out
+      - SdlName: SDL_RenderCoordinatesToWindow
+        ZigName: renderCoordinatesToWindowCoordinates
+        Comment: "Get a point in window coordinates when given a point in render coordinates."
+        Return:
+          Sdl: bool
+          Zig: |
+            struct { x: f32, y: f32 }
+          Convert: .{ .x = window_x, .y = window_y }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: null
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: x
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: y
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: window_x
+            Type: f32
+            Value: "&window_x"
+            Mode: out
+          - Name: window_y
+            Type: f32
+            Value: "&window_y"
+            Mode: out
+      - SdlName: SDL_SetRenderViewport
+        ZigName: setViewport
+        Comment: "Set the drawing area for rendering on the current target."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: viewport
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_GetRenderViewport
+        ZigName: getViewport
+        Comment: "Get the drawing area for the current target."
+        Return:
+          Sdl: bool
+          Zig: ?rect.Rect
+          Convert: rect.Rect.fromSdl(viewport)
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: viewport
+            Type: SDL_Rect
+            Value: "&viewport"
+            Mode: out
+      - SdlName: SDL_RenderViewportSet
+        ZigName: viewportSet
+        Comment: "Return whether an explicit rectangle was set as the viewport."
+        Return:
+          Sdl: bool
+          Zig: bool
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_GetRenderSafeArea
+        ZigName: getSafeArea
+        Comment: "Get the safe area for rendering within the current viewport."
+        Return:
+          Sdl: bool
+          Zig: ?rect.Rect
+          Convert: rect.Rect.fromSdl(area)
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: area
+            Type: SDL_Rect
+            Value: "&area"
+            Mode: out
+      - SdlName: SDL_SetRenderClipRect
+        ZigName: setClipRect
+        Comment: "Set the clip rectangle for rendering on the specified target."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: clipping
+            Type: SDL_Rect
+            Value: null
+            Mode: convertSdlConstNullable
+      - SdlName: SDL_GetRenderClipRect
+        ZigName: getClipRect
+        Comment: "Get the clip rectangle for the current target."
+        Return:
+          Sdl: bool
+          Zig: ?rect.Rect
+          Convert: rect.Rect.fromSdl(clipping)
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+            - Method: Custom
+              ComparisonVal: |
+                if (clipping.empty())
+                            return null;
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: clipping
+            Type: SDL_Rect
+            Value: "&clipping"
+            Mode: out
+      - SdlName: SDL_RenderClipEnabled
+        ZigName: clipEnabled
+        Comment: "Get whether clipping is enabled on the given renderer."
+        Return:
+          Sdl: bool
+          Zig: bool
+          Convert: null
+          Checks: []
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+      - SdlName: SDL_SetRenderScale
+        ZigName: setScale
+        Comment: "Set the drawing scale for rendering on the current target."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: x
+            Type: f32
+            Value: null
+            Mode: null
+          - Name: y
+            Type: f32
+            Value: null
+            Mode: null
+      - SdlName: SDL_GetRenderScale
+        ZigName: getScale
+        Comment: "Get the drawing scale for the current target."
+        Return:
+          Sdl: bool
+          Zig: |
+            !struct { x: f32, y: f32 }
+          Convert: .{ .x = x, .y = y }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: x
+            Type: f32
+            Value: "&x"
+            Mode: out
+          - Name: y
+            Type: f32
+            Value: "&y"
+            Mode: out
+      - SdlName: SDL_SetRenderDrawColor
+        ZigName: setDrawColor
+        Comment: "Set the color used for drawing operations (Rect, Line and Clear)."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: color
+            Type: SDL_Color
+            Value: color.r
+            Mode: null
+          - Name: g
+            Type: null
+            Value: color.g
+            Mode: null
+          - Name: b
+            Type: null
+            Value: color.b
+            Mode: null
+          - Name: a
+            Type: null
+            Value: color.a
+            Mode: null
+      - SdlName: SDL_SetRenderDrawColorFloat
+        ZigName: setDrawColorFloat
+        Comment: "Set the color used for drawing operations (Rect, Line and Clear)."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: color
+            Type: SDL_FColor
+            Value: color.r
+            Mode: null
+          - Name: g
+            Type: null
+            Value: color.g
+            Mode: null
+          - Name: b
+            Type: null
+            Value: color.b
+            Mode: null
+          - Name: a
+            Type: null
+            Value: color.a
+            Mode: null
+      - SdlName: SDL_GetRenderDrawColor
+        ZigName: getDrawColor
+        Comment: "Get the color used for drawing operations (Rect, Line and Clear)."
+        Return:
+          Sdl: bool
+          Zig: "!pixels.Color"
+          Convert: .{ .r = r, .g = g, .b = b, .a = a }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: r
+            Type: u8
+            Value: "&r"
+            Mode: out
+          - Name: g
+            Type: u8
+            Value: "&g"
+            Mode: out
+          - Name: b
+            Type: u8
+            Value: "&b"
+            Mode: out
+          - Name: a
+            Type: u8
+            Value: "&a"
+            Mode: out
+      - SdlName: SDL_GetRenderDrawColorFloat
+        ZigName: getDrawColorFloat
+        Comment: "Get the color used for drawing operations (Rect, Line and Clear)."
+        Return:
+          Sdl: bool
+          Zig: "!pixels.FColor"
+          Convert: .{ .r = r, .g = g, .b = b, .a = a }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: r
+            Type: f32
+            Value: "&r"
+            Mode: out
+          - Name: g
+            Type: f32
+            Value: "&g"
+            Mode: out
+          - Name: b
+            Type: f32
+            Value: "&b"
+            Mode: out
+          - Name: a
+            Type: f32
+            Value: "&a"
+            Mode: out
+      - SdlName: SDL_SetRenderColorScale
+        ZigName: setColorScale
+        Comment: "Set the color scale used for render operations."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: scale
+            Type: f32
+            Value: null
+            Mode: null
+      - SdlName: SDL_GetRenderColorScale
+        ZigName: getColorScale
+        Comment: "Get the color scale used for render operations."
+        Return:
+          Sdl: bool
+          Zig: "!f32"
+          Convert: scale
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: scale
+            Type: f32
+            Value: "&scale"
+            Mode: out
+      - SdlName: SDL_SetRenderDrawBlendMode
+        ZigName: setDrawBlendMode
+        Comment: "Set the blend mode used for drawing operations (Fill and Line)."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: mode
+            Type: ?SDL_BlendMode
+            Value: if (mode) |mode_val| mode_val.value else C.SDL_BLENDMODE_NONE
+            Mode: null
+      - SdlName: SDL_GetRenderDrawBlendMode
+        ZigName: getDrawBlendMode
+        Comment: "Get the blend mode used for drawing operations."
+        Return:
+          Sdl: bool
+          Zig: "!?blend_mode.Mode"
+          Convert: .{ .value = mode }
+          Checks:
+            - Method: ReturnErrIfEq
+              ComparisonVal: false
+            - Method: Custom
+              ComparisonVal: |
+                if (mode == C.SDL_BLENDMODE_NONE)
+                            return null;
+        Arguments:
+          - Name: self
+            Type: SDL_Renderer
+            Value: null
+            Mode: null
+          - Name: mode
+            Type: SDL_BlendMode
+            Value: "&mode"
+            Mode: out
       - SdlName: SDL_RenderClear
         ZigName: clear
         Comment: "Clear the current rendering target with the drawing color."

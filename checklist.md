@@ -32,7 +32,7 @@ For monitoring how close various subsystems are to completion.
 * Hints
 * Joystick (Needs properties, virtual attach)
 * Keyboard (Needs properties)
-* Render (Needs properties, functions)
+* Render (Needs properties, event function)
 * Surface (Needs properties)
 * Video
 

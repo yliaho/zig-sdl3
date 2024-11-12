@@ -309,6 +309,308 @@ pub const Renderer = struct {
 		return rect.FRect.fromSdl(presentation_rect);
 	}
 
+	/// Get a point in render coordinates when given a point in window coordinates.
+	pub fn renderCoordinatesFromWindowCoordinates(
+		self: Renderer,
+		x: f32,
+		y: f32,
+	) struct { x: f32, y: f32 } {
+		var render_x: f32 = undefined;
+		var render_y: f32 = undefined;
+		const ret = C.SDL_RenderCoordinatesFromWindow(
+			self.value,
+			@floatCast(x),
+			@floatCast(y),
+			&render_x,
+			&render_y,
+		);
+		if (!ret)
+			return error.SdlError;
+		return .{ .x = render_x, .y = render_y };
+	}
+
+	/// Get a point in window coordinates when given a point in render coordinates.
+	pub fn renderCoordinatesToWindowCoordinates(
+		self: Renderer,
+		x: f32,
+		y: f32,
+	) struct { x: f32, y: f32 } {
+		var window_x: f32 = undefined;
+		var window_y: f32 = undefined;
+		const ret = C.SDL_RenderCoordinatesToWindow(
+			self.value,
+			@floatCast(x),
+			@floatCast(y),
+			&window_x,
+			&window_y,
+		);
+		if (!ret)
+			return error.SdlError;
+		return .{ .x = window_x, .y = window_y };
+	}
+
+	/// Set the drawing area for rendering on the current target.
+	pub fn setViewport(
+		self: Renderer,
+		viewport: ?rect.IRect,
+	) !void {
+		const viewport_sdl: ?C.SDL_Rect = if (viewport == null) null else viewport.?.toSdl();
+		const ret = C.SDL_SetRenderViewport(
+			self.value,
+			if (viewport_sdl == null) null else &(viewport_sdl.?),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the drawing area for the current target.
+	pub fn getViewport(
+		self: Renderer,
+	) ?rect.Rect {
+		var viewport: C.SDL_Rect = undefined;
+		const ret = C.SDL_GetRenderViewport(
+			self.value,
+			&viewport,
+		);
+		if (!ret)
+			return error.SdlError;
+		return rect.Rect.fromSdl(viewport);
+	}
+
+	/// Return whether an explicit rectangle was set as the viewport.
+	pub fn viewportSet(
+		self: Renderer,
+	) bool {
+		const ret = C.SDL_RenderViewportSet(
+			self.value,
+		);
+		return ret;
+	}
+
+	/// Get the safe area for rendering within the current viewport.
+	pub fn getSafeArea(
+		self: Renderer,
+	) ?rect.Rect {
+		var area: C.SDL_Rect = undefined;
+		const ret = C.SDL_GetRenderSafeArea(
+			self.value,
+			&area,
+		);
+		if (!ret)
+			return error.SdlError;
+		return rect.Rect.fromSdl(area);
+	}
+
+	/// Set the clip rectangle for rendering on the specified target.
+	pub fn setClipRect(
+		self: Renderer,
+		clipping: ?rect.IRect,
+	) !void {
+		const clipping_sdl: ?C.SDL_Rect = if (clipping == null) null else clipping.?.toSdl();
+		const ret = C.SDL_SetRenderClipRect(
+			self.value,
+			if (clipping_sdl == null) null else &(clipping_sdl.?),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the clip rectangle for the current target.
+	pub fn getClipRect(
+		self: Renderer,
+	) ?rect.Rect {
+		var clipping: C.SDL_Rect = undefined;
+		const ret = C.SDL_GetRenderClipRect(
+			self.value,
+			&clipping,
+		);
+		if (!ret)
+			return error.SdlError;
+		if (clipping.empty())
+            return null;
+		return rect.Rect.fromSdl(clipping);
+	}
+
+	/// Get whether clipping is enabled on the given renderer.
+	pub fn clipEnabled(
+		self: Renderer,
+	) bool {
+		const ret = C.SDL_RenderClipEnabled(
+			self.value,
+		);
+		return ret;
+	}
+
+	/// Set the drawing scale for rendering on the current target.
+	pub fn setScale(
+		self: Renderer,
+		x: f32,
+		y: f32,
+	) !void {
+		const ret = C.SDL_SetRenderScale(
+			self.value,
+			@floatCast(x),
+			@floatCast(y),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the drawing scale for the current target.
+	pub fn getScale(
+		self: Renderer,
+	) !struct { x: f32, y: f32 } {
+		var x: f32 = undefined;
+		var y: f32 = undefined;
+		const ret = C.SDL_GetRenderScale(
+			self.value,
+			&x,
+			&y,
+		);
+		if (!ret)
+			return error.SdlError;
+		return .{ .x = x, .y = y };
+	}
+
+	/// Set the color used for drawing operations (Rect, Line and Clear).
+	pub fn setDrawColor(
+		self: Renderer,
+		color: pixels.Color,
+	) !void {
+		const ret = C.SDL_SetRenderDrawColor(
+			self.value,
+			color.r,
+			color.g,
+			color.b,
+			color.a,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Set the color used for drawing operations (Rect, Line and Clear).
+	pub fn setDrawColorFloat(
+		self: Renderer,
+		color: pixels.FColor,
+	) !void {
+		const ret = C.SDL_SetRenderDrawColorFloat(
+			self.value,
+			color.r,
+			color.g,
+			color.b,
+			color.a,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the color used for drawing operations (Rect, Line and Clear).
+	pub fn getDrawColor(
+		self: Renderer,
+	) !pixels.Color {
+		var r: u8 = undefined;
+		var g: u8 = undefined;
+		var b: u8 = undefined;
+		var a: u8 = undefined;
+		const ret = C.SDL_GetRenderDrawColor(
+			self.value,
+			&r,
+			&g,
+			&b,
+			&a,
+		);
+		if (!ret)
+			return error.SdlError;
+		return .{ .r = r, .g = g, .b = b, .a = a };
+	}
+
+	/// Get the color used for drawing operations (Rect, Line and Clear).
+	pub fn getDrawColorFloat(
+		self: Renderer,
+	) !pixels.FColor {
+		var r: f32 = undefined;
+		var g: f32 = undefined;
+		var b: f32 = undefined;
+		var a: f32 = undefined;
+		const ret = C.SDL_GetRenderDrawColorFloat(
+			self.value,
+			&r,
+			&g,
+			&b,
+			&a,
+		);
+		if (!ret)
+			return error.SdlError;
+		return .{ .r = r, .g = g, .b = b, .a = a };
+	}
+
+	/// Set the color scale used for render operations.
+	pub fn setColorScale(
+		self: Renderer,
+		scale: f32,
+	) !void {
+		const ret = C.SDL_SetRenderColorScale(
+			self.value,
+			@floatCast(scale),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the color scale used for render operations.
+	pub fn getColorScale(
+		self: Renderer,
+	) !f32 {
+		var scale: f32 = undefined;
+		const ret = C.SDL_GetRenderColorScale(
+			self.value,
+			&scale,
+		);
+		if (!ret)
+			return error.SdlError;
+		return scale;
+	}
+
+	/// Set the blend mode used for drawing operations (Fill and Line).
+	pub fn setDrawBlendMode(
+		self: Renderer,
+		mode: ?blend_mode.Mode,
+	) !void {
+		const ret = C.SDL_SetRenderDrawBlendMode(
+			self.value,
+			if (mode) |mode_val| mode_val.value else C.SDL_BLENDMODE_NONE,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Get the blend mode used for drawing operations.
+	pub fn getDrawBlendMode(
+		self: Renderer,
+	) !?blend_mode.Mode {
+		var mode: C.SDL_BlendMode = undefined;
+		const ret = C.SDL_GetRenderDrawBlendMode(
+			self.value,
+			&mode,
+		);
+		if (!ret)
+			return error.SdlError;
+		if (mode == C.SDL_BLENDMODE_NONE)
+            return null;
+		return .{ .value = mode };
+	}
+
+	/// Clear the current rendering target with the drawing color.
+	pub fn clear(
+		self: Renderer,
+	) !void {
+		const ret = C.SDL_RenderClear(
+			self.value,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
 	/// Draw a point on the current rendering target at subpixel precision.
 	pub fn renderPoint(
 		self: Renderer,
