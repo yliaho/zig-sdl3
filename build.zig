@@ -15,6 +15,9 @@ pub fn build(b: *std.Build) !void {
     };
     _ = generateBindings(b, cfg);
     const sdl3 = b.addModule("sdl3", .{ .root_source_file = cfg.root_source_file });
+    const main_callbacks = b.option(bool, "callbacks", "Enable SDL callbacks rather than use a main function") orelse false;
+    if (main_callbacks)
+        sdl3.addCSourceFile(.{ .file = b.path("main_callbacks.c") });
     _ = setupTest(b, cfg);
     // _ = try setupExamples(b, sdl3, cfg);
     _ = try runExample(b, sdl3, cfg);

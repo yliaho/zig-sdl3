@@ -29,6 +29,7 @@ For monitoring how close various subsystems are to completion.
 * Version
 
 ## In Progress
+* Audio
 * Hints
 * Joystick (Needs properties, virtual attach)
 * Keyboard (Needs properties)
@@ -37,7 +38,6 @@ For monitoring how close various subsystems are to completion.
 * Video
 
 ## Not Started
-* Audio
 * Dialog
 * EGL
 * Events

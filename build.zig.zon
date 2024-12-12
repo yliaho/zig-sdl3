@@ -39,6 +39,7 @@
         "build.zig",
         "generate.zig",
         "LICENSE",
+        "main_callbacks.c",
         "README",
     },
 }

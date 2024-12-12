@@ -155,12 +155,12 @@ pub fn getBoolean(
 pub fn addCallback(
 	UserData: type,
 	hint: Type,
-	callback_data: CallbackData(UserData),
+	callback_data: *CallbackData(UserData),
 ) !void {
 	const ret = C.SDL_AddHintCallback(
 		hint.toSdl(),
 		callback,
-		&callback_data,
+		callback_data,
 	);
 	if (!ret)
 		return error.SdlError;
@@ -170,12 +170,12 @@ pub fn addCallback(
 pub fn removeCallback(
 	UserData: type,
 	hint: Type,
-	callback_data: CallbackData(UserData),
+	callback_data: *CallbackData(UserData),
 ) void {
 	const ret = C.SDL_RemoveHintCallback(
 		hint.toSdl(),
 		callback,
-		&callback_data,
+		callback_data,
 	);
 	_ = ret;
 }

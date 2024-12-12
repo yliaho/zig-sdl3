@@ -1,3 +1,4 @@
+pub const audio = @import("audio.zig");
 pub const blend_mode = @import("blend_mode.zig");
 pub const camera = @import("camera.zig");
 pub const clipboard = @import("clipboard.zig");
@@ -32,6 +33,13 @@ pub const rect = @import("rect.zig");
 pub const C = @import("c.zig").C;
 
 const std = @import("std");
+
+/// Whether or not to continue the application or exit with success/failure.
+pub const AppResult = enum(c_uint) {
+    Continue = C.SDL_APP_CONTINUE,
+    Success = C.SDL_APP_SUCCESS,
+    Failure = C.SDL_APP_FAILURE,
+};
 
 /// Free memory allocated with SDL. For slices, pass in the pointer.
 pub fn free(mem: ?*anyopaque) void {

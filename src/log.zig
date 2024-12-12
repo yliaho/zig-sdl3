@@ -31,7 +31,7 @@ pub fn LogOutputFunctionData(comptime UserData: type) type {
 /// The prototype for the log output callback function.
 pub fn logOutputFunction(
 	user_data: ?*anyopaque,
-	category: C.SDL_LogCategory,
+	category: c_int,
 	priority: C.SDL_LogPriority,
 	message: [*c]const u8,
 ) callconv(.C) void {
@@ -246,11 +246,11 @@ pub fn getLogOutputFunction() C.SDL_LogOutputFunction {
 /// Replace the default log output function with one of your own.
 pub fn setLogOutputFunction(
 	UserData: type,
-	callback_data: LogOutputFunctionData(UserData),
+	callback_data: *LogOutputFunctionData(UserData),
 ) void {
 	const ret = C.SDL_SetLogOutputFunction(
 		logOutputFunction,
-		&callback_data,
+		callback_data,
 	);
 	_ = ret;
 }

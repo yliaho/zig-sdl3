@@ -234,6 +234,7 @@ fn sdlTypeToTrueSdlType(allocator: std.mem.Allocator, sdl: []const u8, sdl_types
     if (gotten_sdl_type) |val| {
         return switch (val.type_data) {
             .StringMap => "[:0]const u8",
+            .Value => |value| try std.mem.replaceOwned(u8, allocator, value.type, "$SDL", "C"),
             else => std.fmt.allocPrint(allocator, "C.{s}", .{sdl}),
         };
     }
@@ -301,7 +302,7 @@ fn sdlTypeToZigType(
     const found_sdl_type = sdl_types.get(sdl) orelse sdl_types.get(sdl[1..]);
     if (found_sdl_type) |sdl_type| {
         var ret = switch (sdl_type.type_data) {
-            .Callback => |cb| try std.fmt.allocPrint(allocator, "{s}Data(UserData)", .{cb.func.zigName}),
+            .Callback => |cb| try std.fmt.allocPrint(allocator, "*{s}Data(UserData)", .{cb.func.zigName}),
             .Enum => |en| en.zigType,
             .Value => |val| val.zigName,
             .Flag => |flag| flag.name,
@@ -404,7 +405,7 @@ fn convertSdlValueToZig(
         return val;
 
     // Int, just cast it.
-    if (std.mem.eql(u8, sdlType, "int") or std.mem.eql(u8, sdlType, "i16") or std.mem.eql(u8, sdlType, "u5") or std.mem.eql(u8, sdlType, "u6") or std.mem.eql(u8, sdlType, "u8") or std.mem.eql(u8, sdlType, "u16") or std.mem.eql(u8, sdlType, "u31") or std.mem.eql(u8, sdlType, "u32") or std.mem.eql(u8, sdlType, "u64") or std.mem.eql(u8, sdlType, "usize"))
+    if (std.mem.eql(u8, sdlType, "int") or std.mem.eql(u8, sdlType, "i16") or std.mem.eql(u8, sdlType, "u1") or std.mem.eql(u8, sdlType, "u5") or std.mem.eql(u8, sdlType, "u6") or std.mem.eql(u8, sdlType, "u8") or std.mem.eql(u8, sdlType, "u16") or std.mem.eql(u8, sdlType, "u31") or std.mem.eql(u8, sdlType, "u32") or std.mem.eql(u8, sdlType, "u64") or std.mem.eql(u8, sdlType, "usize"))
         return std.fmt.allocPrint(allocator, "@intCast({s})", .{val});
 
     // Float, just cast it.
@@ -1303,7 +1304,7 @@ fn writeFunction(
         // Callback mode, pass data.
         if (std.mem.eql(u8, arg.mode, "callback")) {
             try nextLine(writer, indent + 2);
-            try writer.print("&{s},", .{arg.name});
+            try writer.print("{s},", .{arg.name});
         }
     }
 
@@ -1538,7 +1539,12 @@ pub fn main() !void {
 
         // Write base data.
         const writer = file.writer().any();
-        try writer.writeAll("// This file was generated using `zig build bindings`. Do not manually edit!\n\nconst C = @import(\"c.zig\").C;\nconst std = @import(\"std\");");
+        try writer.writeAll(
+            \\// This file was generated using `zig build bindings`. Do not manually edit!
+            \\
+            \\const C = @import("c.zig").C;
+            \\const std = @import("std");
+        );
         for (subsystem.callbacks) |cb| {
             try writeCallback(allocator, writer, cb, 0, sdl_types, &imports, subsystem.name);
         }
@@ -1648,6 +1654,13 @@ pub fn main() !void {
         \\pub const C = @import("c.zig").C;
         \\
         \\const std = @import("std");
+        \\
+        \\/// Whether or not to continue the application or exit with success/failure.
+        \\pub const AppResult = enum(c_uint) {
+        \\    Continue = C.SDL_APP_CONTINUE,
+        \\    Success = C.SDL_APP_SUCCESS,
+        \\    Failure = C.SDL_APP_FAILURE,
+        \\};
         \\
         \\/// Free memory allocated with SDL. For slices, pass in the pointer.
         \\pub fn free(mem: ?*anyopaque) void {

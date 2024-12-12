@@ -87,12 +87,12 @@ pub const Timer = struct {
 	pub fn initMilliseconds(
 		UserData: type,
 		interval_milliseconds: u32,
-		callback_data: MillisecondsTimerCallbackData(UserData),
+		callback_data: *MillisecondsTimerCallbackData(UserData),
 	) !Timer {
 		const ret = C.SDL_AddTimer(
 			@intCast(interval_milliseconds),
 			millisecondsTimerCallback,
-			&callback_data,
+			callback_data,
 		);
 		if (ret == 0)
 			return null;
@@ -103,12 +103,12 @@ pub const Timer = struct {
 	pub fn initNanoseconds(
 		UserData: type,
 		interval_nanoseconds: u64,
-		callback_data: NanosecondsTimerCallbackData(UserData),
+		callback_data: *NanosecondsTimerCallbackData(UserData),
 	) !Timer {
 		const ret = C.SDL_AddTimerNS(
 			@intCast(interval_nanoseconds),
 			nanosecondsTimerCallback,
-			&callback_data,
+			callback_data,
 		);
 		if (ret == 0)
 			return null;
