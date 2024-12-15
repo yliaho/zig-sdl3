@@ -1,5 +1,6 @@
 # TODO: REST OF FLAGS!!!
 Name: video
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_SystemTheme

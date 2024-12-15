@@ -1,4 +1,5 @@
 Name: blend_mode
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_BlendFactor

@@ -1,4 +1,5 @@
 Name: joystick
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_JoystickType

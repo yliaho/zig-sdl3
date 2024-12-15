@@ -18,15 +18,21 @@ pub fn build(b: *std.Build) !void {
     const main_callbacks = b.option(bool, "callbacks", "Enable SDL callbacks rather than use a main function") orelse false;
     if (main_callbacks)
         sdl3.addCSourceFile(.{ .file = b.path("main_callbacks.c") });
-    _ = setupTest(b, cfg);
+    const extension_options = b.addOptions();
+    const ext_image = b.option(bool, "ext_image", "Enable SDL_image extension") orelse false;
+    extension_options.addOption(bool, "image", ext_image);
+    sdl3.addOptions("extension_options", extension_options);
+    _ = setupTest(b, cfg, extension_options, ext_image);
     // _ = try setupExamples(b, sdl3, cfg);
-    _ = try runExample(b, sdl3, cfg);
+    _ = try runExample(b, sdl3, cfg, ext_image);
 }
 
-pub fn linkTarget(b: *std.Build, target: *std.Build.Step.Compile) void {
+pub fn linkTarget(b: *std.Build, target: *std.Build.Step.Compile, image: bool) void {
     // target.addSystemIncludePath(b.path("/usr/local/include"));
     _ = b;
     target.linkSystemLibrary("SDL3");
+    if (image)
+        target.linkSystemLibrary("SDL3_image");
     target.linkSystemLibrary("m");
     target.linkLibC();
 }
@@ -49,7 +55,7 @@ pub fn generateBindings(b: *std.Build, cfg: std.Build.TestOptions) *std.Build.St
     return exp;
 }
 
-pub fn setupExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOptions, name: []const u8) !*std.Build.Step.Compile {
+pub fn setupExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOptions, name: []const u8, ext_image: bool) !*std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = name,
         .target = cfg.target orelse b.standardTargetOptions(.{}),
@@ -58,16 +64,16 @@ pub fn setupExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestO
         .version = cfg.version,
     });
     exe.root_module.addImport("sdl3", sdl3);
-    linkTarget(b, exe);
+    linkTarget(b, exe, ext_image);
     b.installArtifact(exe);
     return exe;
 }
 
-pub fn runExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOptions) !void {
+pub fn runExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOptions, ext_image: bool) !void {
     const run_example: ?[]const u8 = b.option([]const u8, "example", "The example name for running an example") orelse null;
     const run = b.step("run", "Run an example with -Dexample=<example_name> option");
     if (run_example) |example| {
-        const run_art = b.addRunArtifact(try setupExample(b, sdl3, cfg, example));
+        const run_art = b.addRunArtifact(try setupExample(b, sdl3, cfg, example, ext_image));
         run_art.step.dependOn(b.getInstallStep());
         run.dependOn(&run_art.step);
     }
@@ -89,9 +95,10 @@ pub fn setupExamples(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.Test
     return exp;
 }
 
-pub fn setupTest(b: *std.Build, cfg: std.Build.TestOptions) *std.Build.Step.Compile {
+pub fn setupTest(b: *std.Build, cfg: std.Build.TestOptions, extension_options: *std.Build.Step.Options, ext_image: bool) *std.Build.Step.Compile {
     const tst = b.addTest(cfg);
-    linkTarget(b, tst);
+    linkTarget(b, tst, ext_image);
+    tst.root_module.addOptions("extension_options", extension_options);
     const tst_run = b.addRunArtifact(tst);
     const tst_step = b.step("test", "Run all tests");
     tst_step.dependOn(&tst_run.step);

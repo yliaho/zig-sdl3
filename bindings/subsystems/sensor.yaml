@@ -1,4 +1,5 @@
 Name: sensor
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_SensorType

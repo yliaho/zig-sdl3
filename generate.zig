@@ -120,6 +120,7 @@ const Test = struct {
 
 const Subsystem = struct {
     name: []const u8,
+    extension: bool,
     callbacks: []const Function,
     enums: []const Enum,
     errors: []const Error,
@@ -283,7 +284,7 @@ fn sdlTypeToZigType(
         return "i32";
 
     // Zig int.
-    if (std.mem.eql(u8, sdl, "f32") or std.mem.eql(u8, sdl, "f64") or std.mem.eql(u8, sdl, "i16") or std.mem.eql(u8, sdl, "i64") or std.mem.eql(u8, sdl, "u5") or std.mem.eql(u8, sdl, "u6") or std.mem.eql(u8, sdl, "u8") or std.mem.eql(u8, sdl, "u16") or std.mem.eql(u8, sdl, "u31") or std.mem.eql(u8, sdl, "u32") or std.mem.eql(u8, sdl, "u64") or std.mem.eql(u8, sdl, "usize"))
+    if (std.mem.eql(u8, sdl, "f32") or std.mem.eql(u8, sdl, "f64") or std.mem.eql(u8, sdl, "i16") or std.mem.eql(u8, sdl, "i64") or std.mem.eql(u8, sdl, "u5") or std.mem.eql(u8, sdl, "u6") or std.mem.eql(u8, sdl, "u7") or std.mem.eql(u8, sdl, "u8") or std.mem.eql(u8, sdl, "u16") or std.mem.eql(u8, sdl, "u31") or std.mem.eql(u8, sdl, "u32") or std.mem.eql(u8, sdl, "u64") or std.mem.eql(u8, sdl, "usize"))
         return sdl;
 
     // Bool.
@@ -319,6 +320,11 @@ fn sdlTypeToZigType(
         return ret;
     }
 
+    // Slice.
+    if (std.mem.startsWith(u8, sdl, "[]")) {
+        return std.fmt.allocPrint(allocator, "[]{s}", .{try sdlTypeToZigType(allocator, sdl[2..], sdl_types, generics, generics_opaque, imports, curr_subsystem)});
+    }
+
     // Idk.
     std.debug.print("Type: {s}\n", .{sdl});
     return error.UnknownSdlToZigType;
@@ -339,7 +345,7 @@ fn convertZigValueToSdl(allocator: std.mem.Allocator, val: []const u8, sdlType: 
         return std.fmt.allocPrint(allocator, "if ({s}) |str_capture| str_capture.ptr else null", .{val});
 
     // Int, just cast it.
-    if (std.mem.eql(u8, sdlType, "int") or std.mem.eql(u8, sdlType, "i16") or std.mem.eql(u8, sdlType, "i64") or std.mem.eql(u8, sdlType, "u5") or std.mem.eql(u8, sdlType, "u6") or std.mem.eql(u8, sdlType, "u8") or std.mem.eql(u8, sdlType, "u16") or std.mem.eql(u8, sdlType, "u31") or std.mem.eql(u8, sdlType, "u32") or std.mem.eql(u8, sdlType, "u64") or std.mem.eql(u8, sdlType, "usize"))
+    if (std.mem.eql(u8, sdlType, "int") or std.mem.eql(u8, sdlType, "i16") or std.mem.eql(u8, sdlType, "i64") or std.mem.eql(u8, sdlType, "u5") or std.mem.eql(u8, sdlType, "u6") or std.mem.eql(u8, sdlType, "u7") or std.mem.eql(u8, sdlType, "u8") or std.mem.eql(u8, sdlType, "u16") or std.mem.eql(u8, sdlType, "u31") or std.mem.eql(u8, sdlType, "u32") or std.mem.eql(u8, sdlType, "u64") or std.mem.eql(u8, sdlType, "usize"))
         return std.fmt.allocPrint(allocator, "@intCast({s})", .{val});
 
     // Float, just cast it.
@@ -1626,9 +1632,15 @@ pub fn main() !void {
         }
 
         // Add import to main file.
-        if (item_cnt != 1) {
-            try sdl_file.writer().print("pub const {s} = @import(\"{s}.zig\");\n", .{ subsystem.name, subsystem.name });
-        } else try sdl_file.writer().print("pub const {s} = @import(\"{s}.zig\").{s};\n", .{ single_name, subsystem.name, single_name });
+        if (subsystem.extension) {
+            if (item_cnt != 1) {
+                try sdl_file.writer().print("pub const {s} = if (extension_options.{s}) @import(\"{s}.zig\") else void;\n", .{ subsystem.name, subsystem.name, subsystem.name });
+            } else try sdl_file.writer().print("pub const {s} = if (extension_options.{s}) @import(\"{s}.zig\").{s} else void;\n", .{ single_name, subsystem.name, subsystem.name, single_name });
+        } else {
+            if (item_cnt != 1) {
+                try sdl_file.writer().print("pub const {s} = @import(\"{s}.zig\");\n", .{ subsystem.name, subsystem.name });
+            } else try sdl_file.writer().print("pub const {s} = @import(\"{s}.zig\").{s};\n", .{ single_name, subsystem.name, single_name });
+        }
     }
     if (result.files.items.len > 0)
         try nextLine(sdl_file.writer().any(), 0);
@@ -1646,13 +1658,19 @@ pub fn main() !void {
 
     // C bindings.
     const c_file = try dir.createFile("c.zig", .{ .truncate = true });
-    try c_file.writer().writeAll("pub const C = @cImport(@cInclude(\"SDL3/SDL.h\"));\n");
+    try c_file.writer().writeAll(
+        \\pub const C = @cImport({
+        \\    @cInclude("SDL3/SDL.h");
+        \\    @cInclude("SDL3_image/SDL_image.h");
+        \\});
+    );
 
     // Rest of main file.
     try sdl_file.writer().writeAll(
         \\
         \\pub const C = @import("c.zig").C;
         \\
+        \\const extension_options = @import("extension_options");
         \\const std = @import("std");
         \\
         \\/// Whether or not to continue the application or exit with success/failure.

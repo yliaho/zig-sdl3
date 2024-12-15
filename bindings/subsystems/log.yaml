@@ -1,4 +1,5 @@
 Name: log
+Extension: false
 Callbacks:
   - SdlName: SDL_LogOutputFunction
     ZigName: LogOutputFunction

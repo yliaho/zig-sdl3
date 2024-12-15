@@ -1,4 +1,5 @@
 Name: power
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_PowerState

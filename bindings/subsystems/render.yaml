@@ -1,4 +1,5 @@
 Name: render
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_TextureAccess

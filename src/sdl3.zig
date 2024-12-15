@@ -5,6 +5,7 @@ pub const clipboard = @import("clipboard.zig");
 pub const errors = @import("errors.zig");
 pub const GUID = @import("guid.zig").GUID;
 pub const hints = @import("hints.zig");
+pub const image = if (extension_options.image) @import("image.zig") else void;
 pub const init = @import("init.zig");
 pub const joystick = @import("joystick.zig");
 pub const keyboard = @import("keyboard.zig");
@@ -32,6 +33,7 @@ pub const rect = @import("rect.zig");
 
 pub const C = @import("c.zig").C;
 
+const extension_options = @import("extension_options");
 const std = @import("std");
 
 /// Whether or not to continue the application or exit with success/failure.

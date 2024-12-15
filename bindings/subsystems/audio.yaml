@@ -1,4 +1,5 @@
 Name: audio
+Extension: false
 Callbacks: []
 Enums: []
 Errors: []

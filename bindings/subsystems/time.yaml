@@ -1,4 +1,5 @@
 Name: time
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_Day

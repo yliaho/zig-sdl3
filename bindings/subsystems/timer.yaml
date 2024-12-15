@@ -1,4 +1,5 @@
 Name: timer
+Extension: false
 Callbacks:
   - SdlName: SDL_TimerCallback
     ZigName: MillisecondsTimerCallback

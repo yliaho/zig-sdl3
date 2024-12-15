@@ -1,4 +1,5 @@
 Name: camera
+Extension: false
 Callbacks: []
 Enums:
   - SdlType: SDL_CameraPermissionState

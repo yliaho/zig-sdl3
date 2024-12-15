@@ -1,4 +1,5 @@
 Name: hints
+Extension: false
 Callbacks:
   - SdlName: SDL_HintCallback
     ZigName: Callback
