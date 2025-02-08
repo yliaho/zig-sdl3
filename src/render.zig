@@ -314,7 +314,7 @@ pub const Renderer = struct {
 		self: Renderer,
 		x: f32,
 		y: f32,
-	) struct { x: f32, y: f32 } {
+	) !struct { x: f32, y: f32 } {
 		var render_x: f32 = undefined;
 		var render_y: f32 = undefined;
 		const ret = C.SDL_RenderCoordinatesFromWindow(
@@ -334,7 +334,7 @@ pub const Renderer = struct {
 		self: Renderer,
 		x: f32,
 		y: f32,
-	) struct { x: f32, y: f32 } {
+	) !struct { x: f32, y: f32 } {
 		var window_x: f32 = undefined;
 		var window_y: f32 = undefined;
 		const ret = C.SDL_RenderCoordinatesToWindow(
@@ -1353,7 +1353,7 @@ pub const Vertex = extern struct {
 };
 
 /// VSync mode.
-pub const VSync = union {
+pub const VSync = union(enum) {
     OnEachNumRefresh: usize,
     Adaptive: void,
     pub fn fromSdl(val: c_int) ?VSync {

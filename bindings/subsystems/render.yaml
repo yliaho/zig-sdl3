@@ -444,7 +444,7 @@ Values:
         Return:
           Sdl: bool
           Zig: |
-            struct { x: f32, y: f32 }
+            !struct { x: f32, y: f32 }
           Convert: .{ .x = render_x, .y = render_y }
           Checks:
             - Method: ReturnErrIfEq
@@ -476,7 +476,7 @@ Values:
         Return:
           Sdl: bool
           Zig: |
-            struct { x: f32, y: f32 }
+            !struct { x: f32, y: f32 }
           Convert: .{ .x = window_x, .y = window_y }
           Checks:
             - Method: ReturnErrIfEq
@@ -1998,7 +1998,7 @@ CustomFunctions:
       };
   - Code: |
       /// VSync mode.
-      pub const VSync = union {
+      pub const VSync = union(enum) {
           OnEachNumRefresh: usize,
           Adaptive: void,
 

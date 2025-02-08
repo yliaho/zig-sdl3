@@ -985,7 +985,7 @@ Values:
             Value: null
             Mode: convertSdlConstNullable
           - Name: dest
-            Type: SDL_Rect
+            Type: SDL_Surface
             Value: null
             Mode: null
           - Name: area_to_copy_to
@@ -1012,7 +1012,7 @@ Values:
             Value: null
             Mode: convertSdlConst
           - Name: dest
-            Type: SDL_Rect
+            Type: SDL_Surface
             Value: null
             Mode: null
           - Name: area_to_copy_to
@@ -1039,7 +1039,7 @@ Values:
             Value: null
             Mode: convertSdlConstNullable
           - Name: dest
-            Type: SDL_Rect
+            Type: SDL_Surface
             Value: null
             Mode: null
           - Name: area_to_copy_to
@@ -1070,7 +1070,7 @@ Values:
             Value: null
             Mode: convertSdlConst
           - Name: dest
-            Type: SDL_Rect
+            Type: SDL_Surface
             Value: null
             Mode: null
           - Name: area_to_copy_to
@@ -1101,7 +1101,7 @@ Values:
             Value: null
             Mode: convertSdlConstNullable
           - Name: dest
-            Type: SDL_Rect
+            Type: SDL_Surface
             Value: null
             Mode: null
           - Name: area_to_copy_to
@@ -1136,7 +1136,7 @@ Values:
             Value: null
             Mode: null
           - Name: dest
-            Type: SDL_Rect
+            Type: SDL_Surface
             Value: null
             Mode: null
           - Name: area_to_copy_to
@@ -1187,7 +1187,7 @@ Values:
             Value: null
             Mode: null
           - Name: dest
-            Type: SDL_Rect
+            Type: SDL_Surface
             Value: null
             Mode: null
           - Name: area_to_copy_to

@@ -3,6 +3,7 @@ pub const blend_mode = @import("blend_mode.zig");
 pub const camera = @import("camera.zig");
 pub const clipboard = @import("clipboard.zig");
 pub const errors = @import("errors.zig");
+pub const gpu = @import("gpu.zig");
 pub const GUID = @import("guid.zig").GUID;
 pub const hints = @import("hints.zig");
 pub const image = if (extension_options.image) @import("image.zig") else void;

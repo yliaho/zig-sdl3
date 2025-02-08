@@ -335,6 +335,48 @@ Values:
             Type: SDL_AudioDeviceID
             Value: null
             Mode: null
+      - SdlName: SDL_BindAudioStreams
+        ZigName: bindStreams
+        Comment: "Bind a list of audio streams to an audio device."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Mode: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_AudioDeviceID
+            Value: null
+            Mode: null
+          - Name: streams
+            Type: "[]*C.SDL_AudioStream"
+            Value: streams.ptr
+            Mode: verbatim
+          - Name: null
+            Type: null
+            Value: "@intCast(streams.len)"
+            Mode: null
+      - SdlName: SDL_BindAudioStream
+        ZigName: bindStream
+        Comment: "Bind a single audio stream to an audio device."
+        Return:
+          Sdl: bool
+          Zig: "!void"
+          Convert: null
+          Checks:
+            - Mode: ReturnErrIfEq
+              ComparisonVal: false
+        Arguments:
+          - Name: self
+            Type: SDL_AudioDeviceID
+            Value: null
+            Mode: null
+          - Name: stream
+            Type: SDL_AudioStream
+            Value: null
+            Mode: null
     CustomFunctions:
       - Code: |
           /// Get a list of audio playback devices. Result must be freed.

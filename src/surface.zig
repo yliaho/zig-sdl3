@@ -647,7 +647,7 @@ pub const Surface = struct {
 	pub fn blit(
 		self: Surface,
 		area_to_copy: ?rect.IRect,
-		dest: rect.IRect,
+		dest: Surface,
 		area_to_copy_to: ?rect.IRect,
 	) !void {
 		const area_to_copy_sdl: ?C.SDL_Rect = if (area_to_copy == null) null else area_to_copy.?.toSdl();
@@ -655,7 +655,7 @@ pub const Surface = struct {
 		const ret = C.SDL_BlitSurface(
 			self.value,
 			if (area_to_copy_sdl == null) null else &(area_to_copy_sdl.?),
-			dest.toSdl(),
+			dest.value,
 			if (area_to_copy_to_sdl == null) null else &(area_to_copy_to_sdl.?),
 		);
 		if (!ret)
@@ -666,7 +666,7 @@ pub const Surface = struct {
 	pub fn blitUnchecked(
 		self: Surface,
 		area_to_copy: rect.IRect,
-		dest: rect.IRect,
+		dest: Surface,
 		area_to_copy_to: rect.IRect,
 	) !void {
 		const area_to_copy_sdl: C.SDL_Rect = area_to_copy.toSdl();
@@ -674,7 +674,7 @@ pub const Surface = struct {
 		const ret = C.SDL_BlitSurfaceUnchecked(
 			self.value,
 			&area_to_copy_sdl,
-			dest.toSdl(),
+			dest.value,
 			&area_to_copy_to_sdl,
 		);
 		if (!ret)
@@ -685,7 +685,7 @@ pub const Surface = struct {
 	pub fn blitScaled(
 		self: Surface,
 		area_to_copy: ?rect.IRect,
-		dest: rect.IRect,
+		dest: Surface,
 		area_to_copy_to: ?rect.IRect,
 		scale_mode: ScaleMode,
 	) !void {
@@ -694,7 +694,7 @@ pub const Surface = struct {
 		const ret = C.SDL_BlitSurfaceScaled(
 			self.value,
 			if (area_to_copy_sdl == null) null else &(area_to_copy_sdl.?),
-			dest.toSdl(),
+			dest.value,
 			if (area_to_copy_to_sdl == null) null else &(area_to_copy_to_sdl.?),
 			@intFromEnum(scale_mode),
 		);
@@ -706,7 +706,7 @@ pub const Surface = struct {
 	pub fn blitScaledUnchecked(
 		self: Surface,
 		area_to_copy: rect.IRect,
-		dest: rect.IRect,
+		dest: Surface,
 		area_to_copy_to: rect.IRect,
 		scale_mode: ScaleMode,
 	) !void {
@@ -715,7 +715,7 @@ pub const Surface = struct {
 		const ret = C.SDL_BlitSurfaceUncheckedScaled(
 			self.value,
 			&area_to_copy_sdl,
-			dest.toSdl(),
+			dest.value,
 			&area_to_copy_to_sdl,
 			@intFromEnum(scale_mode),
 		);
@@ -727,7 +727,7 @@ pub const Surface = struct {
 	pub fn blitTiled(
 		self: Surface,
 		area_to_copy: ?rect.IRect,
-		dest: rect.IRect,
+		dest: Surface,
 		area_to_copy_to: ?rect.IRect,
 	) !void {
 		const area_to_copy_sdl: ?C.SDL_Rect = if (area_to_copy == null) null else area_to_copy.?.toSdl();
@@ -735,7 +735,7 @@ pub const Surface = struct {
 		const ret = C.SDL_BlitSurfaceTiled(
 			self.value,
 			if (area_to_copy_sdl == null) null else &(area_to_copy_sdl.?),
-			dest.toSdl(),
+			dest.value,
 			if (area_to_copy_to_sdl == null) null else &(area_to_copy_to_sdl.?),
 		);
 		if (!ret)
@@ -748,7 +748,7 @@ pub const Surface = struct {
 		area_to_copy: ?rect.IRect,
 		scale_amount: f32,
 		scale_mode: ScaleMode,
-		dest: rect.IRect,
+		dest: Surface,
 		area_to_copy_to: ?rect.IRect,
 	) !void {
 		const area_to_copy_sdl: ?C.SDL_Rect = if (area_to_copy == null) null else area_to_copy.?.toSdl();
@@ -758,7 +758,7 @@ pub const Surface = struct {
 			if (area_to_copy_sdl == null) null else &(area_to_copy_sdl.?),
 			@floatCast(scale_amount),
 			@intFromEnum(scale_mode),
-			dest.toSdl(),
+			dest.value,
 			if (area_to_copy_to_sdl == null) null else &(area_to_copy_to_sdl.?),
 		);
 		if (!ret)
@@ -775,7 +775,7 @@ pub const Surface = struct {
 		bottom_height: u31,
 		scale_amount: f32,
 		scale_mode: ScaleMode,
-		dest: rect.IRect,
+		dest: Surface,
 		area_to_copy_to: ?rect.IRect,
 	) !void {
 		const area_to_copy_sdl: ?C.SDL_Rect = if (area_to_copy == null) null else area_to_copy.?.toSdl();
@@ -789,7 +789,7 @@ pub const Surface = struct {
 			@intCast(bottom_height),
 			@floatCast(scale_amount),
 			@intFromEnum(scale_mode),
-			dest.toSdl(),
+			dest.value,
 			if (area_to_copy_to_sdl == null) null else &(area_to_copy_to_sdl.?),
 		);
 		if (!ret)

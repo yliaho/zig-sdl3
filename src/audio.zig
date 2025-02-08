@@ -233,6 +233,33 @@ pub const Device = struct {
 		_ = ret;
 	}
 
+	/// Bind a list of audio streams to an audio device.
+	pub fn bindStreams(
+		self: Device,
+		streams: []*C.SDL_AudioStream,
+	) !void {
+		const ret = C.SDL_BindAudioStreams(
+			self.value,
+			streams.ptr,
+			@intCast(streams.len),
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
+	/// Bind a single audio stream to an audio device.
+	pub fn bindStream(
+		self: Device,
+		stream: Stream,
+	) !void {
+		const ret = C.SDL_BindAudioStream(
+			self.value,
+			stream.value,
+		);
+		if (!ret)
+			return error.SdlError;
+	}
+
 	/// Get a list of audio playback devices. Result must be freed.
     pub fn getAllPlaybackDevices(
         allocator: std.mem.Allocator,
