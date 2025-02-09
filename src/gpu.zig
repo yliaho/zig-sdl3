@@ -12,3 +12,8 @@ pub const Device = struct {
 pub const Buffer = struct {
 	value: *C.SDL_GPUBuffer,
 };
+
+/// Used for transferring data to and from the device.
+pub const TransferBuffer = struct {
+	value: *C.SDL_GPUTransferBuffer,
+};

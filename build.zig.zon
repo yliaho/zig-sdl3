@@ -27,6 +27,10 @@
             .url = "https://github.com/pwbh/ymlz/archive/refs/tags/0.3.4.tar.gz",
             .hash = "1220ed1736bf5f543a77a7bf205d884fa5c5e9393ab99f03401018c8af5792cf8373",
         },
+        .sdl = .{
+            .url = "git+https://github.com/castholm/SDL.git#2bb5f57ea8b8c43eabe514f7bbd3361365ba2ff3",
+            .hash = "1220f653f5b656888b522bf5be06fc3062278767cfa7764e5d00eb559056d65b616f",
+        },
     },
     .paths = .{
         "build.zig",

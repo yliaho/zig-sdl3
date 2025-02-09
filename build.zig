@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) !void {
             .patch = 0,
         },
     };
-    _ = generateBindings(b, cfg);
+    // _ = generateBindings(b, cfg);
     const sdl3 = b.addModule("sdl3", .{ .root_source_file = cfg.root_source_file });
     const main_callbacks = b.option(bool, "callbacks", "Enable SDL callbacks rather than use a main function") orelse false;
     if (main_callbacks)
@@ -23,18 +23,20 @@ pub fn build(b: *std.Build) !void {
     extension_options.addOption(bool, "image", ext_image);
     sdl3.addOptions("extension_options", extension_options);
     _ = setupTest(b, cfg, extension_options, ext_image);
-    // _ = try setupExamples(b, sdl3, cfg);
+    _ = try setupExamples(b, sdl3, cfg, ext_image);
     _ = try runExample(b, sdl3, cfg, ext_image);
 }
 
-pub fn linkTarget(b: *std.Build, target: *std.Build.Step.Compile, image: bool) void {
-    // target.addSystemIncludePath(b.path("/usr/local/include"));
-    _ = b;
-    target.linkSystemLibrary("SDL3");
+pub fn linkTarget(b: *std.Build, target: *std.Build.Step.Compile, cfg: std.Build.TestOptions, image: bool) void {
+    const sdl_dep = b.dependency("sdl", .{
+        // .target = cfg.target,
+        // .optimize = cfg.optimize,
+    });
+    _ = cfg;
+    const sdl_lib = sdl_dep.artifact("SDL3");
+    target.linkLibrary(sdl_lib);
     if (image)
         target.linkSystemLibrary("SDL3_image");
-    target.linkSystemLibrary("m");
-    target.linkLibC();
 }
 
 pub fn generateBindings(b: *std.Build, cfg: std.Build.TestOptions) *std.Build.Step {
@@ -64,7 +66,7 @@ pub fn setupExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestO
         .version = cfg.version,
     });
     exe.root_module.addImport("sdl3", sdl3);
-    linkTarget(b, exe, ext_image);
+    linkTarget(b, exe, cfg, ext_image);
     b.installArtifact(exe);
     return exe;
 }
@@ -79,7 +81,7 @@ pub fn runExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOpt
     }
 }
 
-pub fn setupExamples(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOptions) !*std.Build.Step {
+pub fn setupExamples(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOptions, ext_image: bool) !*std.Build.Step {
     const exp = b.step("examples", "Build all examples");
     const examples_dir = b.path("examples");
     var dir = (try std.fs.openDirAbsolute(examples_dir.getPath(b), .{ .iterate = true }));
@@ -88,7 +90,7 @@ pub fn setupExamples(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.Test
     defer dir_iterator.deinit();
     while (try dir_iterator.next()) |file| {
         if (file.kind == .file and std.mem.endsWith(u8, file.basename, ".zig")) {
-            _ = try setupExample(b, sdl3, cfg, file.basename[0 .. file.basename.len - 4]);
+            _ = try setupExample(b, sdl3, cfg, file.basename[0 .. file.basename.len - 4], ext_image);
         }
     }
     exp.dependOn(b.getInstallStep());
@@ -97,7 +99,7 @@ pub fn setupExamples(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.Test
 
 pub fn setupTest(b: *std.Build, cfg: std.Build.TestOptions, extension_options: *std.Build.Step.Options, ext_image: bool) *std.Build.Step.Compile {
     const tst = b.addTest(cfg);
-    linkTarget(b, tst, ext_image);
+    linkTarget(b, tst, cfg, ext_image);
     tst.root_module.addOptions("extension_options", extension_options);
     const tst_run = b.addRunArtifact(tst);
     const tst_step = b.step("test", "Run all tests");
