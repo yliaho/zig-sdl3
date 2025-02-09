@@ -4,7 +4,7 @@ const std = @import("std");
 
 /// Callback run on the main thread.
 ///
-/// `user_data`: An app-controlled pointer that is passed to the callback.
+/// * `user_data`: An app-controlled pointer that is passed to the callback.
 ///
 /// This datatype is available since SDL 3.2.0.
 pub const MainThreadCallback = *const fn (user_data: ?*anyopaque) callconv(.C) void;
@@ -134,7 +134,7 @@ pub const AppMetadataProperty = enum {
 
 /// Initialize the SDL library.
 ///
-/// `flags`: Subsystem initialization flags.
+/// * `flags`: Subsystem initialization flags.
 ///
 /// The file I/O (for example: `io.fromFile()`) and threading (`thread.create()`) subsystems are initialized by default.
 /// Message boxes (`message_box.showSimpleMessageBox()`) also attempt to work without initializing the video subsystem,
@@ -173,7 +173,7 @@ pub fn isMainThread() bool {
 
 /// Shut down specific SDL subsystems.
 ///
-/// `flags`: Flags used by the `init.init()` function.
+/// * `flags`: Flags used by the `init.init()` function.
 ///
 /// You still need to call `init.shutdown()` even if you close all open subsystems with `sdl.quit()`.
 ///
@@ -188,9 +188,9 @@ pub fn quit(
 
 /// Call a function on the main thread during event processing.
 ///
-/// `callback`: The callback to call on the main thread.
-/// `user_data`: A pointer that is passed to callback.
-/// `wait_complete`: True to wait for the callback to complete, false to return immediately.
+/// * `callback`: The callback to call on the main thread.
+/// * `user_data`: A pointer that is passed to callback.
+/// * `wait_complete`: True to wait for the callback to complete, false to return immediately.
 ///
 /// If this is called on the main thread, the callback is executed immediately.
 /// If this is called on another thread, this callback is queued for execution on the main thread during event processing.
@@ -225,9 +225,9 @@ pub fn shutdown() void {
 
 /// Specify basic metadata about your app.
 ///
-/// `app_name`: The name of the application ("My Game 2: Bad Guy's Revenge!").
-/// `app_version`: The version of the application ("1.0.0beta5" or a git hash, or whatever makes sense).
-/// `app_identifier`: A unique string in reverse-domain format that identifies this app ("com.example.mygame2").
+/// * `app_name`: The name of the application ("My Game 2: Bad Guy's Revenge!").
+/// * `app_version`: The version of the application ("1.0.0beta5" or a git hash, or whatever makes sense).
+/// * `app_identifier`: A unique string in reverse-domain format that identifies this app ("com.example.mygame2").
 ///
 /// You can optionally provide metadata about your app to SDL.
 /// This is not required, but strongly encouraged.
@@ -261,8 +261,8 @@ pub fn setAppMetadata(
 
 /// Specify metadata about your app through a set of properties.
 ///
-/// `property`: Property to set.
-/// `value`: Value to set the property to. This may be null to clear it.
+/// * `property`: Property to set.
+/// * `value`: Value to set the property to. This may be null to clear it.
 ///
 /// You can optionally provide metadata about your app to SDL.
 /// This is not required, but strongly encouraged.
@@ -291,7 +291,7 @@ pub fn setAppMetadataProperty(
 
 /// Get metadata about your app.
 ///
-/// `property`: The metadata property to get.
+/// * `property`: The metadata property to get.
 ///
 /// Returns the current value of the metadata property, or the default if it is not set, `null` for properties with no default.
 ///
@@ -315,7 +315,7 @@ pub fn getAppMetadataProperty(
 
 /// Get which given systems have been initialized.
 ///
-/// `flags`: Flags to mask the result with.
+/// * `flags`: Flags to mask the result with.
 ///
 /// Returns the mask of the argument with flags that have been initialized.
 ///

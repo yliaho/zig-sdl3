@@ -3,74 +3,159 @@ const errors = @import("errors.zig");
 const std = @import("std");
 
 /// A callback used to send notifications of hint value changes.
-pub fn Callback(
-    comptime UserData: type,
-) type {
-    return *const fn (
-        user_data: *UserData,
-        hint: Type,
-        old_value: [:0]const u8,
-        new_value: [:0]const u8,
-    ) void;
-}
-
-/// A callback used to send notifications of hint value changes.
-pub fn CallbackData(comptime UserData: type) type {
-    return struct {
-        cb: *const fn (
-            user_data: *UserData,
-            hint: Type,
-            old_value: [:0]const u8,
-            new_value: [:0]const u8,
-        ) void,
-        data: *UserData,
-    };
-}
-
-/// A callback used to send notifications of hint value changes.
-pub fn callback(
-    user_data: ?*anyopaque,
-    hint: [:0]const u8,
-    old_value: [*c]const u8,
-    new_value: [*c]const u8,
-) callconv(.C) void {
-    const cb_data: *CallbackData(anyopaque) = @ptrCast(@alignCast(user_data));
-    const ret = cb_data.cb(
-        cb_data.data,
-        Type.fromSdl(hint),
-        std.mem.span(old_value),
-        std.mem.span(new_value),
-    );
-    _ = ret;
-}
+///
+/// * `user_data`: User-data passed to `hints.addCallback()`.
+/// * `name`: Hint name passed to `hints.addCallback()`. The type can be gathered with the `hints.Type.fromSdl()` function.
+/// * `old_value`: The previous hint value.
+/// * `new_value`: The new value hint is to be set to.
+///
+/// This is called an initial time during `hints.addCallback()` with the hint's current value, and then again each time the hint's value changes.
+///
+/// This callback is fired from whatever thread is setting a new hint value.
+/// SDL holds a lock on the hint subsystem when calling this callback.
+///
+/// This datatype is available since SDL 3.2.0.
+pub const Callback = *const fn (user_data: ?*anyopaque, name: [*c]const u8, old_value: [*c]const u8, new_value: [*c]const u8) callconv(.C) void;
 
 /// An enumeration of hint priorities.
+///
+/// This enum is available since SDL 3.2.0.
 pub const Priority = enum(c_uint) {
     Default = C.SDL_HINT_DEFAULT,
     Normal = C.SDL_HINT_NORMAL,
     Override = C.SDL_HINT_OVERRIDE,
-
-    /// Set a hint with a specific priority. Will only set if the hint was previously set with a lower priority.
-    pub fn setWithPriority(
-        hint: Type,
-    ) !void {
-        const ret = C.SDL_SetHintWithPriority(
-            hint.toSdl(),
-        );
-        if (!ret)
-            return error.SdlError;
-    }
 };
 
 /// Configuration hints for the library. May or may not be useful depending on the platform.
 pub const Type = enum {
-    /// 0 - Sdl does not handle Alt+Tab, 1 - Sdl will minimize window on Alt+Tab (default).
+    /// By default, SDL emulates Alt+Tab functionality while the keyboard is grabbed and your window is full-screen.
+    /// This prevents the user from getting stuck in your application if you've enabled keyboard grab.
+    ///
+    /// The variable can be set to the following values:
+    ///
+    /// * "0": SDL will not handle Alt+Tab. Your application is responsible for handling Alt+Tab while the keyboard is grabbed.
+    /// * "1": SDL will minimize your window when Alt+Tab is pressed (default).
+    ///
+    /// This hint can be set anytime.
+    ///
+    /// This hint is available since SDL 3.2.0.
     AllowAltTabWhileGrabbed,
+
+    /// A variable to control whether the SDL activity is allowed to be re-created.
+    ///
+    /// If this hint is true, the activity can be recreated on demand by the OS, and Java static data and C++ static data remain with their current values.
+    /// If this hint is false, then SDL will call `exit()` when you return from your main function and the application will be terminated and then started fresh each time.
+    ///
+    /// The variable can be set to the following values:
+    ///
+    /// * "0": The application starts fresh at each launch. (default)
+    /// * "1": The application activity can be recreated by the OS.
+    ///
+    /// This hint can be set anytime.
+    ///
+    /// This hint is available since SDL 3.2.0.
+    AndroidAllowRecreateActivity,
+
+    /// A variable to control whether the event loop will block itself when the app is paused.
+    ///
+    /// The variable can be set to the following values:
+    ///
+    /// * "0": Non blocking.
+    /// * "1": Blocking. (default)
+    ///
+    /// This hint should be set before SDL is initialized.
+    ///
+    /// This hint is available since SDL 3.2.0.
+    AndroidBlockOnPause,
+
+    /// A variable to control whether low latency audio should be enabled.
+    ///
+    /// Some devices have poor quality output when this is enabled, but this is usually an improvement in audio latency.
+    ///
+    /// The variable can be set to the following values:
+    ///
+    /// * "0": Low latency audio is not enabled.
+    /// * "1": Low latency audio is enabled. (default)
+    ///
+    /// This hint should be set before SDL audio is initialized.
+    ///
+    /// This hint is available since SDL 3.2.0.
+    AndroidLowLatencyAudio,
+
+    /// A variable to control whether we trap the Android back button to handle it manually.
+    ///
+    /// This is necessary for the right mouse button to work on some Android devices, or to be able to trap the back button for use in your code reliably.
+    /// If this hint is true, the back button will show up as an `events.Event.key_down` / `events.Event.key_up` pair with a keycode of `scancode.ac_back`.
+    ///
+    /// The variable can be set to the following values:
+    ///
+    /// * "0": Back button will be handled as usual for system. (default)
+    /// * "1": Back button will be trapped, allowing you to handle the key press manually. (This will also let right mouse click work on systems where the right mouse button functions as back.)
+    ///
+    /// This hint can be set anytime.
+    ///
+    /// This hint is available since SDL 3.2.0.
+    AndroidTrapBackButton,
+
+    /// A variable setting the app ID string.
+    ///
+    /// This string is used by desktop compositors to identify and group windows together, as well as match applications with associated desktop settings and icons.
+    ///
+    /// This will override `app_metadata_identifier_string`, if set by the application.
+    ///
+    /// This hint should be set before SDL is initialized.
+    ///
+    /// This hint is available since SDL 3.2.0.
+    AppID,
+
+    /// A variable setting the application name.
+    ///
+    /// This hint lets you specify the application name sent to the OS when required.
+    /// For example, this will often appear in volume control applets for audio streams, and in lists of applications which are inhibiting the screensaver.
+    /// You should use a string that describes your program ("My Game 2: The Revenge").
+    ///
+    /// This will override `app_metadata_name_string`, if set by the application.
+    ///
+    /// This hint should be set before SDL is initialized.
+    ///
+    /// This hint is available since SDL 3.2.0.
+    AppName,
+
+    /// A variable controlling whether controllers used with the Apple TV generate UI events.
+    ///
+    /// When UI events are generated by controller input, the app will be backgrounded when the Apple TV remote's menu button is pressed, and when the pause or B buttons on gamepads are pressed.
+    ///
+    /// More information about properly making use of controllers for the Apple TV can be found here: https://developer.apple.com/tvos/human-interface-guidelines/remote-and-controllers/
+    /// The variable can be set to the following values:
+    ///
+    /// * "0": Controller input does not generate UI events. (default)
+    /// * "1": Controller input generates UI events.
+    ///
+    /// This hint can be set anytime.
+    ///
+    /// This hint is available since SDL 3.2.0.
+    AppleTvControllerUiEvents,
+
+    // TODO: REST OF HINTS!!!
 
     /// Convert from an SDL string.
     pub fn fromSdl(val: [:0]const u8) Type {
         if (std.mem.eql(u8, C.SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, val))
             return .AllowAltTabWhileGrabbed;
+        if (std.mem.eql(u8, C.SDL_HINT_ANDROID_ALLOW_RECREATE_ACTIVITY, val))
+            return .AndroidAllowRecreateActivity;
+        if (std.mem.eql(u8, C.SDL_HINT_ANDROID_BLOCK_ON_PAUSE, val))
+            return .AndroidBlockOnPause;
+        if (std.mem.eql(u8, C.SDL_HINT_ANDROID_LOW_LATENCY_AUDIO, val))
+            return .AndroidLowLatencyAudio;
+        if (std.mem.eql(u8, C.SDL_HINT_ANDROID_TRAP_BACK_BUTTON, val))
+            return .AndroidTrapBackButton;
+        if (std.mem.eql(u8, C.SDL_HINT_APP_ID, val))
+            return .AppID;
+        if (std.mem.eql(u8, C.SDL_HINT_APP_NAME, val))
+            return .AppName;
+        if (std.mem.eql(u8, C.SDL_HINT_APPLE_TV_CONTROLLER_UI_EVENTS, val))
+            return .AppleTvControllerUiEvents;
         return .AllowAltTabWhileGrabbed;
     }
 
@@ -78,56 +163,52 @@ pub const Type = enum {
     pub fn toSdl(self: Type) [:0]const u8 {
         return switch (self) {
             .AllowAltTabWhileGrabbed => C.SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED,
+            .AndroidAllowRecreateActivity => C.SDL_HINT_ANDROID_ALLOW_RECREATE_ACTIVITY,
+            .AndroidBlockOnPause => C.SDL_HINT_ANDROID_BLOCK_ON_PAUSE,
+            .AndroidLowLatencyAudio => C.SDL_HINT_ANDROID_LOW_LATENCY_AUDIO,
+            .AndroidTrapBackButton => C.SDL_HINT_ANDROID_TRAP_BACK_BUTTON,
+            .AppID => C.SDL_HINT_APP_ID,
+            .AppName => C.SDL_HINT_APP_NAME,
+            .AppleTvControllerUiEvents => C.SDL_HINT_APPLE_TV_CONTROLLER_UI_EVENTS,
         };
     }
 };
 
-/// Set a hint with a specific priority. Will only set if the hint was previously set with a lower priority.
-pub fn setWithPriority(
+/// Add a function to watch a particular hint.
+///
+/// * `hint`: Hint to watch.
+/// * `callback`: An `hints.Callback` function that will be called when the hint value changes.
+/// * `user_data`: A pointer to pass to the callback function.
+///
+/// The callback function is called *during* this function, to provide it an initial value, and again each time the hint's value changes.
+///
+/// It is safe to call this function from any thread.
+///
+/// This function is available since SDL 3.2.0.
+pub fn addCallback(
     hint: Type,
-    value: [:0]const u8,
-    priority: Priority,
+    callback: Callback,
+    user_data: ?*anyopaque,
 ) !void {
-    const ret = C.SDL_SetHintWithPriority(
+    const ret = C.SDL_AddHintCallback(
         hint.toSdl(),
-        value,
-        @intFromEnum(priority),
+        callback,
+        user_data,
     );
-    if (!ret)
-        return error.SdlError;
+    return errors.wrapCallBool(ret);
 }
 
-/// Set a hint with normal priority.
-pub fn set(
-    hint: Type,
-    value: [:0]const u8,
-) !void {
-    const ret = C.SDL_SetHint(
-        hint.toSdl(),
-        value,
-    );
-    if (!ret)
-        return error.SdlError;
-}
-
-/// Reset a hint to its default value.
-pub fn reset(
-    hint: Type,
-) !void {
-    const ret = C.SDL_ResetHint(
-        hint.toSdl(),
-    );
-    if (!ret)
-        return error.SdlError;
-}
-
-/// Reset all hints.
-pub fn resetAll() void {
-    const ret = C.SDL_ResetHints();
-    _ = ret;
-}
-
-/// Get a hint's value, or null if the hint is not set.
+/// Get the value of a hint.
+///
+/// * `hint`: The hint to query.
+///
+/// Returns the string value of a hint or `null` if the hint isn't set.
+///
+/// It is safe to call this function from any thread, however the return value only remains valid until the hint is changed;
+/// if another thread might do so, the app should supply locks and/or make a copy of the string.
+/// Note that using a hint callback instead is always thread-safe, as SDL holds a lock on the thread subsystem during the callback.
+///
+/// This function is available since SDL 3.2.0.
 pub fn get(
     hint: Type,
 ) ?[]const u8 {
@@ -139,42 +220,153 @@ pub fn get(
     return std.mem.span(ret);
 }
 
-/// Get a hint's boolean value.
+/// Get the boolean value of a hint variable.
+///
+/// * `hint`: The hint to query.
+///
+/// Returns the boolean value of a hint or `null` if the hint does not exist.
+///
+/// It is safe to call this function from any thread.
+///
+/// This function is available since SDL 3.2.0.
 pub fn getBoolean(
     hint: Type,
 ) ?bool {
     const ret = C.SDL_GetHintBoolean(
         hint.toSdl(),
+        false,
     );
     if (get(hint) == null) return null;
     return ret;
 }
 
-/// Add a function to watch a particular hint.
-pub fn addCallback(
-    UserData: type,
+/// Remove a function watching a particular hint.
+///
+/// * `hint`: The hint to watch.
+/// * `callback`: A `hint.Callback` function that will be called when the hint value changes.
+/// * `user_data`: A pointer being passed to the callback function.
+///
+/// It is safe to call this function from any thread.
+///
+/// This function is available since SDL 3.2.0.
+pub fn removeCallback(
     hint: Type,
-    callback_data: *CallbackData(UserData),
-) !void {
-    const ret = C.SDL_AddHintCallback(
+    callback: Callback,
+    user_data: ?*anyopaque,
+) void {
+    C.SDL_RemoveHintCallback(
         hint.toSdl(),
         callback,
-        callback_data,
+        user_data,
     );
-    if (!ret)
-        return error.SdlError;
 }
 
-/// Remove a function to watch a particular hint.
-pub fn removeCallback(
-    UserData: type,
+/// Reset a hint to the default value.
+///
+/// * `hint`: The hint to reset.
+///
+/// This will reset a hint to the value of the environment variable, or `null` if the environment isn't set.
+/// Callbacks will be called normally with this change.
+///
+/// It is safe to call this function from any thread.
+///
+/// This function is available since SDL 3.2.0.
+pub fn reset(
     hint: Type,
-    callback_data: *CallbackData(UserData),
-) void {
-    const ret = C.SDL_RemoveHintCallback(
+) !void {
+    const ret = C.SDL_ResetHint(
         hint.toSdl(),
-        callback,
-        callback_data,
     );
-    _ = ret;
+    return errors.wrapCallBool(ret);
+}
+
+/// Reset all hints to the default values.
+///
+/// This will reset all hints to the value of the associated environment variable, or `null` if the environment isn't set.
+/// Callbacks will be called normally with this change.
+///
+/// It is safe to call this function from any thread.
+///
+/// This function is available since SDL 3.2.0.
+pub fn resetAll() void {
+    C.SDL_ResetHints();
+}
+
+/// Set a hint with normal priority.
+///
+/// * `hint`: The hint to set.
+/// * `value:` The value of the hint variable.
+///
+/// Hints will not be set if there is an existing override hint or environment variable that takes precedence.
+/// You can use `hints.setWithPriority()` to set the hint with override priority instead.
+pub fn set(
+    hint: Type,
+    value: [:0]const u8,
+) !void {
+    const ret = C.SDL_SetHint(
+        hint.toSdl(),
+        value.ptr,
+    );
+    return errors.wrapCallBool(ret);
+}
+
+/// Set a hint with a specific priority.
+///
+/// * `hint`: The hint to set.
+/// * `value:` The value of the hint variable.
+/// * `priority`: The `hint.Priority` level for the hint.
+///
+/// The priority controls the behavior when setting a hint that already has a value.
+/// Hints will replace existing hints of their priority and lower.
+/// Environment variables are considered to have override priority.
+///
+/// It is safe to call this function from any thread.
+///
+/// This function is available since SDL 3.2.0.
+pub fn setWithPriority(
+    hint: Type,
+    value: [:0]const u8,
+    priority: Priority,
+) !void {
+    const ret = C.SDL_SetHintWithPriority(
+        hint.toSdl(),
+        value.ptr,
+        @intFromEnum(priority),
+    );
+    return errors.wrapCallBool(ret);
+}
+
+fn testHintCb(user_data: ?*anyopaque, name: [*c]const u8, old_value: [*c]const u8, new_value: [*c]const u8) callconv(.C) void {
+    const ctr_ptr: *i32 = @ptrCast(@alignCast(user_data));
+    _ = name;
+    _ = old_value;
+    _ = new_value;
+    ctr_ptr.* = ctr_ptr.* + 1;
+}
+
+// Test hint functions.
+test "Hints" {
+    var ctr: i32 = 0;
+    try addCallback(.AppName, testHintCb, &ctr);
+    try std.testing.expect(ctr == 1);
+    try std.testing.expect(get(.AppName) == null);
+    try std.testing.expect(getBoolean(.AppName) == null);
+    try set(.AppName, "True");
+    try std.testing.expect(ctr == 2);
+    try std.testing.expect(std.mem.eql(u8, get(.AppName).?, "True"));
+    try std.testing.expect(getBoolean(.AppName).?);
+    try setWithPriority(.AppName, "False", .Override);
+    try std.testing.expect(ctr == 3);
+    try std.testing.expect(std.mem.eql(u8, get(.AppName).?, "False"));
+    try std.testing.expect(!getBoolean(.AppName).?);
+    try reset(.AppName);
+    try std.testing.expect(ctr == 4);
+    try std.testing.expect(get(.AppName) == null);
+    try std.testing.expect(getBoolean(.AppName) == null);
+    try set(.AppName, "Reset Again");
+    removeCallback(.AppName, testHintCb, &ctr);
+    resetAll();
+    try std.testing.expect(ctr == 5);
+    try std.testing.expect(get(.AppName) == null);
+    try std.testing.expect(getBoolean(.AppName) == null);
 }

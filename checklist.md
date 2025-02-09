@@ -4,6 +4,9 @@ For monitoring how close various subsystems are to completion.
 ## Done
 * Errors
 * Init
+
+## Done?
+* Hints (Needs extra hints)
 * IO Stream
 * Message Box
 * Misc

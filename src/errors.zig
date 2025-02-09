@@ -39,7 +39,7 @@ pub fn invalidParamError(err: [:0]const u8) !void {
 /// Only the last error is returned.
 ///
 /// The standard way of getting errors is replaced with the zig method.
-/// Rely on standard zig error handling, and use the error_callback in case callbacks for when an error is encountered.
+/// Rely on standard zig error handling, and use the `errors.error_callback` in case callbacks for when an error is encountered.
 ///
 /// SDL will not clear the error string for successful API calls.
 /// You must check return values for failure cases before you can assume the error string applies.
