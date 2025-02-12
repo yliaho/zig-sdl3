@@ -132,19 +132,19 @@ pub fn wrapCallBool(result: bool) !void {
 // Make sure error getting and setting works properly.
 test "Error" {
     clear();
-    try std.testing.expect(get() == null);
+    try std.testing.expectEqual(null, get());
     try std.testing.expectError(error.SdlError, invalidParamError("Hello world"));
-    try std.testing.expect(std.mem.eql(u8, get().?, "Parameter 'Hello world' is invalid"));
+    try std.testing.expectEqualStrings("Parameter 'Hello world' is invalid", get().?);
     try std.testing.expectError(error.SdlError, signalOutOfMemory());
-    try std.testing.expect(std.mem.eql(u8, get().?, "Out of memory"));
+    try std.testing.expectEqualStrings("Out of memory", get().?);
     try std.testing.expectError(error.SdlError, set("Hello world"));
-    try std.testing.expect(std.mem.eql(u8, get().?, "Hello world"));
+    try std.testing.expectEqualStrings("Hello world", get().?);
     try std.testing.expectError(error.SdlError, unsupported());
-    try std.testing.expect(std.mem.eql(u8, get().?, "That operation is not supported"));
-    try std.testing.expect(try wrapCall(u8, 0, 1) == 0);
+    try std.testing.expectEqualStrings("That operation is not supported", get().?);
+    try std.testing.expectEqual(0, try wrapCall(u8, 0, 1));
     try std.testing.expectError(error.SdlError, wrapCall(u8, 1, 1));
     try wrapCallBool(true);
     try std.testing.expectError(error.SdlError, wrapCallBool(false));
     clear();
-    try std.testing.expect(get() == null);
+    try std.testing.expectEqual(null, get());
 }

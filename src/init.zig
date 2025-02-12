@@ -348,14 +348,14 @@ test "Init" {
     try std.testing.expect(isMainThread());
     var data: i32 = 1;
     try runOnMainThread(testRunOnMainThreadCb, &data, true);
-    try std.testing.expect(data == -1);
-    try std.testing.expect(std.meta.eql(flags, wasInit(flags)));
-    try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Name).?, "SDL3 Test"));
-    try std.testing.expect(getAppMetadataProperty(.Version) == null);
-    try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Identifier).?, "!Testing"));
+    try std.testing.expectEqual(-1, data);
+    try std.testing.expectEqual(flags, wasInit(flags));
+    try std.testing.expectEqualStrings("SDL3 Test", getAppMetadataProperty(.Name).?);
+    try std.testing.expectEqual(null, getAppMetadataProperty(.Version));
+    try std.testing.expectEqualStrings("!Testing", getAppMetadataProperty(.Identifier).?);
     try setAppMetadataProperty(.Creator, "Gota7");
-    try std.testing.expect(std.mem.eql(u8, getAppMetadataProperty(.Creator).?, "Gota7"));
+    try std.testing.expectEqualStrings("Gota7", getAppMetadataProperty(.Creator).?);
     try setAppMetadataProperty(.Creator, null);
-    try std.testing.expect(getAppMetadataProperty(.Creator) == null);
-    try std.testing.expect(getAppMetadataProperty(.Url) == null);
+    try std.testing.expectEqual(null, getAppMetadataProperty(.Creator));
+    try std.testing.expectEqual(null, getAppMetadataProperty(.Url));
 }
