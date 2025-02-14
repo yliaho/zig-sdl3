@@ -15,7 +15,12 @@ const std = @import("std");
 /// SDL holds a lock on the hint subsystem when calling this callback.
 ///
 /// This datatype is available since SDL 3.2.0.
-pub const Callback = *const fn (user_data: ?*anyopaque, name: [*c]const u8, old_value: [*c]const u8, new_value: [*c]const u8) callconv(.C) void;
+pub const Callback = *const fn (
+    user_data: ?*anyopaque,
+    name: [*c]const u8,
+    old_value: [*c]const u8,
+    new_value: [*c]const u8,
+) callconv(.C) void;
 
 /// An enumeration of hint priorities.
 ///

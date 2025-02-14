@@ -17,7 +17,10 @@ const std = @import("std");
 /// This callback may fire without any locks held; if this is a concern, the app should provide its own locking.
 ///
 /// This datatype is available since SDL 3.2.0.
-pub const CleanupCallback = *const fn (user_data: ?*anyopaque, value: ?*anyopaque) callconv(.C) void;
+pub const CleanupCallback = *const fn (
+    user_data: ?*anyopaque,
+    value: ?*anyopaque,
+) callconv(.C) void;
 
 /// A callback used to enumerate all the properties in a group of properties.
 ///
@@ -30,7 +33,11 @@ pub const CleanupCallback = *const fn (user_data: ?*anyopaque, value: ?*anyopaqu
 /// `properties.group.enumerateProperties()` holds a lock on props during this callback.
 ///
 /// This datatype is available since SDL 3.2.0.
-pub const EnumerateCallback = *const fn (user_data: ?*anyopaque, props: C.SDL_PropertiesID, name: [*c]const u8) callconv(.C) void;
+pub const EnumerateCallback = *const fn (
+    user_data: ?*anyopaque,
+    props: C.SDL_PropertiesID,
+    name: [*c]const u8,
+) callconv(.C) void;
 
 /// SDL properties type.
 ///

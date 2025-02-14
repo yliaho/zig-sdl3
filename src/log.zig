@@ -13,7 +13,12 @@ const std = @import("std");
 /// A mutex is held so that this function is never called by more than one thread at once.
 ///
 /// This datatype is available since SDL 3.2.0.
-pub const LogOutputFunction = *const fn (user_data: ?*anyopaque, category: c_int, priority: C.SDL_LogPriority, message: [*c]const u8) callconv(.C) void;
+pub const LogOutputFunction = *const fn (
+    user_data: ?*anyopaque,
+    category: c_int,
+    priority: C.SDL_LogPriority,
+    message: [*c]const u8,
+) callconv(.C) void;
 
 /// The predefined log priorities.
 ///

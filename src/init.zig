@@ -7,7 +7,9 @@ const std = @import("std");
 /// * `user_data`: An app-controlled pointer that is passed to the callback.
 ///
 /// This datatype is available since SDL 3.2.0.
-pub const MainThreadCallback = *const fn (user_data: ?*anyopaque) callconv(.C) void;
+pub const MainThreadCallback = *const fn (
+    user_data: ?*anyopaque,
+) callconv(.C) void;
 
 /// These are the flags which may be passed to `init.init()`.
 /// You should specify the subsystems which you will be using in your application.

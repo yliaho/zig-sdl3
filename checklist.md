@@ -4,6 +4,8 @@ For monitoring how close various subsystems are to completion.
 ## Done
 * Errors
 * Init
+* Log
+* Properties
 
 ## Done?
 * Hints (Needs extra hints)
@@ -19,11 +21,9 @@ For monitoring how close various subsystems are to completion.
 * Keycode
 * Loadso
 * Locale
-* Log
 * Pen
 * Pixels
 * Power
-* Properties
 * Rect
 * Scan Code
 * Sensor

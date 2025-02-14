@@ -4,7 +4,9 @@ const std = @import("std");
 /// Callback for when an SDL error occurs.
 ///
 /// This is per-thread.
-threadlocal var error_callback: ?*const fn (err: ?[]const u8) void = null;
+threadlocal var error_callback: ?*const fn (
+    err: ?[]const u8,
+) void = null;
 
 /// An SDL error.
 pub const Error = error{

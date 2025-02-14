@@ -1,4 +1,11 @@
 pub const audio = @import("audio.zig");
+
+/// Not recommended for usage unless absolutely needed.
+///
+/// SDL's macros are not compatible with zig, use zig when appropriate.
+///
+/// However, setting callbacks should work fine.
+pub const assert = @import("assert.zig");
 pub const blend_mode = @import("blend_mode.zig");
 pub const camera = @import("camera.zig");
 pub const clipboard = @import("clipboard.zig");
