@@ -133,7 +133,7 @@ pub fn report(
 ///
 /// It is safe to call this function from any thread, as long as calling the `allocator` is thread-safe.
 ///
-/// This function is available since SDL 3.2.0.
+/// This function is provided by the wrapper.
 pub fn reportWithAlloc(
     data: *C.SDL_AssertData,
     location: std.builtin.SourceLocation,

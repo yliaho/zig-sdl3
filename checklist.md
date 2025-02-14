@@ -2,10 +2,12 @@
 For monitoring how close various subsystems are to completion.
 
 ## Done
+* Assert
 * Errors
 * Init
 * Log
 * Properties
+* Version
 
 ## Done?
 * Hints (Needs extra hints)
@@ -29,7 +31,6 @@ For monitoring how close various subsystems are to completion.
 * Sensor
 * Time
 * Timer
-* Version
 
 ## In Progress
 * Audio
@@ -58,7 +59,6 @@ For monitoring how close various subsystems are to completion.
 * Vulkan
 
 ## Not Applicable
-* Asserts (Just use Zig's built-in functionality)
 * Atomics (Zig has this already)
 * Begin Code
 * Bits (Zig has this already)
