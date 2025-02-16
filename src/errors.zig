@@ -29,7 +29,9 @@ pub fn clear() void {
 /// It is safe to call this function from any thread.
 ///
 /// This function is available since SDL 3.2.0.
-pub fn invalidParamError(err: [:0]const u8) !void {
+pub fn invalidParamError(
+    err: [:0]const u8,
+) !void {
     _ = C.SDL_InvalidParamError(err.ptr);
     return error.SdlError;
 }
@@ -112,7 +114,11 @@ pub fn unsupported() !void {
 /// It is safe to call this function from any thread.
 ///
 /// This is provided by zig-sdl3.
-pub fn wrapCall(comptime Result: type, result: Result, error_condition: Result) !Result {
+pub fn wrapCall(
+    comptime Result: type,
+    result: Result,
+    error_condition: Result,
+) !Result {
     if (result != error_condition)
         return result;
     if (@This().error_callback) |cb| {
@@ -127,8 +133,28 @@ pub fn wrapCall(comptime Result: type, result: Result, error_condition: Result) 
 /// It is safe to call this function from any thread.
 ///
 /// This is provided by zig-sdl3.
-pub fn wrapCallBool(result: bool) !void {
+pub fn wrapCallBool(
+    result: bool,
+) !void {
     _ = try wrapCall(bool, result, false);
+}
+
+/// Wrap an SDL call that returns success if not null.
+/// Returns an error if the result is null, otherwise unwraps it.
+///
+/// It is safe to call this function from any thread.
+///
+/// This is provided by zig-sdl3.
+pub fn wrapNull(
+    comptime Result: type,
+    result: ?Result,
+) !Result {
+    if (result) |val|
+        return val;
+    if (@This().error_callback) |cb| {
+        cb(get());
+    }
+    return error.SdlError;
 }
 
 // Make sure error getting and setting works properly.
@@ -147,6 +173,8 @@ test "Error" {
     try std.testing.expectError(error.SdlError, wrapCall(u8, 1, 1));
     try wrapCallBool(true);
     try std.testing.expectError(error.SdlError, wrapCallBool(false));
+    _ = try wrapNull(i32, 3);
+    try std.testing.expectError(error.SdlError, wrapNull(i32, null));
     clear();
     try std.testing.expectEqual(null, get());
 }
