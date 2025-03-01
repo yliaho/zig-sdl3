@@ -13,8 +13,6 @@ pub fn build(b: *std.Build) void {
 
     const sdl3 = b.dependency("sdl3", .{});
     exe.root_module.addImport("sdl3", sdl3.module("sdl3"));
-    exe.linkSystemLibrary("SDL3");
-    exe.linkLibC();
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);

@@ -23,7 +23,11 @@ pub fn build(b: *std.Build) !void {
     });
     const sdl_dep_lib = sdl_dep.artifact("SDL3");
 
-    const sdl3 = b.addModule("sdl3", .{ .root_source_file = cfg.root_source_file });
+    const sdl3 = b.addModule("sdl3", .{
+        .root_source_file = cfg.root_source_file,
+        .target = target,
+        .optimize = optimize,
+    });
     const main_callbacks = b.option(bool, "callbacks", "Enable SDL callbacks rather than use a main function") orelse false;
     if (main_callbacks)
     {
