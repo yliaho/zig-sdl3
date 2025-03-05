@@ -4,14 +4,17 @@ const std = @import("std");
 
 /// The prototype for the log output callback function.
 ///
+/// ## Function Parameters
 /// * `user_data`: What was passed as userdata to `log.setLogOutputFunction()`.
 /// * `category`: The category of the message.
 /// * `priority`: The priority of the message.
 /// * `message`: The message being output.
 ///
+/// ## Thread Safety
 /// This function is called by SDL when there is new text to be logged.
 /// A mutex is held so that this function is never called by more than one thread at once.
 ///
+/// ## Version
 /// This datatype is available since SDL 3.2.0.
 pub const LogOutputFunction = *const fn (
     user_data: ?*anyopaque,
@@ -22,6 +25,7 @@ pub const LogOutputFunction = *const fn (
 
 /// The predefined log priorities.
 ///
+/// ## Version
 /// This enum is available since SDL 3.2.0.
 pub const Priority = enum(c_uint) {
     Trace = C.SDL_LOG_PRIORITY_TRACE,
@@ -41,15 +45,19 @@ pub const Priority = enum(c_uint) {
 
     /// Set the text prepended to log messages of a given priority.
     ///
+    /// ## Function Parameters
     /// * `self`: The priority to modify.
     /// * `prefix`: The prefix to use for that log priority, or `null` to use no prefix.
     ///
-    /// By default SDL_LOG_PRIORITY_INFO and below have no prefix, and SDL_LOG_PRIORITY_WARN and higher have a prefix showing their priority, e.g. "WARNING: ".
+    /// ## Remarks
+    /// By default `log.Priority.Info` and below have no prefix, and `log.priority.Warn` and higher have a prefix showing their priority, e.g. "WARNING: ".
     ///
     /// Note that prefixes will only effect the default log callback and not any custom ones.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn setPrefix(
         self: Priority,
@@ -65,11 +73,13 @@ pub const Priority = enum(c_uint) {
 
 /// The predefined log categories.
 ///
+/// ## Remarks
 /// By default the application and gpu categories are enabled at the INFO level,
 /// the assert category is enabled at the WARN level,
 /// test is enabled at the VERBOSE level,
 /// and all other categories are enabled at the ERROR level.
 ///
+/// ## Version
 /// This is available since SDL 3.2.0.
 pub const Category = packed struct {
     value: c_int,
@@ -95,12 +105,16 @@ pub const Category = packed struct {
 
     /// Get the priority of a particular log category.
     ///
+    /// ## Function Parameters
     /// * `self`: The category to query.
     ///
+    /// ## Return Value
     /// Returns the `log.Priority` for the requested query.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn getPriority(
         self: Category,
@@ -110,12 +124,15 @@ pub const Category = packed struct {
 
     /// Log a message with the specified category and priority.
     ///
+    /// ## Function Parameters
     /// * `self`: The category of the message.
     /// * `priority`: The priority of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn log(
         self: Category,
@@ -132,11 +149,14 @@ pub const Category = packed struct {
 
     /// Log a message with `log.Priority.Critical`.
     ///
+    /// ## Function Parameters
     /// * `self`: Category of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn logCritical(
         self: Category,
@@ -151,11 +171,14 @@ pub const Category = packed struct {
 
     /// Log a message with `log.Priority.Debug`.
     ///
+    /// ## Function Parameters
     /// * `self`: Category of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn logDebug(
         self: Category,
@@ -170,11 +193,14 @@ pub const Category = packed struct {
 
     /// Log a message with `log.Priority.Error`.
     ///
+    /// ## Function Parameters
     /// * `self`: Category of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn logError(
         self: Category,
@@ -189,11 +215,14 @@ pub const Category = packed struct {
 
     /// Log a message with `log.Priority.Info`.
     ///
+    /// ## Function Parameters
     /// * `self`: Category of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn logInfo(
         self: Category,
@@ -208,11 +237,14 @@ pub const Category = packed struct {
 
     /// Log a message with `log.Priority.Trace`.
     ///
+    /// ## Function Parameters
     /// * `self`: Category of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn logTrace(
         self: Category,
@@ -227,11 +259,14 @@ pub const Category = packed struct {
 
     /// Log a message with `log.Priority.Verbose`.
     ///
+    /// ## Function Parameters
     /// * `self`: Category of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn logVerbose(
         self: Category,
@@ -246,11 +281,14 @@ pub const Category = packed struct {
 
     /// Log a message with `log.Priority.Warn`.
     ///
+    /// ## Function Parameters
     /// * `self`: Category of the message.
     /// * `str`: String to log.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn logWarn(
         self: Category,
@@ -265,11 +303,14 @@ pub const Category = packed struct {
 
     /// Set the priority of a particular log category.
     ///
+    /// ## Function Parameters
     /// * `self`: The category to assign the priority to.
     /// * `priority`: The log priority to assign.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn setPriority(
         self: Category,
@@ -285,10 +326,13 @@ pub const Category = packed struct {
 
 /// Get the default log output function.
 ///
+/// ## Return Value
 /// Returns the default log output callback.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getDefaultLogOutputFunction() LogOutputFunction {
     return C.SDL_GetDefaultLogOutputFunction().?;
@@ -296,12 +340,14 @@ pub fn getDefaultLogOutputFunction() LogOutputFunction {
 
 /// Get the current log output function.
 ///
-/// Return struct:
+/// ## Return Value
 /// * `callback`: A `log.LogOutputFunction` filled in with the current log `callback`.
 /// * `user_data`: A pointer filled in with the pointer that is passed to `callback`.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getLogOutputFunction() struct { callback: LogOutputFunction, user_data: ?*anyopaque } {
     var callback: C.SDL_LogOutputFunction = undefined;
@@ -315,10 +361,13 @@ pub fn getLogOutputFunction() struct { callback: LogOutputFunction, user_data: ?
 
 /// Log a message with `log.Category.application` and `log.Priority.Info`.
 ///
+/// ## Function Parameters
 /// * `str`: The string to log.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn log(
     str: [:0]const u8,
@@ -331,10 +380,13 @@ pub fn log(
 
 /// Reset all priorities to default.
 ///
+/// ## Remarks
 /// This is called by `init.shutdown()`.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn resetAllPriorities() void {
     C.SDL_ResetLogPriorities();
@@ -342,10 +394,13 @@ pub fn resetAllPriorities() void {
 
 /// Set the priority of all log categories.
 ///
+/// ## Function Parameters
 /// * `priority`: The priority to assign to all categories.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn setAllPriorities(
     priority: Priority,
@@ -357,11 +412,14 @@ pub fn setAllPriorities(
 
 /// Replace the default log output function with one of your own.
 ///
+/// ## Function Parameters
 /// * `callback`: A `log.LogOutputFunction` to call instead of the default.
 /// * `user_data`: A pointer that is passed to `callback`.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn setLogOutputFunction(
     callback: LogOutputFunction,

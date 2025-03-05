@@ -4,6 +4,9 @@ const std = @import("std");
 /// Callback for when an SDL error occurs.
 ///
 /// This is per-thread.
+///
+/// ## Version
+/// This is provided by zig-sdl3.
 pub threadlocal var error_callback: ?*const fn (
     err: ?[]const u8,
 ) void = null;
@@ -15,8 +18,10 @@ pub const Error = error{
 
 /// Clear any previous error message for this thread.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn clear() void {
     _ = C.SDL_ClearError();
@@ -24,10 +29,16 @@ pub fn clear() void {
 
 /// Standardize error reporting on unsupported operations.
 ///
+/// ## Function Parameters
+/// * `err`: Error to report.
+///
+/// ## Remarks
 /// This simply calls `errors.set()` with a standardized error string, for convenience, consistency, and clarity.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn invalidParamError(
     err: [:0]const u8,
@@ -38,6 +49,11 @@ pub fn invalidParamError(
 
 /// Returns a message with information about the specific error that occurred,
 /// or null if there hasn't been an error message set since the last call to `errors.clear()`.
+///
+/// ## Return Value
+/// The last error reported from SDL.
+///
+/// ## Remarks
 ///
 /// It is possible for multiple errors to occur before calling `errors.get()`.
 /// Only the last error is returned.
@@ -53,8 +69,10 @@ pub fn invalidParamError(
 /// The returned value is a thread-local string which will remain valid until the current thread's error string is changed.
 /// The caller should make a copy if the value is needed after the next SDL API call.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn get() ?[]const u8 {
     const ret = C.SDL_GetError();
@@ -66,12 +84,18 @@ pub fn get() ?[]const u8 {
 
 /// Set the SDL error message for the current thread.
 ///
+/// ## Function Parameters
+/// * `err`: New error to set.
+///
+/// ## Remarks
 /// Calling this function will replace any previous error message that was set.
 ///
 /// This function will always return an error.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn set(
     err: [:0]const u8,
@@ -85,10 +109,13 @@ pub fn set(
 
 /// Set an error indicating that memory allocation failed.
 ///
+/// ## Remarks
 /// This will always return an error.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn signalOutOfMemory() !void {
     _ = C.SDL_OutOfMemory();
@@ -97,10 +124,13 @@ pub fn signalOutOfMemory() !void {
 
 /// Standardize error reporting on unsupported operations.
 ///
+/// ## Remarks
 /// This simply calls `errors.set()` with a standardized error string, for convenience, consistency, and clarity.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn unsupported() !void {
     _ = C.SDL_Unsupported();
@@ -108,11 +138,20 @@ pub fn unsupported() !void {
 }
 
 /// Wrap an SDL call with an error check.
+///
+/// ## Function Parameters
+/// * `Result`: Resulting type expected from the SDL call.
+/// * `result`: Value returned from the SDL call.
+/// * `error_condition`: If `result` matches this, then an error will be returned.
+///
+/// ## Remarks
 /// If the result of the call matches the error_condition, call the error callback and return an error.
 /// If the result does not match, then return the result.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This is provided by zig-sdl3.
 pub fn wrapCall(
     comptime Result: type,
@@ -128,10 +167,17 @@ pub fn wrapCall(
 }
 
 /// Wrap an SDL call that returns a success with an error check.
+///
+/// ## Function Parameters
+/// * `result`: Boolean that will result in an error if `false`.
+///
+/// ## Return Value
 /// Returns an error if the result is false, otherwise returns void.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This is provided by zig-sdl3.
 pub fn wrapCallBool(
     result: bool,
@@ -141,8 +187,17 @@ pub fn wrapCallBool(
 
 /// Unwrap a C pointer.
 ///
+// ## Function Parameters
+/// * `Result`: Return value type that is pointed to by a C pointer.
+/// * `result`: Return value that if `null` will return an error.
+///
+/// ## Return Value
+/// Returns a pointer to an array of values.
+///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This is provided by zig-sdl3.
 pub fn wrapCallCPtr(
     comptime Result: type,
@@ -158,8 +213,17 @@ pub fn wrapCallCPtr(
 
 /// Unwrap a C pointer to a constant.
 ///
+/// ## Function Parameters
+/// * `Result`: Return value type that is pointed to by a constant C pointer.
+/// * `result`: Return value that if `null` will return an error.
+///
+/// ## Return Value
+/// Returns a pointer to an array of constant values.
+///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This is provided by zig-sdl3.
 pub fn wrapCallCPtrConst(
     comptime Result: type,
@@ -175,8 +239,16 @@ pub fn wrapCallCPtrConst(
 
 /// Unwrap a C string.
 ///
+/// ## Function Parameters
+/// * `result`: Raw C pointer to a string. If this is `null`, an error is returned.
+///
+/// ## Return Value
+/// Returns an unwrapped C string.
+///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This is provided by zig-sdl3.
 pub fn wrapCallCString(
     result: [*c]const u8,
@@ -187,10 +259,18 @@ pub fn wrapCallCString(
 }
 
 /// Wrap an SDL call that returns success if not null.
-/// Returns an error if the result is null, otherwise unwraps it.
 ///
+/// ## Function Parameters
+/// * `Result`: Type that is nullable that has been returned by SDL.
+/// * `result`: Actual result value from SDL that will result in an error if `null`.
+///
+/// ## Return Value
+/// Returns an error if the result is `null`, otherwise unwraps it.
+///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This is provided by zig-sdl3.
 pub fn wrapNull(
     comptime Result: type,

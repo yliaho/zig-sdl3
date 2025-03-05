@@ -6,25 +6,35 @@ pub const Version = packed struct {
     value: c_int,
     /// This is the version number macro for the current SDL version.
     ///
+    /// ## Version
     /// This field is available since SDL 3.2.0.
     pub const compiled_against = Version{ .value = C.SDL_VERSION };
 
     /// A string describing the source at a particular point in development.
     ///
+    /// ## Remarks
     /// This string is often generated from revision control's state at build time.
     ///
     /// This string can be quite complex and does not follow any standard.
     /// For example, it might be something like "SDL-prerelease-3.1.1-47-gf687e0732".
     /// It might also be user-defined at build time, so it's best to treat it as a clue in debugging forensics and not something the app will parse in any way.
     ///
+    /// ## Version
     /// This field is available since SDL 3.2.0.
     // pub const revision = C.SDL_REVISION; // This should exist but does not?
 
     /// Check if the SDL version is at least greater than the given one.
     ///
+    /// ## Function Parameters
     /// * `major` - Major version to compare against.
     /// * `minor` - Minor version to compare against.
     /// * `micro` - Micro version to compare against.
+    ///
+    /// ## Return Value
+    /// If the SDL version is at least greater than the given one.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn atLeast(
         major: u32,
         minor: u32,
@@ -40,13 +50,17 @@ pub const Version = packed struct {
 
     /// Get the version of SDL that is linked against your program.
     ///
+    /// ## Return Value
     /// Returns the version of the linked library.
     ///
+    /// ## Remarks
     /// If you are linking to SDL dynamically, then it is possible that the current version will be different than the version you compiled against.
     /// This function returns the current version, while `Version.compiled_version` is the version you compiled with.
     ///
+    /// ## Thread Safety
     /// This function may be called safely at any time, even before `init.init()`.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn get() Version {
         const ret = C.SDL_GetVersion();
@@ -55,8 +69,10 @@ pub const Version = packed struct {
 
     /// Extracts the major version from a version number.
     ///
+    /// ## Function Parameters
     /// * `self`: The version number.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn getMajor(
         self: Version,
@@ -69,8 +85,10 @@ pub const Version = packed struct {
 
     /// Extracts the minor version from a version number.
     ///
+    /// ## Function Parameters
     /// * `self`: The version number.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn getMinor(
         self: Version,
@@ -83,8 +101,10 @@ pub const Version = packed struct {
 
     /// Extracts the micro version from a version number.
     ///
+    /// ## Function Parameters
     /// * `self`: The version number.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn getMicro(
         self: Version,
@@ -96,6 +116,8 @@ pub const Version = packed struct {
     }
 
     /// Get the code revision of SDL that is linked against your program.
+    ///
+    /// ## Remarks
     ///
     /// Returns an arbitrary string, uniquely identifying the exact revision of the SDL library in use, or `null` possibly.
     ///
@@ -109,6 +131,7 @@ pub const Version = packed struct {
     ///
     /// You shouldn't use this function for anything but logging it for debugging purposes. The string is not intended to be reliable in any way.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn getRevision() ?[]const u8 {
         const ret = C.SDL_GetRevision();
@@ -120,10 +143,15 @@ pub const Version = packed struct {
 
     /// Turns the version numbers into a numeric value.
     ///
+    /// ## Function Parameters
     /// * `major` - The major version number.
     /// * `minor` - The minor version number.
     /// * `micro` - The micro version number.
     ///
+    /// ## Return Value
+    /// An SDL version composed of the numbers provided.
+    ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn make(
         major: u32,

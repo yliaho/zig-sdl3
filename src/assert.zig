@@ -4,13 +4,17 @@ const std = @import("std");
 
 /// A callback that fires when an SDL assertion fails.
 ///
+/// ## Function Parameters
 /// * `assert_data`: A pointer to the `C.SDL_AssertData` structure corresponding to the current assertion.
 /// * `user_data`: What was passed as userdata to `assert.setHandler()`.
 ///
+/// ## Return Value
 /// Returns a `C.SDL_AssertState` value indicating how to handle the failure.
 ///
+/// ## Thread Safety
 /// This callback may be called from any thread that triggers an assert at any time.
 ///
+/// ## Version
 /// This datatype is available since SDL 3.2.0.
 pub const Handler = *const fn (
     assert_data: [*c]const C.SDL_AssertData,
@@ -19,11 +23,13 @@ pub const Handler = *const fn (
 
 /// Possible outcomes from a triggered assertion.
 ///
+/// ## Remarks
 /// When an enabled assertion triggers, it may call the assertion handler (possibly one provided by the app via `assert.setHandler()`,
 /// which will return one of these values, possibly after asking the user.
 ///
 /// Then SDL will respond based on this outcome (loop around to retry the condition, try to break in a debugger, kill the program, or ignore the problem).
 ///
+/// ## Version
 /// This enum is available since SDL 3.2.0.
 pub const State = enum(c_int) {
     /// Retry the assert immediately.
@@ -40,13 +46,17 @@ pub const State = enum(c_int) {
 
 /// Get the default assertion handler.
 ///
+/// ## Return Value
 /// Returns the default `assert.Handler` that is called when an assert triggers.
 ///
+/// ## Remarks
 /// This returns the function pointer that is called by default when an assertion is triggered.
 /// This is an internal function provided by SDL, that is used for assertions when `assert.setHandler()` hasn't been used to provide a different function.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getDefaultHandler() Handler {
     return C.SDL_GetDefaultAssertionHandler().?;
@@ -54,8 +64,10 @@ pub fn getDefaultHandler() Handler {
 
 /// Get the current assertion handler.
 ///
+/// ## Return Value
 /// Returns the current assertion handler and the `user_data` associated with it.
 ///
+/// ## Remarks
 /// This returns the function pointer that is called when an assertion is triggered.
 /// This is either the value last passed to `assert.setHandler()`, or if no application-specified function is set,
 /// is equivalent to calling `assert.getDefaultHandler()`.
@@ -63,8 +75,10 @@ pub fn getDefaultHandler() Handler {
 /// The `user_data` was passed to `assert.setHandler()`.
 /// This value will always be `null` for the default handler.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getHandler() struct { handler: Handler, user_data: ?*anyopaque } {
     var user_data: ?*anyopaque = undefined;
@@ -74,10 +88,12 @@ pub fn getHandler() struct { handler: Handler, user_data: ?*anyopaque } {
 
 /// Get a list of all assertion failures.
 ///
+/// ## Return Value
 /// Returns a list of all failed assertions or `null` if the list is empty.
 /// This memory should not be modified or freed by the application.
 /// This pointer remains valid until the next call to `init.shutdown()` or `assert.resetReport()`.
 ///
+/// ## Remarks
 /// This function gets all assertions triggered since the last call to `assert.resetReport()`, or the start of the program.
 ///
 /// The proper way to examine this data looks something like this:
@@ -92,8 +108,10 @@ pub fn getHandler() struct { handler: Handler, user_data: ?*anyopaque } {
 /// }
 /// ```
 ///
+/// ## Thread Safety
 /// This function is not thread safe. Other threads calling S`assert.resetReport()` simultaneously, may render the returned pointer invalid.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getReport() ?*const C.SDL_AssertData {
     return C.SDL_GetAssertionReport();
@@ -101,15 +119,19 @@ pub fn getReport() ?*const C.SDL_AssertData {
 
 /// Report an assertion.
 ///
+/// ## Function Parameters
 /// * `data`: Assert data structure. Should be unique for this call.
 /// * `func`: Function name.
 /// * `file`: File name.
 /// * `line`: Line number.
 ///
+/// ## Return Value
 /// Returns assert state.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn report(
     data: *C.SDL_AssertData,
@@ -122,17 +144,22 @@ pub fn report(
 
 /// Helper function for reporting an assertion.
 ///
+/// ## Function Parameters
 /// * `data`: Assert data structure. Should be unique for this call.
 /// * `location`: Result of `@src()`.
 /// * `allocator`: Memory allocator.
 ///
+/// ## Return Value
 /// Returns assert state and an owned buffer.
 ///
+/// ## Remarks
 /// Because of required null-termination in the SDL library, using @src() requires an intermediate buffer to copy data to in order to null-terminate.
 /// Resulting buffer must be freed manually after all work with reports is over.
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread, as long as calling the `allocator` is thread-safe.
 ///
+/// ## Version
 /// This function is provided by the wrapper.
 pub fn reportWithAlloc(
     data: *C.SDL_AssertData,
@@ -153,13 +180,16 @@ pub fn reportWithAlloc(
 
 /// Clear the list of all assertion failures.
 ///
+/// ## Remarks
 /// This function will clear the list of all assertions triggered up to that point.
 /// Immediately following this call, `assert.getReport()` will return no items.
 /// In addition, any previously-triggered assertions will be reset to a `trigger_count` of zero, and their `always_ignore` state will be `false`.
 ///
+/// ## Thread Safety
 /// This function is not thread safe.
 /// Other threads triggering an assertion, or simultaneously calling this function may cause memory leaks or crashes.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn resetReport() void {
     C.SDL_ResetAssertionReport();
@@ -167,9 +197,11 @@ pub fn resetReport() void {
 
 /// Set an application-defined assertion handler.
 ///
+/// ## Function Parameters
 /// * `handler`: The `assert.Handler` function to call when an assertion fails or `null` for the default handler.
 /// * `user_data`: A pointer that is passed to handler.
 ///
+/// ## Remarks
 /// This function allows an application to show its own assertion UI and/or force the response to an assertion failure.
 /// If the application doesn't provide this, SDL will try to do the right thing, popping up a system-specific GUI dialog, and probably minimizing any fullscreen windows.
 ///
@@ -177,8 +209,10 @@ pub fn resetReport() void {
 ///
 /// This callback is NOT reset to SDL's internal handler upon `init.shutdown()`!
 ///
+/// ## Thread Safety
 /// It is safe to call this function from any thread.
 ///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn setHandler(
     handler: ?Handler,

@@ -4,9 +4,11 @@ const std = @import("std");
 
 /// A callback used to free resources when a property is deleted.
 ///
+/// ## Function Parameters
 /// * `user_data`: An app-defined pointer passed to the callback.
 /// * `value`: The pointer assigned to the property to clean up.
 ///
+/// ## Remarks
 /// This should release any resources associated with value that are no longer needed.
 ///
 /// This callback is set per-property.
@@ -14,8 +16,10 @@ const std = @import("std");
 ///
 /// This callback will be called during `properties.Group.setPointerPropertyWithCleanup()` if the function fails for any reason.
 ///
+/// ## Thread Safety
 /// This callback may fire without any locks held; if this is a concern, the app should provide its own locking.
 ///
+/// ## Version
 /// This datatype is available since SDL 3.2.0.
 pub const CleanupCallback = *const fn (
     user_data: ?*anyopaque,
@@ -24,14 +28,18 @@ pub const CleanupCallback = *const fn (
 
 /// A callback used to enumerate all the properties in a group of properties.
 ///
+/// ## Function Parameters
 /// * `user_data`: An app-defined pointer passed to the callback.
 /// * `props`: The SDL_PropertiesID that is being enumerated.
 /// * `name`: The next property name in the enumeration.
 ///
+/// ## Remarks
 /// This callback is called from `properties.group.enumerateProperties()`, and is called once per property in the set.
 ///
+/// ## Thread Safety
 /// `properties.group.enumerateProperties()` holds a lock on props during this callback.
 ///
+/// ## Version
 /// This datatype is available since SDL 3.2.0.
 pub const EnumerateCallback = *const fn (
     user_data: ?*anyopaque,
@@ -41,6 +49,7 @@ pub const EnumerateCallback = *const fn (
 
 /// SDL properties type.
 ///
+/// ## Version
 /// This enum is available since SDL 3.2.0.
 pub const Type = enum(c_uint) {
     Pointer = C.SDL_PROPERTY_TYPE_POINTER,
@@ -53,17 +62,21 @@ pub const Type = enum(c_uint) {
 /// SDL properties group.
 /// Properties can be added or removed at runtime.
 ///
+/// ## Version
 /// This datatype is available since SDL 3.2.0.
 pub const Group = packed struct {
     value: C.SDL_PropertiesID,
 
     /// Clear a property from a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: Properties group to modify.
     /// * `name`: The name of the property to clear.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn clear(
         self: Group,
@@ -78,15 +91,19 @@ pub const Group = packed struct {
 
     /// Copy a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: Properties group to copy from.
     /// * `dest`: The destination properties.
     ///
+    /// ## Remarks
     /// Copy all the properties from one group of properties to another,
     /// with the exception of properties requiring cleanup (set using `properties.Group.setPointerPropertyWithCleanup()`), which will not be copied.
     /// Any property that already exists on `dest` will be overwritten.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn copyTo(
         self: Group,
@@ -101,12 +118,16 @@ pub const Group = packed struct {
 
     /// Destroy a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: Properties to destroy.
     ///
+    /// ## Remarks
     /// All properties are deleted and their cleanup functions will be called, if any.
     ///
+    /// ## Thread Safety
     /// This function should not be called while these properties are locked or other threads might be setting or getting values from these properties.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn deinit(
         self: Group,
@@ -118,10 +139,18 @@ pub const Group = packed struct {
 
     /// Enumerate the properties contained in a group of properties.
     ///
+    /// ## Function Parameters
+    /// * `self`: The properties group to iterate.
+    /// * `callback`: Callback function to run for each property in the group.
+    /// * `user_data`: User data to pass to the enumeration callback.
+    ///
+    /// ## Remarks
     /// The callback function is called for each property in the group of properties. The properties are locked during enumeration.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn enumerateProperties(
         self: Group,
@@ -140,13 +169,17 @@ pub const Group = packed struct {
 
     /// Get a property from a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: The properties to query.
     /// * `name`: The name of the property to query.
     ///
+    /// ## Return Value
     /// Returns the property, or `null` if it does not exist.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn get(
         self: Group,
@@ -175,14 +208,18 @@ pub const Group = packed struct {
 
     /// Utility function for getting all the properties in the group.
     ///
+    /// ## Function Parameters
     /// * `self`: Properties group to get all properties from.
     /// * `allocator`: Memory allocator to use to gather properties into.
     ///
+    /// ## Return Value
     /// Returns a string hash map of the property or an error.
     ///
+    /// ## Remarks
     /// Resulting map is owned and needs to be freed.
     ///
-    /// This is provided by the wrapper.
+    /// ## Version
+    /// This is provided by zig-sdl3.
     pub fn getAll(
         self: Group,
         allocator: std.mem.Allocator,
@@ -200,13 +237,17 @@ pub const Group = packed struct {
 
     /// Get the type of a property in a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: The properties to query.
     /// * `name`: The name of the property to query.
     ///
+    /// ## Remarks
     /// Returns null if the property is not found.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn getType(
         self: Group,
@@ -221,11 +262,14 @@ pub const Group = packed struct {
 
     /// Return whether a property exists in a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: The properties to query.
     /// * `name`: The name of the property to query.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn has(
         self: Group,
@@ -240,10 +284,16 @@ pub const Group = packed struct {
 
     /// Create a group of properties.
     ///
+    /// ## Return Value
+    /// Returns the created group of properties.
+    ///
+    /// ## Remarks
     /// All properties are automatically destroyed when `init.shutdown()` is called.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn init() !Group {
         const ret = C.SDL_CreateProperties();
@@ -252,8 +302,10 @@ pub const Group = packed struct {
 
     /// Lock a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: The properties to lock.
     ///
+    /// ## Remarks
     /// Obtain a multi-threaded lock for these properties.
     /// Other threads will wait while trying to lock these properties until they are unlocked.
     /// Properties must be unlocked before they are destroyed.
@@ -261,8 +313,10 @@ pub const Group = packed struct {
     /// The lock is automatically taken when setting individual properties,
     /// this function is only needed when you want to set several properties atomically or want to guarantee that properties being queried aren't freed in another thread.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn lock(
         self: Group,
@@ -275,12 +329,15 @@ pub const Group = packed struct {
 
     /// Set a property in the group.
     ///
+    /// ## Function Parameters
     /// * `self`: Group of properties to set property in.
     /// * `name`: Name of property to set.
     /// * `value`: Value of the property to set.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn set(
         self: Group,
@@ -299,19 +356,23 @@ pub const Group = packed struct {
 
     /// Set a pointer property in a group of properties with a cleanup function that is called when the property is deleted.
     ///
+    /// ## Function Parameters
     /// * `self`: The properties to modify.
     /// * `name`: The name of the property to modify.
     /// * `value`: The new value of the property, or `null` to delete the property.
     /// * `cleanup`: The function to call when this property is deleted, or NULL if no cleanup is necessary.
     /// * `user_data`: A pointer that is passed to the cleanup function.
     ///
+    /// ## Remarks
     /// The cleanup function is also called if setting the property fails for any reason.
     ///
     /// For simply setting basic data types, like numbers, bools, or strings, use `properties.Group.set()` instead, as those functions will handle cleanup on your behalf.
     /// This function is only for more complex, custom data.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn setPointerPropertyWithCleanup(
         self: Group,
@@ -332,10 +393,13 @@ pub const Group = packed struct {
 
     /// Unlock a group of properties.
     ///
+    /// ## Function Parameters
     /// * `self`: The properties to unlock.
     ///
+    /// ## Thread Safety
     /// It is safe to call this function from any thread.
     ///
+    /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn unlock(
         self: Group,
@@ -357,6 +421,10 @@ pub const Property = union(Type) {
 
 /// Get the global SDL properties.
 ///
+/// ## Return Value
+/// Returns the global properties map.
+///
+/// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getGlobal() !Group {
     const ret = try errors.wrapCall(C.SDL_PropertiesID, C.SDL_GetGlobalProperties(), 0);
