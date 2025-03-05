@@ -1,10 +1,11 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (10/57)
+## Done (11/57)
 * Assert
 * Camera
 * Errors
+* GUID
 * Init
 * Log
 * Metal
@@ -21,7 +22,6 @@ For monitoring how close various subsystems are to completion.
 ## Needs Testing
 * Blend Mode
 * Clipboard
-* GUID
 * Keycode
 * Loadso
 * Locale

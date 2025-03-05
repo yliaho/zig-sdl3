@@ -49,6 +49,10 @@ pub const clipboard = @import("clipboard.zig");
 /// These strings are set by calling `errors.set()`.
 pub const errors = @import("errors.zig");
 pub const gpu = @import("gpu.zig");
+
+/// A GUID is a 128-bit value that represents something that is uniquely identifiable by this value: "globally unique."
+///
+/// SDL provides functions to convert a GUID to/from a stri
 pub const GUID = @import("guid.zig").GUID;
 
 /// This file contains functions to set and get configuration hints, as well as listing each of them alphabetically.
