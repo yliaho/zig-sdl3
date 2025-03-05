@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (12/57)
+## Done (13/57)
 * Assert
 * Camera
 * Clipboard
@@ -12,6 +12,7 @@ For monitoring how close various subsystems are to completion.
 * Metal
 * Misc
 * Properties
+* Shared Object/Loadso
 * Version
 * Vulkan
 
@@ -23,7 +24,6 @@ For monitoring how close various subsystems are to completion.
 ## Needs Testing
 * Blend Mode
 * Keycode
-* Loadso
 * Locale
 * Pen
 * Pixels
