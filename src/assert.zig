@@ -244,17 +244,17 @@ test "Assert" {
 
     var assert_data1 = C.SDL_AssertData{};
     var assert_data2 = C.SDL_AssertData{};
-    _ = report(&assert_data1, "assertionTests", "assert.zig", 213);
+    _ = report(&assert_data1, "assertionTests", "assert.zig", 247);
     const allocated_report = try reportWithAlloc(&assert_data2, @src(), std.testing.allocator);
     defer std.testing.allocator.free(allocated_report.buffer);
 
     const report2: *const C.SDL_AssertData = getReport().?;
     const report1: *const C.SDL_AssertData = report2.next.?;
     try std.testing.expectEqual(null, report1.next);
-    try std.testing.expectEqual(213, report1.linenum);
+    try std.testing.expectEqual(247, report1.linenum);
     try std.testing.expectEqualStrings("assertionTests", std.mem.span(report1.function));
     try std.testing.expectEqualStrings("assert.zig", std.mem.span(report1.filename));
-    try std.testing.expectEqual(214, report2.linenum);
+    try std.testing.expectEqual(248, report2.linenum);
     try std.testing.expectEqualStrings("test.Assert", std.mem.span(report2.function));
     try std.testing.expectEqualStrings("src/assert.zig", std.mem.span(report2.filename));
 
