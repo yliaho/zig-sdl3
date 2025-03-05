@@ -38,6 +38,38 @@ pub const blend_mode = @import("blend_mode.zig");
 /// If taking a single frame automatically, or recording video from a camera's input without the user initiating it from a preview,
 /// it could be wise to drop the first several frames (if not the first several seconds worth of frames!) before using images from a camera.
 pub const camera = @import("camera.zig");
+
+/// SDL provides access to the system clipboard, both for reading information from other processes and publishing information of its own.
+///
+/// This is not just text! SDL apps can access and publish data by mimetype.
+///
+/// ## Basic Use (Text)
+/// Obtaining and publishing simple text to the system clipboard is as easy as calling `clipboard.getText()` and `clipboard.setText()`, respectively.
+/// These deal with C strings in UTF-8 encoding. Data transmission and encoding conversion is completely managed by SDL.
+///
+/// ## Clipboard Callbacks (Non-Text)
+/// Things get more complicated when the clipboard contains something other than text.
+/// Not only can the system clipboard contain data of any type, in some cases it can contain the same data in different formats!
+/// For example, an image painting app might let the user copy a graphic to the clipboard, and offers it in .BMP, .JPG, or .PNG format for other apps to consume.
+///
+/// Obtaining clipboard data ("pasting") like this is a matter of calling `clipboard.getData()` and telling it the mimetype of the data you want.
+/// But how does one know if that format is available?
+/// `hasData()` can report if a specific mimetype is offered, and `clipboard.getMimeTypes()` can provide the entire list of mimetypes available,
+/// so the app can decide what to do with the data and what formats it can support.
+///
+/// Setting the clipboard ("copying") to arbitrary data is done with `clipboard.setData()`.
+/// The app does not provide the data in this call, but rather the mimetypes it is willing to provide and a callback function.
+/// During the callback, the app will generate the data.
+/// This allows massive data sets to be provided to the clipboard, without any data being copied before it is explicitly requested.
+/// More specifically, it allows an app to offer data in multiple formats without providing a copy of all of them upfront.
+/// If the app has an image that it could provide in PNG or JPG format, it doesn't have to encode it to either of those unless and until something tries to paste it.
+///
+/// ## Primary Selection
+/// The X11 and Wayland video targets have a concept of the "primary selection" in addition to the usual clipboard.
+/// This is generally highlighted (but not explicitly copied) text from various apps.
+/// SDL offers APIs for this through `clipboard.getPrimarySelectionText()` and `clipboard.setPrimarySelectionText()`.
+/// SDL offers these APIs on platforms without this concept, too, but only so far that it will keep a copy of a string that the app sets for later retrieval;
+/// the operating system will not ever attempt to change the string externally if it doesn't support a primary selection.
 pub const clipboard = @import("clipboard.zig");
 
 /// Simple error message routines for SDL.

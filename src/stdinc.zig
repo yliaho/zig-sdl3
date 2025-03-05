@@ -88,8 +88,17 @@ pub const ReallocFunc = *const fn (mem: ?*anyopaque, size: usize) callconv(.C) ?
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn free(mem: ?*anyopaque) void {
-    return C.SDL_free(mem);
+pub fn free(mem: anytype) void {
+    switch (@typeInfo(@TypeOf(mem))) {
+        .pointer => |pt| {
+            if (pt.size == .slice) {
+                C.SDL_free(@ptrCast(mem.ptr));
+            } else {
+                C.SDL_free(@ptrCast(mem));
+            }
+        },
+        else => @compileError("Invalid argument to SDL free"),
+    }
 }
 
 /// Get the original set of SDL memory functions.

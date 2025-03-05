@@ -1,10 +1,10 @@
 .{
-    .name = "sdl3-template",
+    .name = .sdl3_template,
     .version = "0.0.0",
     .dependencies = .{
         .sdl3 = .{
             .url = "https://github.com/Gota7/zig-sdl3/archive/refs/heads/master.zip",
-            .hash = "12208c3b7dd5e442e543bb7d456769d94423279a6c423641da6d0127a51c9968392d",
+            .hash = "sdl3-0.0.1-NmT1Q-bVBgCpD4xJsXzQFDNtEMZuzAuqV13vZGM5kp3y",
         },
     },
     .paths = .{
@@ -12,4 +12,5 @@
         "build.zig.zon",
         "src",
     },
+    .fingerprint = 0xa5bd7236fc5f4b29,
 }
