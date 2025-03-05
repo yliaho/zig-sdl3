@@ -48,7 +48,7 @@ pub const Surface = struct {
     /// Create a Vulkan rendering surface for a window.
     ///
     /// ## Function Parameters
-    /// * `window`:	The window to which to attach the Vulkan surface.
+    /// * `window`: The window to which to attach the Vulkan surface.
     /// * `instance`: The Vulkan instance handle.
     /// * `allocator`: A VkAllocationCallbacks struct, which lets the app set the allocator that creates the surface. Can be `null`.
     ///

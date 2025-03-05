@@ -256,7 +256,7 @@ test "Assert" {
     try std.testing.expectEqualStrings("assert.zig", std.mem.span(report1.filename));
     try std.testing.expectEqual(248, report2.linenum);
     try std.testing.expectEqualStrings("test.Assert", std.mem.span(report2.function));
-    try std.testing.expectEqualStrings("src/assert.zig", std.mem.span(report2.filename));
+    try std.testing.expectEqualStrings("assert.zig", std.mem.span(report2.filename));
 
     resetReport();
     try std.testing.expectEqual(null, getReport());
