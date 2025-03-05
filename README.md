@@ -14,12 +14,9 @@ Some advantages of SDL3 include windowing, audio, gamepad, keyboard, mouse, rend
 
 ## Structure
 
-### Binding Generator
-
-A custom wrapper generator program is used to create the wrapper for SDL3.
-The source for this program is located in `generate.zig`, and the information used to generate the wrapper is in the `bindings` folder.
-Note that certain subsystems are too complex to automatically generate bindings for (such as `rect` or `iostream`), and so the handwritten code to them is located in `bindings/files`.
-Bindings can be generated using `zig build bindings`. This will update the `src` directory to be up to date with the latest bindings.
+### Source
+The `src` folder was originally generated via a binding generator, but manually perfecting and testing the subsystems was found to be more productive.
+Each source file must also call each function at least once in testing if possible to ensure compilation is successful.
 
 ### Examples
 
@@ -31,27 +28,21 @@ All examples may be built with `zig build examples`, or a single example can be 
 The `template` directory contains a sample hello world to get started using SDL3.
 Simply copy this folder to use as your project, and have fun!
 
-Note that this assumes you already have SDL3 installed and ready to link with for your target platform.
-In the future, we may look into bundling SDL3 and building it with this library to have full control.
-Doing so can also help potentially decouple parts of SDL3 from libc.
-
 ### Tests
-Tests are embedded directly into the YAML files to be put in their destination subsystem.
 Tests for the library can be ran by running `zig build test`.
 
 ## Features
 
 * SDL subsystems are divided into convenient namespaces.
+* Functions that can fail have the return wrapped with an error type and can even call a custom error callback.
 * C namespace exporting raw SDL functions in case it is ever needed.
 * Standard `init` and `deinit` functions for creating and destroying resources.
-* Skirts around C compat weirdness (C pointers, anyopaque, C types).
+* Skirts around C compat weirdness when possible (C pointers, anyopaque, C types).
 * Naming and conventions are more consistent with zig.
 * Functions return values rather than write to pointers.
 * Types that are intended to be nullable are now clearly annotated as such with optionals.
-* Callbacks with generics rather than anyopaque.
 * Easy conversion to/from SDL types from the wrapped types.
 * The `self.function()` notation is used where applicable.
-* Functions that can fail have the return wrapped with an error type.
 
 ## Hello World
 
