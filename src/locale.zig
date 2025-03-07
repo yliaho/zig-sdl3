@@ -1,4 +1,5 @@
 const C = @import("c.zig").C;
+const errors = @import("errors.zig");
 const stdinc = @import("stdinc.zig");
 
 /// A struct to provide locale data.
@@ -46,7 +47,8 @@ pub const Locale = extern struct {
     /// This function is available since SDL 3.2.0.
     pub fn getPreferred() ![]*Locale {
         var cnt: c_int = undefined;
-        const ret: [*]*Locale = @ptrCast(C.SDL_GetPreferredLocales(&cnt));
+        const val = C.SDL_GetPreferredLocales(&cnt);
+        const ret = try errors.wrapCallCPtr(*Locale, @ptrCast(val));
         return ret[0..@intCast(cnt)];
     }
 };
