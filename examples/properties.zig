@@ -19,7 +19,7 @@ fn arrayCleanupCallback(user_data: ?*anyopaque, val: ?*anyopaque) callconv(.C) v
     data.deinit();
 }
 
-fn printItems(user_data: ?*anyopaque, props: sdl3.C.SDL_PropertiesID, name: [*c]const u8) callconv(.C) void {
+fn printItems(user_data: ?*anyopaque, props: sdl3.c.SDL_PropertiesID, name: [*c]const u8) callconv(.C) void {
     const index: *u32 = @alignCast(@ptrCast(user_data));
     const group = sdl3.properties.Group{ .value = props };
     std.io.getStdOut().writer().print("Index: {d}, Name: \"{s}\", Type: {s}\n", .{

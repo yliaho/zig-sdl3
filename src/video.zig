@@ -701,6 +701,15 @@ pub const FlashOperation = enum(c_uint) {
     }
 };
 
+/// This is a unique ID for a window.
+///
+/// ## Remarks
+/// The value `0` is an invalid ID.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const WindowID = C.SDL_WindowID;
+
 /// The struct used as an opaque handle to a window.
 ///
 /// ## Version
@@ -1018,6 +1027,52 @@ pub const Window = packed struct {
         return errors.wrapCallBool(ret);
     }
 
+    /// Get a window from a stored ID.
+    ///
+    /// ## Function Parameters
+    /// * `id`: The ID of the window.
+    ///
+    /// ## Return Value
+    /// Returns the window associated with `id`.
+    ///
+    /// ## Remarks
+    /// The numeric ID is what `event.Window` references, and is necessary to map these events to specific `video.Window` objects.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn fromID(
+        id: WindowID,
+    ) !Window {
+        const ret = C.SDL_GetWindowFromID(id);
+        return .{ .value = try errors.wrapNull(*C.SDL_Window, ret) };
+    }
+
+    /// Query the display mode to use when a window is visible at fullscreen.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to query.
+    ///
+    /// ## Return Value
+    /// Returns a pointer to the exclusive fullscreen mode or `null` for borderless fullscreen desktop mode.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFullscreenMode(
+        self: Window,
+    ) !DisplayMode {
+        const ret = C.SDL_GetWindowFullscreenMode(self.value);
+        if (ret) |val| {
+            return DisplayMode.fromSdl(val.*);
+        }
+        return null;
+    }
+
     /// Create a window with the specified dimensions and flags.
     ///
     /// ## Function Parameters
@@ -1141,6 +1196,118 @@ pub const Window = packed struct {
 
         const window = try errors.wrapNull(*C.SDL_Window, C.SDL_CreateWindowWithProperties(group.value));
         return .{ .window = window, .properties = group };
+    }
+
+    /// Get the size of a window's client area.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to query the width and height from.
+    ///
+    /// ## Return Value
+    /// The minimum and maximum aspect ratio of the window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getAspectRatio(
+        self: Window,
+    ) !struct { min_aspect: f32, max_aspect: f32 } {
+        var min_aspect: f32 = undefined;
+        var max_aspect: f32 = undefined;
+        const ret = C.SDL_GetWindowAspectRatio(
+            self.value,
+            &min_aspect,
+            &max_aspect,
+        );
+        try errors.wrapCallBool(ret);
+        return .{ .min_aspect = min_aspect, .max_aspect = max_aspect };
+    }
+
+    /// Get the size of a window's borders (decorations) around the client area.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to query the size values of the border (decorations) from.
+    ///
+    /// ## Return Value
+    /// Returns the border size for each side of the window.
+    ///
+    /// ## Remarks
+    /// Note: This function may fail on systems where the window has not yet been decorated by the display server (for example, immediately after calling `video.Window.init()`).
+    /// It is recommended that you wait at least until the window has been presented and composited,
+    /// so that the window system has a chance to decorate the window and provide the border dimensions to SDL.
+    ///
+    /// This function also returns false if getting the information is not supported.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getBordersSize(
+        self: Window,
+    ) struct { top: u32, left: u32, bottom: u32, right: u32 } {
+        var top: c_int = undefined;
+        var left: c_int = undefined;
+        var bottom: c_int = undefined;
+        var right: c_int = undefined;
+        const ret = C.SDL_GetWindowBordersSize(
+            self.value,
+            &top,
+            &left,
+            &bottom,
+            &right,
+        );
+        try errors.wrapCallBool(ret);
+        return .{ .top = @intCast(top), .left = @intCast(left), .bottom = @intCast(bottom), .right = @intCast(right) };
+    }
+
+    /// Get the content display scale relative to a window's pixel size.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to query.
+    ///
+    /// ## Return Value
+    /// Returns the display scale.
+    ///
+    /// ## Remarks
+    /// This is a combination of the window pixel density and the display content scale, and is the expected scale for displaying content in this window.
+    /// For example, if a 3840x2160 window had a display scale of 2.0, the user expects the content to take twice as many pixels and be the same physical size
+    /// as if it were being displayed in a 1920x1080 window with a display scale of 1.0.
+    ///
+    /// Conceptually this value corresponds to the scale display setting, and is updated when that setting is changed,
+    /// or the window moves to a display with a different scale setting.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getDisplayScale(
+        self: Window,
+    ) !f32 {
+        const ret = C.SDL_GetWindowDisplayScale(self.value);
+        return errors.wrapCall(f32, ret, 0);
+    }
+
+    /// Get the window flags.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to query.
+    ///
+    /// ## Return Value
+    /// Returns the flags associated with the window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFlags(
+        self: Window,
+    ) WindowFlags {
+        return WindowFlags.fromSdl(C.SDL_GetWindowFlags(self.value));
     }
 
     /// Get the window that currently has an input grab enabled.
@@ -1462,8 +1629,26 @@ pub fn getSystemTheme() ?SystemTheme {
 }
 
 /// Get the name of a built in video driver.
+///
+/// ## Function Parameters
+/// * `index`: The index of a video driver.
+///
+/// ## Return Value
+/// Returns the name of the video driver with the given index.
+///
+/// ## Remarks
+/// The video drivers are presented in the order in which they are normally checked during initialization.
+///
+/// The names of drivers are all simple, low-ASCII identifiers, like "cocoa", "x11" or "windows".
+/// These never have Unicode characters, and are not meant to be proper names.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
 pub fn getDriverName(
-    index: u31,
+    index: usize,
 ) ?[]const u8 {
     const ret = C.SDL_GetVideoDriver(
         @intCast(index),
@@ -1508,4 +1693,10 @@ test "Video" {
     // Display.getPrimaryDisplay
     // getSystemTheme
     // getVideoDriver
+    // Window.getAspectRatio
+    // Window.getBordersSize
+    // Window.getDisplayScale
+    // Window.getFlags
+    // Window.fromID
+    // Window.getFullscreenMode
 }

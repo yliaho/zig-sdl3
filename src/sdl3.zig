@@ -8,6 +8,12 @@ pub const audio = @import("audio.zig");
 pub const assert = @import("assert.zig");
 pub const blend_mode = @import("blend_mode.zig");
 
+/// Provide raw access to SDL3's C API.
+///
+/// Under most circumstances, you will never need to use this.
+/// This should only really be used for functions not yet implemented in zig-sdl3.
+pub const c = @import("c.zig").C;
+
 /// Video capture for the SDL library.
 ///
 /// This API lets apps read input from video sources, like webcams.
@@ -136,6 +142,12 @@ pub const keycode = @import("keycode.zig");
 /// Don't unload a library if you plan to use these pointers in the future.
 /// Notably: beware of giving one of these pointers to `atexit()`, since it may call that pointer after the library unloads.
 pub const SharedObject = @import("loadso.zig").SharedObject;
+
+/// SDL locale services.
+///
+/// This provides a way to get a list of preferred locales (language plus country) for the user.
+/// There is exactly one function: `Locale.getPreferred()`, which handles all the heavy lifting,
+/// and offers documentation on all the strange ways humans might have configured their language settings.
 pub const Locale = @import("locale.zig").Locale;
 
 /// Simple log messages with priorities and categories.
@@ -194,6 +206,9 @@ pub const PowerState = @import("power.zig").PowerState;
 ///
 /// Properties can be removed from a group by using `properties.Group.clear()`.
 pub const properties = @import("properties.zig");
+
+/// Some helper functions for managing rectangles and 2D points, in both integer and floating point versions.
+pub const rect = @import("rect.zig");
 pub const render = @import("render.zig");
 pub const Scancode = @import("scancode.zig").Scancode;
 pub const sensor = @import("sensor.zig");
@@ -217,9 +232,6 @@ pub const video = @import("video.zig");
 pub const vulkan = @import("vulkan.zig");
 
 pub const Stream = @import("io_stream.zig").Stream;
-pub const rect = @import("rect.zig");
-
-pub const C = @import("c.zig").C;
 
 const extension_options = @import("extension_options");
 const std = @import("std");
@@ -238,17 +250,12 @@ const std = @import("std");
 /// This enum is available since SDL 3.2.0.
 pub const AppResult = enum(c_uint) {
     /// Value that requests that the app continue from the main callbacks.
-    Continue = C.SDL_APP_CONTINUE,
+    Continue = c.SDL_APP_CONTINUE,
     /// Value that requests termination with success from the main callbacks.
-    Success = C.SDL_APP_SUCCESS,
+    Success = c.SDL_APP_SUCCESS,
     /// Value that requests termination with error from the main callbacks.
-    Failure = C.SDL_APP_FAILURE,
+    Failure = c.SDL_APP_FAILURE,
 };
-
-/// Free memory allocated with SDL. For slices, pass in the pointer.
-pub fn free(mem: ?*anyopaque) void {
-    C.SDL_free(mem);
-}
 
 test {
     std.testing.refAllDecls(@This());
