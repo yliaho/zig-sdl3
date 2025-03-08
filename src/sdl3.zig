@@ -6,6 +6,10 @@ pub const audio = @import("audio.zig");
 ///
 /// However, setting callbacks should work fine.
 pub const assert = @import("assert.zig");
+
+/// Functions for fiddling with bits and bitmasks.
+pub const bits = @import("bits.zig");
+
 pub const blend_mode = @import("blend_mode.zig");
 
 /// Provide raw access to SDL3's C API.

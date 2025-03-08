@@ -1,8 +1,9 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (14/57)
+## Done (15/57)
 * Assert
+* Bits
 * Camera
 * Clipboard
 * Errors
@@ -61,7 +62,6 @@ For monitoring how close various subsystems are to completion.
 ## Not Applicable
 * Atomics (Zig has this already)
 * Begin Code
-* Bits (Zig has this already)
 * Close Code
 * Copying
 * Endian (Zig has this already)
