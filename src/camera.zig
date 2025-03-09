@@ -532,6 +532,8 @@ pub fn getNumDrivers() usize {
 
 // Test camera functionality.
 test "Camera" {
+    comptime try std.testing.expectEqual(@sizeOf(C.SDL_CameraID), @sizeOf(ID));
+    comptime try std.testing.expectEqual(@sizeOf(*C.SDL_Camera), @sizeOf(Camera));
 
     // Global functions.
     const num_drivers = getNumDrivers();

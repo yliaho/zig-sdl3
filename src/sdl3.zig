@@ -90,6 +90,9 @@ pub const clipboard = @import("clipboard.zig");
 /// These strings are maintained per-thread, and apps are welcome to set their own errors, which is popular when building libraries on top of SDL for other apps to consume.
 /// These strings are set by calling `errors.set()`.
 pub const errors = @import("errors.zig");
+
+pub const events = @import("events.zig");
+
 pub const gpu = @import("gpu.zig");
 
 /// A GUID is a 128-bit value that represents something that is uniquely identifiable by this value: "globally unique."
@@ -254,11 +257,11 @@ const std = @import("std");
 /// This enum is available since SDL 3.2.0.
 pub const AppResult = enum(c_uint) {
     /// Value that requests that the app continue from the main callbacks.
-    Continue = c.SDL_APP_CONTINUE,
+    run = c.SDL_APP_CONTINUE,
     /// Value that requests termination with success from the main callbacks.
-    Success = c.SDL_APP_SUCCESS,
+    success = c.SDL_APP_SUCCESS,
     /// Value that requests termination with error from the main callbacks.
-    Failure = c.SDL_APP_FAILURE,
+    failure = c.SDL_APP_FAILURE,
 };
 
 test {

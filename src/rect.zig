@@ -1,4 +1,5 @@
 const C = @import("c.zig").C;
+const errors = @import("errors.zig");
 const std = @import("std");
 
 pub const FloatingType = f32;
@@ -125,8 +126,28 @@ pub fn Rect(comptime Type: type) type {
             };
         }
 
+        /// Get intersection with another rect.
+        fn getIntersectionFRect(self: FRect, other: FRect) ?FRect {
+            const a = self.toSdl();
+            const b = other.toSdl();
+            var ret: C.SDL_FRect = undefined;
+            if (!C.SDL_GetRectIntersectionFloat(&a, &b, &ret))
+                return null;
+            return fromSdl(ret);
+        }
+
+        /// Get intersection with another rect.
+        fn getIntersectionIRect(self: IRect, other: IRect) ?IRect {
+            const a = self.toSdl();
+            const b = other.toSdl();
+            var ret: C.SDL_Rect = undefined;
+            if (!C.SDL_GetRectIntersection(&a, &b, &ret))
+                return null;
+            return fromSdl(ret);
+        }
+
         /// Calculate the intersection between a rect and lines. Returns null if there is no intersection.
-        fn getRectAndLineIntersectionFRect(self: FRect, line: [2]FPoint) ?[2]FPoint {
+        fn getLineIntersectionFRect(self: FRect, line: [2]FPoint) ?[2]FPoint {
             const rect = self.toSdl();
             var p1 = line[0].toSdl();
             var p2 = line[1].toSdl();
@@ -136,7 +157,7 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// Calculate the intersection between a rect and lines. Returns null if there is no intersection.
-        fn getRectAndLineIntersectionIRect(self: IRect, line: [2]IPoint) ?[2]IPoint {
+        fn getLineIntersectionIRect(self: IRect, line: [2]IPoint) ?[2]IPoint {
             const rect = self.toSdl();
             var p1 = line[0].toSdl();
             var p2 = line[1].toSdl();
@@ -216,23 +237,21 @@ pub fn Rect(comptime Type: type) type {
             };
         }
 
-        /// Get intersection with another rect.
-        fn getRectIntersectionFRect(self: FRect, other: FRect) ?FRect {
+        /// Get the union between two rectangles.
+        fn getUnionFRect(self: FRect, other: FRect) !FRect {
             const a = self.toSdl();
             const b = other.toSdl();
             var ret: C.SDL_FRect = undefined;
-            if (!C.SDL_GetRectIntersectionFloat(&a, &b, &ret))
-                return null;
+            try errors.wrapCallBool(C.SDL_GetRectUnionFloat(&a, &b, &ret));
             return fromSdl(ret);
         }
 
-        /// Get intersection with another rect.
-        fn getRectIntersectionIRect(self: IRect, other: IRect) ?IRect {
+        /// Get the union between two rectangles.
+        fn getUnionIRect(self: IRect, other: IRect) !IRect {
             const a = self.toSdl();
             const b = other.toSdl();
             var ret: C.SDL_Rect = undefined;
-            if (!C.SDL_GetRectIntersection(&a, &b, &ret))
-                return null;
+            try errors.wrapCallBool(C.SDL_GetRectUnion(&a, &b, &ret));
             return fromSdl(ret);
         }
 
@@ -276,26 +295,6 @@ pub fn Rect(comptime Type: type) type {
             };
         }
 
-        /// Get the union between two rectangles.
-        fn unionFRect(self: FRect, other: FRect) !FRect {
-            const a = self.toSdl();
-            const b = other.toSdl();
-            var ret: C.SDL_FRect = undefined;
-            if (!C.SDL_GetRectUnionFloat(&a, &b, &ret))
-                return error.SDLError;
-            return fromSdl(ret);
-        }
-
-        /// Get the union between two rectangles.
-        fn unionIRect(self: IRect, other: IRect) !IRect {
-            const a = self.toSdl();
-            const b = other.toSdl();
-            var ret: C.SDL_Rect = undefined;
-            if (!C.SDL_GetRectUnion(&a, &b, &ret))
-                return error.SDLError;
-            return fromSdl(ret);
-        }
-
         // Put other SDL declarations here.
         const isFRect = Type == FloatingType;
         const isIRect = Type == IntegerType;
@@ -314,9 +313,7 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Version
         /// This function is available since SDL 3.2.0.
-        pub const getRectIntersection = if (isIRect) getRectIntersectionIRect else if (isFRect) getRectIntersectionFRect else null;
-        /// If intersecting with another rectangle.
-        pub const hasIntersection = if (isIRect) hasIntersectionIRect else if (isFRect) hasIntersectionFRect else null;
+        pub const getIntersection = if (isIRect) getIntersectionIRect else if (isFRect) getIntersectionFRect else null;
 
         /// Calculate the intersection of a rectangle and line segment.
         ///
@@ -335,11 +332,26 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Version
         /// This function is available since SDL 3.2.0.
-        pub const getRectAndLineIntersection = if (isIRect) getRectAndLineIntersectionIRect else if (isFRect) getRectAndLineIntersectionFRect else null;
+        pub const getLineIntersection = if (isIRect) getLineIntersectionIRect else if (isFRect) getLineIntersectionFRect else null;
+
+        /// Calculate the union of two rectangles.
+        ///
+        /// ## Function Parameters
+        /// * `self`: First rectangle.
+        /// * `other`: Second rectangle.
+        ///
+        /// ## Return Value
+        /// Returns the union region between the two rectangles.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub const getUnion = if (isIRect) getUnionIRect else if (isFRect) getUnionFRect else null;
+
+        /// If intersecting with another rectangle.
+        pub const hasIntersection = if (isIRect) hasIntersectionIRect else if (isFRect) hasIntersectionFRect else null;
+
         /// Get the SDL rectangle.
         pub const toSdl = if (isIRect) toSdlIRect else if (isFRect) toSdlFRect else null;
-        /// Get the union region between two rectangles.
-        pub const unionRegion = if (isIRect) unionIRect else if (isFRect) unionFRect else null;
     };
 }
 
@@ -369,4 +381,6 @@ test "Rect" {
     // getRectEnclosingPointsFloat
     // getRectIntersection
     // getRectIntersectionFloat
+    // getRectUnion
+    // getRectUnionFloat
 }

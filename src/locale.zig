@@ -1,5 +1,6 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
+const std = @import("std");
 const stdinc = @import("stdinc.zig");
 
 /// A struct to provide locale data.
@@ -55,6 +56,10 @@ pub const Locale = extern struct {
 
 // Test fetching locale.
 test "Locale" {
+    comptime try std.testing.expectEqual(@sizeOf(C.SDL_Locale), @sizeOf(Locale));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Locale, "language"), @offsetOf(Locale, "language"));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Locale, "country"), @offsetOf(Locale, "country"));
+
     const locales = Locale.getPreferred() catch return;
     defer stdinc.free(locales);
 }

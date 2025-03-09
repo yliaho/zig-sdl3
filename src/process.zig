@@ -44,6 +44,16 @@ pub const IO = enum(c_uint) {
 pub const Process = packed struct {
     value: *C.SDL_Process,
 
+    /// Process creation properties.
+    ///
+    /// ## Version
+    /// Provided by zig-sdl3.
+    pub const CreateProperties = struct {
+        /// A slice of strings containing the program to run, any arguments, and a `null` pointer,
+        /// e.g. const char *args[] = { "myprogram", "argument", null }.
+        args: [:null]const ?[*:0]const u8,
+    };
+
     /// Create a new process.
     ///
     /// ## Function Parameters

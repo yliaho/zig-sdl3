@@ -11,7 +11,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const sdl3 = b.dependency("sdl3", .{});
+    const sdl3 = b.dependency("sdl3", .{
+        .callbacks = true,
+    });
     exe.root_module.addImport("sdl3", sdl3.module("sdl3"));
     b.installArtifact(exe);
 
