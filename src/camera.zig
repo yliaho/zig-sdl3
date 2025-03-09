@@ -12,11 +12,11 @@ const surface = @import("surface.zig");
 /// This enum is provided by zig-sdl3.
 pub const PermissionState = enum(c_int) {
     /// User has denied access to camera.
-    Denied = -1,
+    denied = -1,
     /// User has not responded to allow camera yet.
-    Awaiting = 0,
+    awaiting = 0,
     /// User has approved access to camera.
-    Approved = 1,
+    approved = 1,
 };
 
 /// The position of camera in relation to system device.
@@ -24,8 +24,8 @@ pub const PermissionState = enum(c_int) {
 /// ## Version
 /// This enum is available since SDL 3.2.0.
 pub const Position = enum(c_uint) {
-    FrontFacing = C.SDL_CAMERA_POSITION_FRONT_FACING,
-    BackFacing = C.SDL_CAMERA_POSITION_BACK_FACING,
+    front_facing = C.SDL_CAMERA_POSITION_FRONT_FACING,
+    back_facing = C.SDL_CAMERA_POSITION_BACK_FACING,
 };
 
 /// This is a unique ID for a camera device for the time it is connected to the system, and is never reused for the lifetime of the application.
@@ -185,7 +185,7 @@ pub const Camera = packed struct {
     /// It must be given back to the camera subsystem with `camera.Camera.releaseFrame()`!
     ///
     /// If the system is waiting for the user to approve access to the camera, as some platforms require, this will return `null` (no frames available);
-    /// you should either wait for an `event.Event.camera_device_approved` (or `event.Event.camera_device_denied`) event,
+    /// you should either wait for an `event.Type.camera_device_approved` (or `event.Type.camera_device_denied`) event,
     /// or poll `camera.Camera.getPermissionState()` occasionally until it returns non-zero.
     ///
     /// ## Thread Safety
@@ -234,7 +234,7 @@ pub const Camera = packed struct {
     /// Note that this might not be the native format of the hardware, as SDL might be converting to this format behind the scenes.
     ///
     /// If the system is waiting for the user to approve access to the camera, as some platforms require, this will return false, but this isn't necessarily a fatal error;
-    /// you should either wait for an `event.Event.camera_device_approved` (or `event.Event.camera_device_denied`) event,
+    /// you should either wait for an `event.Type.camera_device_approved` (or `event.Type.camera_device_denied`) event,
     /// or poll `camera.Camera.getPermissionState()` occasionally until it returns non-zero.
     ///
     /// ## Thread Safety
@@ -289,7 +289,7 @@ pub const Camera = packed struct {
     /// On some platforms, this presents as a popup dialog where the user has to explicitly approve access;
     /// on others the approval might be implicit and not alert the user at all.
     ///
-    /// Instead of polling with this function, you can wait for a `event.Event.camera_device_approved` (or `event.Event.camera_device_denied`) event in the standard SDL event loop,
+    /// Instead of polling with this function, you can wait for a `event.Type.camera_device_approved` (or `event.Type.camera_device_denied`) event in the standard SDL event loop,
     /// which is guaranteed to be sent once when permission to use the camera is decided.
     ///
     /// If a camera is declined, there's nothing to be done but call `camera.Camera.deinit()` to dispose of it.
@@ -358,7 +358,7 @@ pub const Camera = packed struct {
     /// Note that the camera is not usable until the user approves its use!
     /// On some platforms, the operating system will prompt the user to permit access to the camera, and they can choose Yes or No at that point.
     /// Until they do, the camera will not be usable.
-    /// The app should either wait for an `event.Event.camera_device_approved` (or `event.Event.camera_device_denied`) event,
+    /// The app should either wait for an `event.Type.camera_device_approved` (or `event.Type.camera_device_denied`) event,
     /// or poll `camera.Camera.getPermissionState()` occasionally until it returns non-zero.
     /// On platforms that don't require explicit user approval (and perhaps in places where the user previously permitted access),
     /// the approval event might come immediately, but it might come seconds, minutes, or hours later!

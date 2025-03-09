@@ -278,13 +278,13 @@ fn sdlLog(
     } else null;
     const priority_managed = sdl3.log.Priority.fromSdl(priority);
     const priority_str: [:0]const u8 = if (priority_managed) |val| switch (val) {
-        .Trace => "Trace",
-        .Verbose => "Verbose",
-        .Debug => "Debug",
-        .Info => "Info",
-        .Warn => "Warn",
-        .Error => "Error",
-        .Critical => "Critical",
+        .trace => "Trace",
+        .verbose => "Verbose",
+        .debug => "Debug",
+        .info => "Info",
+        .warn => "Warn",
+        .err => "Error",
+        .critical => "Critical",
     } else "Unknown";
     if (category_str) |val| {
         std.debug.print("[{s}:{s}] {s}\n", .{ val, priority_str, message });
@@ -315,7 +315,7 @@ fn init(
 
     // Setup logging.
     sdl3.errors.error_callback = &sdlErr;
-    sdl3.log.setAllPriorities(.Info);
+    sdl3.log.setAllPriorities(.info);
     sdl3.log.setLogOutputFunction(&sdlLog, null);
 
     log_app.logInfo("Starting application...");

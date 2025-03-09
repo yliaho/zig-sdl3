@@ -33,15 +33,15 @@ pub const Handler = *const fn (
 /// This enum is available since SDL 3.2.0.
 pub const State = enum(c_int) {
     /// Retry the assert immediately.
-    Retry = C.SDL_ASSERTION_RETRY,
+    retry = C.SDL_ASSERTION_RETRY,
     /// Make the debugger trigger a breakpoint.
-    Break = C.SDL_ASSERTION_BREAK,
+    breakpoint = C.SDL_ASSERTION_BREAK,
     /// Terminate the program.
-    Abort = C.SDL_ASSERTION_ABORT,
+    abort = C.SDL_ASSERTION_ABORT,
     /// Ignore the assert.
-    Ignore = C.SDL_ASSERTION_IGNORE,
+    ignore = C.SDL_ASSERTION_IGNORE,
     /// Ignore the assert from now on.
-    AlwaysIgnore = C.SDL_ASSERTION_ALWAYS_IGNORE,
+    always_ignore = C.SDL_ASSERTION_ALWAYS_IGNORE,
 };
 
 /// Get the default assertion handler.
@@ -228,7 +228,7 @@ const TestHandlerCallbackData = struct {
 fn testAssertCallback(assert_data: [*c]const C.SDL_AssertData, user_data: ?*anyopaque) callconv(.C) C.SDL_AssertState {
     var data: *TestHandlerCallbackData = @ptrCast(@alignCast(user_data));
     data.last_data = assert_data;
-    return @intFromEnum(State.Ignore);
+    return @intFromEnum(State.ignore);
 }
 
 // Test asserting functionality.

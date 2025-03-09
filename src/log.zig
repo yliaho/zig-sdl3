@@ -28,13 +28,13 @@ pub const LogOutputFunction = *const fn (
 /// ## Version
 /// This enum is available since SDL 3.2.0.
 pub const Priority = enum(c_uint) {
-    Trace = C.SDL_LOG_PRIORITY_TRACE,
-    Verbose = C.SDL_LOG_PRIORITY_VERBOSE,
-    Debug = C.SDL_LOG_PRIORITY_DEBUG,
-    Info = C.SDL_LOG_PRIORITY_INFO,
-    Warn = C.SDL_LOG_PRIORITY_WARN,
-    Error = C.SDL_LOG_PRIORITY_ERROR,
-    Critical = C.SDL_LOG_PRIORITY_CRITICAL,
+    trace = C.SDL_LOG_PRIORITY_TRACE,
+    verbose = C.SDL_LOG_PRIORITY_VERBOSE,
+    debug = C.SDL_LOG_PRIORITY_DEBUG,
+    info = C.SDL_LOG_PRIORITY_INFO,
+    warn = C.SDL_LOG_PRIORITY_WARN,
+    err = C.SDL_LOG_PRIORITY_ERROR,
+    critical = C.SDL_LOG_PRIORITY_CRITICAL,
 
     /// Make a priority from an SDL value.
     pub fn fromSdl(val: c_uint) ?Priority {
@@ -50,7 +50,7 @@ pub const Priority = enum(c_uint) {
     /// * `prefix`: The prefix to use for that log priority, or `null` to use no prefix.
     ///
     /// ## Remarks
-    /// By default `log.Priority.Info` and below have no prefix, and `log.priority.Warn` and higher have a prefix showing their priority, e.g. "WARNING: ".
+    /// By default `log.Priority.info` and below have no prefix, and `log.priority.warn` and higher have a prefix showing their priority, e.g. "WARNING: ".
     ///
     /// Note that prefixes will only effect the default log callback and not any custom ones.
     ///
@@ -169,7 +169,7 @@ pub const Category = packed struct {
         );
     }
 
-    /// Log a message with `log.Priority.Debug`.
+    /// Log a message with `log.Priority.debug`.
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
@@ -191,7 +191,7 @@ pub const Category = packed struct {
         );
     }
 
-    /// Log a message with `log.Priority.Error`.
+    /// Log a message with `log.Priority.err`.
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
@@ -213,7 +213,7 @@ pub const Category = packed struct {
         );
     }
 
-    /// Log a message with `log.Priority.Info`.
+    /// Log a message with `log.Priority.info`.
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
@@ -235,7 +235,7 @@ pub const Category = packed struct {
         );
     }
 
-    /// Log a message with `log.Priority.Trace`.
+    /// Log a message with `log.Priority.trace`.
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
@@ -257,7 +257,7 @@ pub const Category = packed struct {
         );
     }
 
-    /// Log a message with `log.Priority.Verbose`.
+    /// Log a message with `log.Priority.verbose`.
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
@@ -279,7 +279,7 @@ pub const Category = packed struct {
         );
     }
 
-    /// Log a message with `log.Priority.Warn`.
+    /// Log a message with `log.Priority.warn`.
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
@@ -359,7 +359,7 @@ pub fn getLogOutputFunction() struct { callback: LogOutputFunction, user_data: ?
     return .{ .callback = callback.?, .user_data = user_data };
 }
 
-/// Log a message with `log.Category.application` and `log.Priority.Info`.
+/// Log a message with `log.Category.application` and `log.Priority.info`.
 ///
 /// ## Function Parameters
 /// * `str`: The string to log.
@@ -468,63 +468,63 @@ test "Log" {
     log("Hello World!");
     try std.testing.expectEqualStrings("Hello World!", testGetLastMessage(data));
     try std.testing.expectEqual(Category.application, data.last_category);
-    try std.testing.expectEqual(.Info, data.last_priority);
+    try std.testing.expectEqual(.info, data.last_priority);
 
     const category = Category.render;
-    category.setPriority(.Critical);
-    try std.testing.expectEqual(.Critical, category.getPriority());
-    category.setPriority(.Error);
-    try std.testing.expectEqual(.Error, category.getPriority());
+    category.setPriority(.critical);
+    try std.testing.expectEqual(.critical, category.getPriority());
+    category.setPriority(.err);
+    try std.testing.expectEqual(.err, category.getPriority());
 
-    setAllPriorities(.Trace);
-    try std.testing.expectEqual(.Trace, Category.application.getPriority());
+    setAllPriorities(.trace);
+    try std.testing.expectEqual(.trace, Category.application.getPriority());
 
-    category.log(.Verbose, "a");
+    category.log(.verbose, "a");
     try std.testing.expectEqualStrings("a", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Verbose, data.last_priority);
+    try std.testing.expectEqual(.verbose, data.last_priority);
 
     category.logCritical("b");
     try std.testing.expectEqualStrings("b", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Critical, data.last_priority);
+    try std.testing.expectEqual(.critical, data.last_priority);
 
     category.logDebug("c");
     try std.testing.expectEqualStrings("c", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Debug, data.last_priority);
+    try std.testing.expectEqual(.debug, data.last_priority);
 
     category.logError("d");
     try std.testing.expectEqualStrings("d", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Error, data.last_priority);
+    try std.testing.expectEqual(.err, data.last_priority);
 
     category.logInfo("e");
     try std.testing.expectEqualStrings("e", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Info, data.last_priority);
+    try std.testing.expectEqual(.info, data.last_priority);
 
     category.logTrace("f");
     try std.testing.expectEqualStrings("f", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Trace, data.last_priority);
+    try std.testing.expectEqual(.trace, data.last_priority);
 
     category.logVerbose("g");
     try std.testing.expectEqualStrings("g", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Verbose, data.last_priority);
+    try std.testing.expectEqual(.verbose, data.last_priority);
 
     category.logWarn("h");
     try std.testing.expectEqualStrings("h", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
-    try std.testing.expectEqual(.Warn, data.last_priority);
+    try std.testing.expectEqual(.warn, data.last_priority);
 
     // Prefix only takes effect with default function for some reason? So we can not really test this.
-    const pri = Priority.Info;
+    const pri = Priority.info;
     try pri.setPrefix("[INFO]: ");
     try pri.setPrefix(null);
 
     resetAllPriorities();
-    try std.testing.expectEqual(.Info, Category.application.getPriority());
+    try std.testing.expectEqual(.info, Category.application.getPriority());
     setLogOutputFunction(backup.callback, backup.user_data);
 }

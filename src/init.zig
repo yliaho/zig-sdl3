@@ -84,61 +84,61 @@ pub const AppMetadataProperty = enum {
     /// The human-readable name of the application, like "My Game 2: Bad Guy's Revenge!".
     /// This will show up anywhere the OS shows the name of the application separately from window titles, such as volume control applets, etc.
     /// This defaults to "SDL Application".
-    Name,
+    name,
     /// The version of the app that is running; there are no rules on format, so "1.0.3beta2" and "April 22nd, 2024" and a git hash are all valid options.
     /// This has no default.
-    Version,
+    version,
     /// A unique string that identifies this app.
     /// This must be in reverse-domain format, like "com.example.mygame2".
     /// This string is used by desktop compositors to identify and group windows together, as well as match applications with associated desktop settings and icons.
     /// If you plan to package your application in a container such as Flatpak, the app ID should match the name of your Flatpak container as well.
     /// This has no default.
-    Identifier,
+    identifier,
     /// The human-readable name of the creator/developer/maker of this app, like "MojoWorkshop, LLC"
-    Creator,
+    creator,
     /// The human-readable copyright notice, like "Copyright (c) 2024 MojoWorkshop, LLC" or whatnot.
     /// Keep this to one line, don't paste a copy of a whole software license in here.
     /// This has no default.
-    Copyright,
+    copyright,
     /// A URL to the app on the web.
     /// Maybe a product page, or a storefront, or even a GitHub repository, for user's further information.
     /// This has no default.
-    Url,
+    url,
     /// The type of application this is.
     /// Currently this string can be "game" for a video game, "mediaplayer" for a media player, or generically "application" if nothing else applies.
     /// Future versions of SDL might add new types.
     /// This defaults to "application".
-    Type,
+    program_type,
 
     /// Convert from an SDL string.
     pub fn fromSdl(val: [:0]const u8) AppMetadataProperty {
         if (std.mem.eql(u8, C.SDL_PROP_APP_METADATA_NAME_STRING, val))
-            return .Name;
+            return .name;
         if (std.mem.eql(u8, C.SDL_PROP_APP_METADATA_VERSION_STRING, val))
-            return .Version;
+            return .version;
         if (std.mem.eql(u8, C.SDL_PROP_APP_METADATA_IDENTIFIER_STRING, val))
-            return .Identifier;
+            return .identifier;
         if (std.mem.eql(u8, C.SDL_PROP_APP_METADATA_CREATOR_STRING, val))
-            return .Creator;
+            return .creator;
         if (std.mem.eql(u8, C.SDL_PROP_APP_METADATA_COPYRIGHT_STRING, val))
-            return .Copyright;
+            return .copyright;
         if (std.mem.eql(u8, C.SDL_PROP_APP_METADATA_URL_STRING, val))
-            return .Url;
+            return .url;
         if (std.mem.eql(u8, C.SDL_PROP_APP_METADATA_TYPE_STRING, val))
-            return .Type;
-        return .Name;
+            return .program_type;
+        return .name;
     }
 
     /// Convert to an SDL string.
     pub fn toSdl(self: AppMetadataProperty) [:0]const u8 {
         return switch (self) {
-            .Name => C.SDL_PROP_APP_METADATA_NAME_STRING,
-            .Version => C.SDL_PROP_APP_METADATA_VERSION_STRING,
-            .Identifier => C.SDL_PROP_APP_METADATA_IDENTIFIER_STRING,
-            .Creator => C.SDL_PROP_APP_METADATA_CREATOR_STRING,
-            .Copyright => C.SDL_PROP_APP_METADATA_COPYRIGHT_STRING,
-            .Url => C.SDL_PROP_APP_METADATA_URL_STRING,
-            .Type => C.SDL_PROP_APP_METADATA_TYPE_STRING,
+            .name => C.SDL_PROP_APP_METADATA_NAME_STRING,
+            .version => C.SDL_PROP_APP_METADATA_VERSION_STRING,
+            .identifier => C.SDL_PROP_APP_METADATA_IDENTIFIER_STRING,
+            .creator => C.SDL_PROP_APP_METADATA_CREATOR_STRING,
+            .copyright => C.SDL_PROP_APP_METADATA_COPYRIGHT_STRING,
+            .url => C.SDL_PROP_APP_METADATA_URL_STRING,
+            .program_type => C.SDL_PROP_APP_METADATA_TYPE_STRING,
         };
     }
 };
@@ -398,12 +398,12 @@ test "Init" {
     try runOnMainThread(testRunOnMainThreadCb, &data, true);
     try std.testing.expectEqual(-1, data);
     try std.testing.expectEqual(flags, wasInit(flags));
-    try std.testing.expectEqualStrings("SDL3 Test", getAppMetadataProperty(.Name).?);
-    try std.testing.expectEqual(null, getAppMetadataProperty(.Version));
-    try std.testing.expectEqualStrings("!Testing", getAppMetadataProperty(.Identifier).?);
-    try setAppMetadataProperty(.Creator, "Gota7");
-    try std.testing.expectEqualStrings("Gota7", getAppMetadataProperty(.Creator).?);
-    try setAppMetadataProperty(.Creator, null);
-    try std.testing.expectEqual(null, getAppMetadataProperty(.Creator));
-    try std.testing.expectEqual(null, getAppMetadataProperty(.Url));
+    try std.testing.expectEqualStrings("SDL3 Test", getAppMetadataProperty(.name).?);
+    try std.testing.expectEqual(null, getAppMetadataProperty(.version));
+    try std.testing.expectEqualStrings("!Testing", getAppMetadataProperty(.identifier).?);
+    try setAppMetadataProperty(.creator, "Gota7");
+    try std.testing.expectEqualStrings("Gota7", getAppMetadataProperty(.creator).?);
+    try setAppMetadataProperty(.creator, null);
+    try std.testing.expectEqual(null, getAppMetadataProperty(.creator));
+    try std.testing.expectEqual(null, getAppMetadataProperty(.url));
 }

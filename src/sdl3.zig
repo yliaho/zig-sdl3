@@ -29,7 +29,7 @@ pub const c = @import("c.zig").C;
 /// and some will present a UI asking the user if your application should be allowed to obtain images at all, which they can deny.
 /// A successfully opened camera will not provide images until permission is granted.
 /// Applications, after opening a camera device, can see if they were granted access by either polling with the `camera.Camera.getPermissionState()` function,
-/// or waiting for an `event.Event.camera_device_approved` or `event.Event.camera_device_denied` event.
+/// or waiting for an `event.Type.camera_device_approved` or `event.Type.camera_device_denied` event.
 /// Platforms that don't have any user approval process will report approval immediately.
 ///
 /// Note that SDL cameras only provide video as individual frames; they will not provide full-motion video encoded in a movie file format,
@@ -190,6 +190,16 @@ pub const Locale = @import("locale.zig").Locale;
 ///
 /// Each log call is atomic, so you won't see log messages cut off one another when logging from multiple threads.
 pub const log = @import("log.zig");
+
+/// Ability to call other main functions.
+///
+/// SDL will take care of platform specific details on how it gets called.
+///
+/// You most likely don't want to touch this and instead deal with the `.callbacks` setting to enable main callbacks in `build.zig`.
+/// See the template project for an example on how to set this up.
+///
+/// For more information, see:
+/// [https://wiki.libsdl.org/SDL3/README/main-functions](https://wiki.libsdl.org/SDL3/README/main-functions).
 pub const main = @import("main.zig");
 pub const message_box = @import("message_box.zig");
 

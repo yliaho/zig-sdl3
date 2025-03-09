@@ -4,11 +4,11 @@ const std = @import("std");
 fn printPropertyType(typ: ?sdl3.properties.Type) []const u8 {
     if (typ) |val|
         return switch (val) {
-            .Pointer => "pointer",
-            .String => "string",
-            .Number => "number",
-            .Float => "float",
-            .Boolean => "boolean",
+            .pointer => "pointer",
+            .string => "string",
+            .number => "number",
+            .float => "float",
+            .boolean => "boolean",
         };
     return "[does not exist]";
 }
@@ -34,10 +34,10 @@ pub fn main() !void {
     const properties = try sdl3.properties.Group.init();
     defer properties.deinit();
     var num: u32 = 3;
-    try properties.set("myBool", .{ .Boolean = true });
-    try properties.set("myNum", .{ .Number = 7 });
-    try properties.set("myNumPtr", .{ .Pointer = &num });
-    try properties.set("myStr", .{ .String = "Hello World!" });
+    try properties.set("myBool", .{ .boolean = true });
+    try properties.set("myNum", .{ .number = 7 });
+    try properties.set("myNumPtr", .{ .pointer = &num });
+    try properties.set("myStr", .{ .string = "Hello World!" });
 
     const allocator = std.heap.c_allocator;
     var arr = std.ArrayList(u32).init(allocator);
@@ -69,9 +69,9 @@ pub fn main() !void {
     try properties.enumerateProperties(printItems, &index);
 
     if (properties.get("myBool")) |val| {
-        try writer.print("\nValue of \"myBool\" is {s}\n", .{if (val.Boolean) "true" else "false"});
+        try writer.print("\nValue of \"myBool\" is {s}\n", .{if (val.boolean) "true" else "false"});
     }
     if (properties.get("myStr")) |val| {
-        try writer.print("\nValue of \"myStr\" is {s}\n", .{val.String}); // Will not print.
+        try writer.print("\nValue of \"myStr\" is {s}\n", .{val.string}); // Will not print.
     }
 }

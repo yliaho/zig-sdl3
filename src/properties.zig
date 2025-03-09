@@ -52,11 +52,11 @@ pub const EnumerateCallback = *const fn (
 /// ## Version
 /// This enum is available since SDL 3.2.0.
 pub const Type = enum(c_uint) {
-    Pointer = C.SDL_PROPERTY_TYPE_POINTER,
-    String = C.SDL_PROPERTY_TYPE_STRING,
-    Number = C.SDL_PROPERTY_TYPE_NUMBER,
-    Float = C.SDL_PROPERTY_TYPE_FLOAT,
-    Boolean = C.SDL_PROPERTY_TYPE_BOOLEAN,
+    pointer = C.SDL_PROPERTY_TYPE_POINTER,
+    string = C.SDL_PROPERTY_TYPE_STRING,
+    number = C.SDL_PROPERTY_TYPE_NUMBER,
+    float = C.SDL_PROPERTY_TYPE_FLOAT,
+    boolean = C.SDL_PROPERTY_TYPE_BOOLEAN,
 };
 
 /// SDL properties group.
@@ -186,11 +186,11 @@ pub const Group = packed struct {
         name: [:0]const u8,
     ) ?Property {
         return switch (C.SDL_GetPropertyType(self.value, name.ptr)) {
-            C.SDL_PROPERTY_TYPE_POINTER => Property{ .Pointer = C.SDL_GetPointerProperty(self.value, name.ptr, null) },
-            C.SDL_PROPERTY_TYPE_STRING => Property{ .String = std.mem.span(C.SDL_GetStringProperty(self.value, name.ptr, "")) },
-            C.SDL_PROPERTY_TYPE_NUMBER => Property{ .Number = C.SDL_GetNumberProperty(self.value, name.ptr, 0) },
-            C.SDL_PROPERTY_TYPE_FLOAT => Property{ .Float = C.SDL_GetFloatProperty(self.value, name.ptr, 0) },
-            C.SDL_PROPERTY_TYPE_BOOLEAN => Property{ .Boolean = C.SDL_GetBooleanProperty(self.value, name.ptr, false) },
+            C.SDL_PROPERTY_TYPE_POINTER => Property{ .pointer = C.SDL_GetPointerProperty(self.value, name.ptr, null) },
+            C.SDL_PROPERTY_TYPE_STRING => Property{ .string = std.mem.span(C.SDL_GetStringProperty(self.value, name.ptr, "")) },
+            C.SDL_PROPERTY_TYPE_NUMBER => Property{ .number = C.SDL_GetNumberProperty(self.value, name.ptr, 0) },
+            C.SDL_PROPERTY_TYPE_FLOAT => Property{ .float = C.SDL_GetFloatProperty(self.value, name.ptr, 0) },
+            C.SDL_PROPERTY_TYPE_BOOLEAN => Property{ .boolean = C.SDL_GetBooleanProperty(self.value, name.ptr, false) },
             else => null,
         };
     }
@@ -345,11 +345,11 @@ pub const Group = packed struct {
         value: Property,
     ) !void {
         const ret = switch (value) {
-            .Pointer => |pt| C.SDL_SetPointerProperty(self.value, name, pt),
-            .String => |str| C.SDL_SetStringProperty(self.value, name, str),
-            .Number => |num| C.SDL_SetNumberProperty(self.value, name, num),
-            .Float => |num| C.SDL_SetFloatProperty(self.value, name, num),
-            .Boolean => |val| C.SDL_SetBooleanProperty(self.value, name, val),
+            .pointer => |pt| C.SDL_SetPointerProperty(self.value, name, pt),
+            .string => |str| C.SDL_SetStringProperty(self.value, name, str),
+            .number => |num| C.SDL_SetNumberProperty(self.value, name, num),
+            .float => |num| C.SDL_SetFloatProperty(self.value, name, num),
+            .boolean => |val| C.SDL_SetBooleanProperty(self.value, name, val),
         };
         return errors.wrapCallBool(ret);
     }
@@ -412,11 +412,11 @@ pub const Group = packed struct {
 
 /// Property.
 pub const Property = union(Type) {
-    Pointer: ?*anyopaque,
-    String: [:0]const u8,
-    Number: i64,
-    Float: f32,
-    Boolean: bool,
+    pointer: ?*anyopaque,
+    string: [:0]const u8,
+    number: i64,
+    float: f32,
+    boolean: bool,
 };
 
 /// Get the global SDL properties.
@@ -455,44 +455,44 @@ test "Properties" {
     try std.testing.expectEqual(null, group.getType("trial"));
     try std.testing.expectEqual(null, group.get("trial"));
 
-    try group.set("trial", Property{ .Boolean = false });
+    try group.set("trial", Property{ .boolean = false });
     try std.testing.expectEqual(true, group.has("trial"));
-    try std.testing.expectEqual(.Boolean, group.getType("trial"));
-    try std.testing.expectEqual(Property{ .Boolean = false }, group.get("trial"));
+    try std.testing.expectEqual(.boolean, group.getType("trial"));
+    try std.testing.expectEqual(Property{ .boolean = false }, group.get("trial"));
 
-    try group.set("trial", Property{ .Boolean = true });
+    try group.set("trial", Property{ .boolean = true });
     try std.testing.expectEqual(true, group.has("trial"));
-    try std.testing.expectEqual(.Boolean, group.getType("trial"));
-    try std.testing.expectEqual(Property{ .Boolean = true }, group.get("trial"));
+    try std.testing.expectEqual(.boolean, group.getType("trial"));
+    try std.testing.expectEqual(Property{ .boolean = true }, group.get("trial"));
 
     try group.clear("trial");
     try std.testing.expectEqual(false, group.has("trial"));
     try std.testing.expectEqual(null, group.getType("trial"));
     try std.testing.expectEqual(null, group.get("trial"));
 
-    try group.set("trial", Property{ .String = "Hello World!" });
+    try group.set("trial", Property{ .string = "Hello World!" });
     try std.testing.expectEqual(true, group.has("trial"));
-    try std.testing.expectEqual(.String, group.getType("trial"));
-    try std.testing.expectEqualStrings("Hello World!", group.get("trial").?.String);
+    try std.testing.expectEqual(.string, group.getType("trial"));
+    try std.testing.expectEqualStrings("Hello World!", group.get("trial").?.string);
 
-    try group.set("trial", Property{ .Number = -4 });
+    try group.set("trial", Property{ .number = -4 });
     try std.testing.expectEqual(true, group.has("trial"));
-    try std.testing.expectEqual(.Number, group.getType("trial"));
-    try std.testing.expectEqual(Property{ .Number = -4 }, group.get("trial"));
+    try std.testing.expectEqual(.number, group.getType("trial"));
+    try std.testing.expectEqual(Property{ .number = -4 }, group.get("trial"));
 
-    try group.set("trial", Property{ .Float = 5.3 });
+    try group.set("trial", Property{ .float = 5.3 });
     try std.testing.expectEqual(true, group.has("trial"));
-    try std.testing.expectEqual(.Float, group.getType("trial"));
-    try std.testing.expectEqual(Property{ .Float = 5.3 }, group.get("trial"));
+    try std.testing.expectEqual(.float, group.getType("trial"));
+    try std.testing.expectEqual(Property{ .float = 5.3 }, group.get("trial"));
 
     var num: i32 = 3;
-    try group.set("trial", Property{ .Pointer = &num });
+    try group.set("trial", Property{ .pointer = &num });
     try std.testing.expectEqual(true, group.has("trial"));
-    try std.testing.expectEqual(.Pointer, group.getType("trial"));
-    try std.testing.expectEqual(Property{ .Pointer = &num }, group.get("trial"));
+    try std.testing.expectEqual(.pointer, group.getType("trial"));
+    try std.testing.expectEqual(Property{ .pointer = &num }, group.get("trial"));
 
-    try group.set("a", Property{ .Number = 5 });
-    try group.set("b", Property{ .Boolean = false });
+    try group.set("a", Property{ .number = 5 });
+    try group.set("b", Property{ .boolean = false });
     var arr = std.ArrayList(u32).init(std.testing.allocator);
     try arr.append(8); // Ensure no memory leakage.
     try group.setPointerPropertyWithCleanup("c", &arr, testPropertiesCleanupCb, null);
@@ -505,9 +505,9 @@ test "Properties" {
     defer map.deinit();
     try std.testing.expectEqual(3, map.count());
 
-    try std.testing.expectEqual(Property{ .Number = 5 }, map.get("a"));
-    try std.testing.expectEqual(Property{ .Boolean = false }, map.get("b"));
-    try std.testing.expectEqual(Property{ .Pointer = &num }, map.get("trial"));
+    try std.testing.expectEqual(Property{ .number = 5 }, map.get("a"));
+    try std.testing.expectEqual(Property{ .boolean = false }, map.get("b"));
+    try std.testing.expectEqual(Property{ .pointer = &num }, map.get("trial"));
 
     try group.enumerateProperties(testEnumeratePropertiesCb, null);
 }

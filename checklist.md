@@ -1,8 +1,6 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-Need to fix up enums from the "Done" category...
-
 ## Done (16/57)
 * Assert
 * Bits
