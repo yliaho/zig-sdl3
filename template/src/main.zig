@@ -226,6 +226,7 @@ const log_app = sdl3.log.Category.application;
 const AppState = struct {
     init_flags: sdl3.init.Flags,
     window: sdl3.video.Window,
+    renderer: sdl3.render.Renderer,
 };
 
 /// An example function to handle errors from SDL.
@@ -327,7 +328,7 @@ fn init(
     const init_flags = sdl3.init.Flags{
         .video = true,
     };
-    const window = try sdl3.video.Window.init("Hello SDL3", WINDOW_WIDTH, WINDOW_HEIGHT, .{});
+    const window_renderer = try sdl3.render.Renderer.initWithWindow("Hello SDL3", WINDOW_WIDTH, WINDOW_HEIGHT, .{});
 
     // Prove error handling works.
     const dummy: ?sdl3.video.Window = sdl3.video.Window.fromID(99999) catch null;
@@ -338,7 +339,8 @@ fn init(
     // Set app state.
     state.* = .{
         .init_flags = init_flags,
-        .window = window,
+        .window = window_renderer.window,
+        .renderer = window_renderer.renderer,
     };
     app_state.* = state;
 
@@ -361,9 +363,9 @@ fn init(
 fn iterate(
     app_state: *AppState,
 ) !sdl3.AppResult {
-    const surface = try app_state.window.getSurface();
-    try surface.fillRect(null, surface.mapRgb(128, 30, 255));
-    try app_state.window.updateSurface();
+    try app_state.renderer.setDrawColor(.{ .r = 128, .g = 30, .b = 255 });
+    try app_state.renderer.clear();
+    try app_state.renderer.present();
     return .run;
 }
 
@@ -407,6 +409,7 @@ fn quit(
 ) void {
     _ = result;
     if (app_state) |val| {
+        val.renderer.deinit();
         val.window.deinit();
         allocator.destroy(val);
     }

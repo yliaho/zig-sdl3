@@ -620,6 +620,68 @@ pub fn hasGroup(
     return C.SDL_HasEvents(minmax.min, minmax.max);
 }
 
+/// Check the event queue for messages and optionally return them.
+///
+/// ## Function Parameters
+/// * `events`: Destination slice to store events to.
+/// * `action`: Action to take. Note that the `group` option does not apply to `events.Action.add`.
+/// * `group`: When peeking or getting events, only consider events in the particular group.
+///
+/// ## Return Value
+/// Returns the number of events actually stored.
+///
+/// ## Remarks
+/// You may have to call `events.pump()` before calling this function.
+/// Otherwise, the events may not be ready to be filtered when you call `events.peep()`.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn peep(
+    events: []Event,
+    action: Action,
+    group: Group,
+) !usize {
+    const minmax = group.minMax();
+    const raw: [*]C.SDL_Event = @ptrCast(events.ptr); // Hacky! We ensure in unit tests our enum is the same size so we can do this, then convert in-place.
+    const ret = C.SDL_PeepEvents(raw, @intCast(events.len), @intFromEnum(action), minmax.min, minmax.max);
+    for (0..ret) |ind| {
+        _ = Event.fromSdlInPlace(raw[ind]);
+    }
+    return @intCast(errors.wrapCall(c_int, ret, -1));
+}
+
+/// Check the event queue for messages to see how many there are.
+///
+/// ## Function Parameters
+/// * `num_events`: Max number of events to check for.
+/// * `action`: Action to take. Note that the `group` option does not apply to `events.Action.add`.
+/// * `group`: When peeking or getting events, only consider events in the particular group.
+///
+/// ## Return Value
+/// Returns the number of events that would be peeked.
+///
+/// ## Remarks
+/// You may have to call `events.pump()` before calling this function.
+/// Otherwise, the events may not be ready to be filtered when you call `events.peep()`.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn peepSize(
+    num_events: usize,
+    action: Action,
+    group: Group,
+) !usize {
+    const minmax = group.minMax();
+    const ret = C.SDL_PeepEvents(null, @intCast(num_events), @intFromEnum(action), minmax.min, minmax.max);
+    return @intCast(errors.wrapCall(c_int, ret, -1));
+}
+
 // Test SDL events.
 test "Events" {
     comptime try std.testing.expectEqual(@sizeOf(C.SDL_Event), @sizeOf(Event));
@@ -635,4 +697,6 @@ test "Events" {
     // Event.getWindow
     // has
     // hasGroup
+    // peep
+    // peepSize
 }
