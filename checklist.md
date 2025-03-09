@@ -3,7 +3,7 @@ For monitoring how close various subsystems are to completion.
 
 Need to fix up enums from the "Done" category...
 
-## Done (15/57)
+## Done (16/57)
 * Assert
 * Bits
 * Camera
@@ -13,6 +13,7 @@ Need to fix up enums from the "Done" category...
 * Init
 * Locale
 * Log
+* Main
 * Metal
 * Misc
 * Properties

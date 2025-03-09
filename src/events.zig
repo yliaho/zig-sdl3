@@ -149,10 +149,6 @@ pub const Group = enum {
 pub const Type = enum(C.SDL_EventType) {
     /// User-requested quit.
     quit = C.SDL_EVENT_QUIT,
-    /// An unknown event type.
-    unknown = C.SDL_EVENT_FIRST,
-    /// For padding out the union.
-    padding = C.SDL_EVENT_ENUM_PADDING,
     // /// The application is being terminated by the OS.
     // /// This event must be handled in a callback set with `events.addWatch()`.
     // /// Called on iOS in `applicationWillTerminate()`.
@@ -271,6 +267,10 @@ pub const Type = enum(C.SDL_EventType) {
     // Private1,
     // Private2,
     // Private3,
+    /// An unknown event type.
+    unknown = C.SDL_EVENT_FIRST,
+    /// For padding out the union.
+    padding = C.SDL_EVENT_ENUM_PADDING,
     // _,
 };
 

@@ -190,6 +190,7 @@ pub const Locale = @import("locale.zig").Locale;
 ///
 /// Each log call is atomic, so you won't see log messages cut off one another when logging from multiple threads.
 pub const log = @import("log.zig");
+pub const main = @import("main.zig");
 pub const message_box = @import("message_box.zig");
 
 /// Functions to creating Metal layers and views on SDL windows.
@@ -245,7 +246,8 @@ const std = @import("std");
 
 /// Return values for optional main callbacks.
 ///
-/// Returning Success or Failure from SDL_AppInit, SDL_AppEvent, or SDL_AppIterate will terminate the program and report success/failure to the operating system.
+/// Returning Success or Failure from `SDL_AppInit(), `SDL_AppEvent()`,
+/// or `SDL_AppIterate()` will terminate the program and report success/failure to the operating system.
 /// What that means is platform-dependent.
 /// On Unix, for example, on success, the process error code will be zero, and on failure it will be 1.
 /// This interface doesn't allow you to return specific exit codes, just whether there was an error generally or not.
@@ -263,6 +265,75 @@ pub const AppResult = enum(c_uint) {
     /// Value that requests termination with error from the main callbacks.
     failure = c.SDL_APP_FAILURE,
 };
+
+/// Function pointer typedef for `SDL_AppEvent()`.
+///
+/// ## Function Parameters
+/// * `app_state`: An optional pointer, provided by the app in `SDL_AppInit()`.
+/// * `event`: The new event for the app to examine.
+///
+/// ## Return Value
+/// Returns `sdl3.AppResult.failure` to terminate with an error, `sdl3.AppResult.success` to terminate with success, `sdl3.AppResult.run` to continue.
+///
+/// ## Remarks
+/// These are used by `main.enterAppMainCallbacks()`.
+/// This mechanism operates behind the scenes for apps using the optional main callbacks.
+/// Apps that want to use this should just implement `SDL_AppEvent()` directly.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const AppEventCallback = *const fn (app_state: ?*anyopaque, event: [*c]c.SDL_Event) callconv(.C) c_uint;
+
+/// Function pointer typedef for `SDL_AppInit()`.
+///
+/// ## Function Parameters
+/// * `app_state`: A place where the app can optionally store a pointer for future use.
+/// * `arg_count`: The standard ANSI C main's argc; number of elements in `arg_values`.
+/// * `arg_values`: The standard ANSI C main's argv; array of command line arguments.
+///
+/// ## Return Value
+/// Returns `sdl3.AppResult.failure` to terminate with an error, `sdl3.AppResult.success` to terminate with success, `sdl3.AppResult.run` to continue.
+///
+/// ## Remarks
+/// These are used by `main.enterAppMainCallbacks()`.
+/// This mechanism operates behind the scenes for apps using the optional main callbacks.
+/// Apps that want to use this should just implement `SDL_AppInit()` directly.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const AppInitCallback = *const fn (app_state: [*c]?*anyopaque, arg_count: c_int, arg_values: [*c][*c]u8) callconv(.C) c_uint;
+
+/// Function pointer typedef for `SDL_AppIterate()`.
+///
+/// ## Function Parameters
+/// * `app_state`: An optional pointer, provided by the app in `SDL_AppInit()`.
+///
+/// ## Return Value
+/// Returns `sdl3.AppResult.failure` to terminate with an error, `sdl3.AppResult.success` to terminate with success, `sdl3.AppResult.run` to continue.
+///
+/// ## Remarks
+/// These are used by `main.enterAppMainCallbacks()`.
+/// This mechanism operates behind the scenes for apps using the optional main callbacks.
+/// Apps that want to use this should just implement `SDL_AppIterate()` directly.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const AppIterateCallback = *const fn (app_state: ?*anyopaque) callconv(.C) c_uint;
+
+/// Function pointer typedef for `SDL_AppQuit()`.
+///
+/// ## Function Parameters
+/// * `app_state`: An optional pointer, provided by the app in `SDL_AppInit()`.
+/// * `result`: The result code that terminated the app (success or failure).
+///
+/// ## Remarks
+/// These are used by `main.enterAppMainCallbacks()`.
+/// This mechanism operates behind the scenes for apps using the optional main callbacks.
+/// Apps that want to use this should just implement `SDL_AppEvent()` directly.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const AppQuitCallback = *const fn (app_state: ?*anyopaque, result: c_uint) callconv(.C) void;
 
 test {
     std.testing.refAllDecls(@This());
