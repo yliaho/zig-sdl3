@@ -1,9 +1,8 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
+const init = @import("init.zig");
 const std = @import("std");
 const video = @import("video.zig");
-
-// TODO: REVIEW TO SEE IF ALL FUNCTION DOCS NAME CORRECT FUNCTIONS!
 
 /// The type of action to request from `events.peep()`.
 ///
@@ -79,6 +78,39 @@ pub const Group = enum {
     /// User events.
     user,
 
+    /// Iterate over all event types in the group.
+    ///
+    /// ## Version
+    /// Provided by zig-sdl3.
+    pub const Iterator = struct {
+        curr: C.SDL_EventType,
+        max: C.SDL_EventType,
+
+        /// Get the next event type in the iterator.
+        ///
+        /// ## Function Parameters
+        /// * `self`: The group iterator.
+        ///
+        /// ## Return Value
+        /// Returns the next event type in the iterator, or `null` if none left.
+        ///
+        /// ## Thread Safety
+        /// This function is not thread safe.
+        ///
+        /// ## Version
+        /// Provided by zig-sdl3.
+        pub fn next(
+            self: *Iterator,
+        ) ?C.SDL_EventType {
+            if (self.curr <= self.max) {
+                const ret = self.curr;
+                self.curr += 1;
+                return ret;
+            }
+            return null;
+        }
+    };
+
     /// Check if an event type is in a group.
     ///
     /// ## Function Parameters
@@ -100,6 +132,29 @@ pub const Group = enum {
         const raw: C.SDL_EventType = @intFromEnum(event_type);
         const minmax = self.minMax();
         return raw >= minmax.min and raw <= minmax.max;
+    }
+
+    /// Create an iterator for every type in the group.
+    ///
+    /// ## Function Parameters
+    /// * `self`: Group to iterate over.
+    ///
+    /// ## Return Value
+    /// Returns an iterator that can iterate all over SDL event types.
+    ///
+    /// ## Thread Safety
+    /// This function is thread safe.
+    ///
+    /// ## Version
+    /// Provided by zig-sdl3.
+    pub fn iterator(
+        self: Group,
+    ) Iterator {
+        const minmax = self.minMax();
+        return Iterator{
+            .curr = minmax.min,
+            .max = minmax.max,
+        };
     }
 
     /// Get the minimum and maximum `c.SDL_EventType` for the provided group.
@@ -267,6 +322,7 @@ pub const Type = enum(C.SDL_EventType) {
     // Private1,
     // Private2,
     // Private3,
+    // User,
     /// An unknown event type.
     unknown = C.SDL_EVENT_FIRST,
     /// For padding out the union.
@@ -408,6 +464,8 @@ pub const Event = union(Type) {
     pub fn toSdl(event: Event) C.SDL_Event {
         return switch (event) {
             .quit => |val| .{ .quit = .{ .type = C.SDL_EVENT_QUIT, .timestamp = val.common.timestamp } },
+            .unknown => |val| .{ .common = .{ .type = val.event_type, .timestamp = val.common.timestamp } },
+            .padding => .{ .type = C.SDL_EVENT_ENUM_PADDING },
         };
     }
 
@@ -461,6 +519,23 @@ pub fn addWatch(
     return errors.wrapCallBool(C.SDL_AddEventWatch(event_filter, user_data));
 }
 
+/// If an event is available in the queue.
+///
+/// ## Return Value
+/// Returns true if there is at least one event in the queue, false otherwise.
+///
+/// ## Remarks
+/// This will not effect the events in the queue.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This is provided by zig-sdl3.
+pub fn available() bool {
+    return C.SDL_PollEvent(null);
+}
+
 /// Query the state of processing events by type.
 ///
 /// ## Function Parameters
@@ -509,7 +584,7 @@ pub fn filter(
 ///
 /// ## Remarks
 /// This will unconditionally remove any events from the queue that match type.
-/// If you need to remove a range of event types, use `Group.flush()` instead.
+/// If you need to remove a range of event types, use `events.flushGroup()` instead.
 ///
 /// It's also normal to just ignore events you don't care about in your event loop without calling this function.
 ///
@@ -594,7 +669,7 @@ pub fn getFilter() ?struct { event_filter: Filter, user_data: ?*anyopaque } {
 pub fn has(
     event_type: Type,
 ) bool {
-    return C.SDL_HasEvent(@enumFromInt(event_type));
+    return C.SDL_HasEvent(@intFromEnum(event_type));
 }
 
 /// Check for the existence of certain event types in the event queue.
@@ -647,10 +722,10 @@ pub fn peep(
     const minmax = group.minMax();
     const raw: [*]C.SDL_Event = @ptrCast(events.ptr); // Hacky! We ensure in unit tests our enum is the same size so we can do this, then convert in-place.
     const ret = C.SDL_PeepEvents(raw, @intCast(events.len), @intFromEnum(action), minmax.min, minmax.max);
-    for (0..ret) |ind| {
-        _ = Event.fromSdlInPlace(raw[ind]);
+    for (0..@intCast(ret)) |ind| {
+        _ = Event.fromSdlInPlace(&raw[ind]);
     }
-    return @intCast(errors.wrapCall(c_int, ret, -1));
+    return @intCast(try errors.wrapCall(c_int, ret, -1));
 }
 
 /// Check the event queue for messages to see how many there are.
@@ -679,24 +754,318 @@ pub fn peepSize(
 ) !usize {
     const minmax = group.minMax();
     const ret = C.SDL_PeepEvents(null, @intCast(num_events), @intFromEnum(action), minmax.min, minmax.max);
-    return @intCast(errors.wrapCall(c_int, ret, -1));
+    return @intCast(try errors.wrapCall(c_int, ret, -1));
+}
+
+/// Poll for currently pending events.
+///
+/// ## Return Value
+/// Returns the next event in the queue or `null` if there is none available.
+///
+/// ## Remarks
+/// The next event is removed from the queue and returned.
+///
+/// As this function may implicitly call `events.pump()`, you can only call this function in the thread that set the video mode.
+///
+/// `events.poll()` is the favored way of receiving system events since it can be done from the main loop
+/// and does not suspend the main loop while waiting on an event to be posted.
+///
+/// The common practice is to fully process the event queue once every frame, usually as a first step before updating the game's state:
+/// ```zig
+/// while (game_is_still_running) {
+///     while (events.poll()) |event| {  // Poll until all events are handled!
+///         // Decide what to do with this event.
+///     }
+///
+///     // Update game state, draw the current frame.
+/// }
+/// ```
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn poll() ?Event {
+    var event: C.SDL_Event = undefined;
+    const ret = C.SDL_PollEvent(&event);
+    if (!ret)
+        return null;
+    return Event.fromSdl(event);
+}
+
+/// Pump the event loop, gathering events from the input devices.
+///
+/// ## Remarks
+/// This function updates the event queue and internal input device state.
+///
+/// `events.pump()` gathers all the pending input information from devices and places it in the event queue.
+/// Without calls to `events.pump()` no events would ever be placed on the queue.
+/// Often the need for calls to `events.pump()` is hidden from the user since `events.poll()` and `events.wait()` implicitly call `events.pump()`.
+/// However, if you are not polling or waiting for events (e.g. you are filtering them), then you must call `events.pump()` to force an event queue update.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn pump() void {
+    C.SDL_PumpEvents();
+}
+
+/// Add an event to the event queue.
+///
+/// ## Function Parameters
+/// * `event`: The event to be added to the queue.
+///
+/// ## Remarks
+/// The event queue can actually be used as a two way communication channel.
+/// Not only can events be read from the queue, but the user can also push their own events onto it.
+/// The event is copied into the queue.
+///
+/// Note: Pushing device input events onto the queue doesn't modify the state of the device within SDL.
+///
+/// Note: Events pushed onto the queue with `events.push()` get passed through the event filter but events added with `events.peep()` do not.
+///
+/// For pushing application-specific events, please use `events.register()` to get an event type that does not conflict with other code
+/// that also wants its own custom event types.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn push(
+    event: Event,
+) !void {
+    var event_umanaged = event.toSdl();
+    const ret = C.SDL_PushEvent(&event_umanaged);
+    return errors.wrapCallBool(ret);
+}
+
+/// Allocate a set of user-defined events, and return the beginning event number for that set of events.
+///
+/// ## Function Parameters
+/// * `num_events`: The number of events to be allocated.
+///
+/// ## Return Value
+/// Returns the beginning event number, or `null` if `num_events` is invalid or if there are not enough user-defined events left.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn register(
+    num_events: usize,
+) ?C.SDL_EventType {
+    const ret = C.SDL_RegisterEvents(@intCast(num_events));
+    if (ret == 0)
+        return null;
+    return ret;
+}
+
+/// Remove an event watch callback added with `events.addWatch()`.
+///
+/// ## Function Parameters
+/// * `event_filter`: Function originally passed to `events.addWatch()`.
+/// * `user_data`: The user data originally passed to `events.addWatch()`.
+///
+/// ## Remarks
+/// This function takes the same input as `events.addWatch()` to identify and delete the corresponding callback.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn removeWatch(
+    event_filter: Filter,
+    user_data: ?*anyopaque,
+) void {
+    C.SDL_RemoveEventWatch(event_filter, user_data);
+}
+
+/// Set the state of processing events by type.
+///
+/// ## Function Parameters
+/// * `event_type`: The type of event.
+/// * `enabled`: Whether to process the event or not.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn setEnabled(
+    event_type: Type,
+    enable: bool,
+) void {
+    C.SDL_SetEventEnabled(@intFromEnum(event_type), enable);
+}
+
+/// Set up a filter to process all events before they are added to the internal event queue.
+///
+/// ## Function Parameters
+/// * `event_filter`: A function to call when an event happens.
+/// * `user_data`: User data passed to `event_filter`.
+///
+/// If you just want to see events without modifying them or preventing them from being queued, you should use `events.addWatch()` instead.
+///
+/// If the filter function returns true when called, then the event will be added to the internal queue.
+/// If it returns false, then the event will be dropped from the queue, but the internal state will still be updated.
+/// This allows selective filtering of dynamically arriving events.
+///
+/// WARNING: Be very careful of what you do in the event filter function, as it may run in a different thread!
+///
+/// On platforms that support it, if the quit event is generated by an interrupt signal (e.g. pressing Ctrl-C),
+/// it will be delivered to the application at the next event poll.
+///
+/// Note: Disabled events never make it to the event filter function; see `events.enabled()`.
+///
+/// Note: Events pushed onto the queue with `events.push()` get passed through the event filter, but events pushed onto the queue with `events.peep()` do not.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+///
+/// ## Code Examples
+/// TODO!!!
+pub fn setFilter(
+    event_filter: Filter,
+    user_data: ?*anyopaque,
+) void {
+    C.SDL_SetEventFilter(event_filter, user_data);
+}
+
+/// Wait indefinitely for the next available event.
+///
+/// ## Function Parameters
+/// * `pop_event`: If this is false, then only wait until an event is available. If true, return and pop the event from the queue.
+///
+/// ## Return Value
+/// Returns the event popped if `pop_event` is true, otherwise will return `null`.
+/// It is not possible to have `pop_event` be true and have this function return `null`.
+///
+/// ## Remarks
+/// If `pop_event` is false, the next event is removed from the queue and returned.
+///
+/// As this function may implicitly call `events.pump()`, you can only call this function in the thread that initialized the video subsystem.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn wait(
+    pop_event: bool,
+) !?Event {
+    if (pop_event) {
+        var event: C.SDL_Event = undefined;
+        const ret = C.SDL_WaitEvent(&event);
+        try errors.wrapCallBool(ret);
+        return Event.fromSdl(event);
+    } else {
+        const ret = C.SDL_WaitEvent(null);
+        try errors.wrapCallBool(ret);
+        return null;
+    }
+}
+
+/// Wait until the specified timeout (in milliseconds) for the next available event.
+///
+/// ## Function Parameters
+/// * `pop_event`: If this is false, then only wait until an event is available. If true, return and pop the event from the queue.
+/// * `timeout_millseconds`: The maximum number of milliseconds to wait for the next available event.
+///
+/// ## Return Value
+/// If the call times out, then the whole struct returned is `null`.
+/// Returns the event popped if `pop_event` is true, otherwise will return `null` in the struct returned.
+/// It is not possible to have `pop_event` be true and have the event in the struct returned `null`.
+///
+/// ## Remarks
+/// If `pop_event` is false, the next event is removed from the queue and returned.
+///
+/// As this function may implicitly call `events.pump()`, you can only call this function in the thread that initialized the video subsystem.
+///
+/// The timeout is not guaranteed, the actual wait time could be longer due to system scheduling.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn waitTimeout(
+    pop_event: bool,
+    timeout_milliseconds: u31,
+) ?struct { event: ?Event } {
+    if (pop_event) {
+        var event: C.SDL_Event = undefined;
+        const ret = C.SDL_WaitEventTimeout(&event, @intCast(timeout_milliseconds));
+        if (!ret)
+            return null;
+        return .{ .event = Event.fromSdl(event) };
+    } else {
+        const ret = C.SDL_WaitEventTimeout(null, @intCast(timeout_milliseconds));
+        if (!ret)
+            return null;
+        return .{ .event = null };
+    }
+}
+
+fn dummyFilter(
+    user_data: ?*anyopaque,
+    event: [*c]C.SDL_Event,
+) callconv(.C) bool {
+    _ = user_data;
+    _ = event;
+    return true;
 }
 
 // Test SDL events.
 test "Events" {
     comptime try std.testing.expectEqual(@sizeOf(C.SDL_Event), @sizeOf(Event));
 
-    // addWatch
-    // enabled
-    // filter
-    // flush
-    // flushGroup
-    // Group.eventIn
-    // Group.minMax
-    // getFilter
-    // Event.getWindow
-    // has
-    // hasGroup
-    // peep
-    // peepSize
+    defer init.shutdown();
+    try init.init(.{ .events = true });
+    defer init.quit(.{ .events = true });
+
+    setEnabled(.quit, true);
+    try push(.{ .quit = .{ .common = .{ .timestamp = 27 } } });
+    pump();
+    try std.testing.expect(has(.quit));
+    try std.testing.expect(hasGroup(.application));
+    try std.testing.expect(available());
+    try std.testing.expect(enabled(.quit));
+
+    try std.testing.expect(try peepSize(1, .Peek, .application) > 0);
+    var buf = [_]Event{undefined};
+    _ = try peep(&buf, .Peek, .application);
+
+    try std.testing.expect(poll() != null);
+    // _ = try wait(false); // This is not deterministic and may hang so don't.
+    _ = waitTimeout(false, 1);
+
+    flush(.quit);
+    flushGroup(.all);
+
+    const group = Group.application;
+    try std.testing.expect(group.eventIn(.quit));
+    _ = group.minMax();
+    var group_iter = group.iterator();
+    while (group_iter.next()) |val| {
+        _ = val;
+    }
+
+    filter(dummyFilter, null);
+    setFilter(dummyFilter, null);
+    try std.testing.expectEqual(@intFromPtr(&dummyFilter), @intFromPtr(getFilter().?.event_filter));
+
+    try addWatch(dummyFilter, null);
+    removeWatch(dummyFilter, null);
+
+    try std.testing.expect(register(1) != null);
+    _ = buf[0].getWindow();
 }

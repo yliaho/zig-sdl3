@@ -1,9 +1,10 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (16/57)
+## Done (17/57)
 * Assert
 * Bits
+* Blend Mode
 * Camera
 * Clipboard
 * Errors
@@ -25,7 +26,6 @@ For monitoring how close various subsystems are to completion.
 * Message Box
 
 ## Needs Testing
-* Blend Mode
 * Keycode
 * Pen
 * Pixels
@@ -38,6 +38,7 @@ For monitoring how close various subsystems are to completion.
 
 ## In Progress
 * Audio
+* Events
 * Hints
 * Joystick (Needs properties, virtual attach)
 * Keyboard (Needs properties)
@@ -48,12 +49,10 @@ For monitoring how close various subsystems are to completion.
 ## Not Started
 * Dialog
 * EGL
-* Events
 * Gamepad
 * GPU
 * Haptic
 * HID
-* Main
 * Mouse
 * Open GL (All variants)
 * Storage
@@ -67,7 +66,6 @@ For monitoring how close various subsystems are to completion.
 * Copying
 * Endian (Zig has this already)
 * Intrin
-* Main Implementation (To be added with compiler flags?)
 * Mutex (Zig has this already)
 * Old Names
 * Platform Defines (Build system flag probably)
