@@ -1,81 +1,101 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (17/57)
-* Assert
-* Bits
-* Blend Mode
-* Camera
-* Clipboard
-* Errors
-* GUID
-* Init
-* Locale
-* Log
+## Done (18/57)
+
+### Basics
 * Main
-* Metal
-* Misc
+* Init
 * Properties
-* Shared Object/Loadso
+* Errors
+* Log
+* Assert
 * Version
+
+### Video
+* Blend Mode
+* Clipboard
 * Vulkan
+* Metal
+* Camera
 
-## Done?
-* Hints (Needs extra hints)
-* IO Stream
-* Message Box
+### Platform
+* Bits
 
-## Needs Testing
-* Keycode
-* Pen
-* Pixels
-* Power
-* Rect
-* Scan Code
-* Sensor
-* Time
-* Timer
+### Additional Functionality
+* Shared Object/Loadso
+* Power Management
+* Locale
+* GUID
+* Misc
 
-## In Progress
-* Audio
-* Events
+## In Progress (23/57)
+
+### Basics
 * Hints
-* Joystick (Needs properties, virtual attach)
-* Keyboard (Needs properties)
-* Render (Needs properties, event function)
-* Surface (Needs properties)
+
+### Video
 * Video
+* Render
+* Pixels
+* Rect
+* Surface
 
-## Not Started
-* Dialog
-* EGL
-* Gamepad
-* GPU
-* Haptic
-* HID
+### Input
+* Events
+* Keyboard
+* Keycode
+* Scancode
 * Mouse
-* Open GL (All variants)
-* Storage
-* System
+* Joystick
+* Gamepad
+* Pen
+* Sensor
+
+### Audio
+* Audio
+
+### Time
+* Timer
+* Time
+
+### File IO
+* IO Streams
+
+### Additional Functionality
+* Process Control
+* Message Box
+* Standard Lib
+
+## Not Started (17/57)
+
+### Input
 * Touch
+* HIDAPI
 
-## Not Applicable
-* Atomics (Zig has this already)
-* Begin Code
-* Close Code
-* Copying
-* Endian (Zig has this already)
+### Haptic
+* Haptic
+
+### GPU
+* GPU
+
+### Threads
+* Thread
+* Mutex
+* Atomic
+
+### File IO
+* Filesystem
+* Storage
+* Async
+
+### Platform
+* Platform
+* CPU Info
 * Intrin
-* Mutex (Zig has this already)
-* Old Names
-* Platform Defines (Build system flag probably)
-* Revision
-* Std Inc (Zig standard library)
-* Tests
+* Endian
 
-## Needs More Investigation
-* CPU Info (Does Zig have everything needed?)
-* Filesystem (Zig has some stuff, but does it have everything?)
-* Platform (Zig probably has this?)
-* Process (Does Zig have this?)
-* Thread (Does Zig have this?)
+### Additional Functionality
+* File Dialogs
+* System Tray
+* System

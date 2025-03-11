@@ -90,7 +90,10 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Return Value
         /// Returns a new rectangle with each member casted to the new type.
-        pub fn asOtherRect(self: Self, comptime NewType: type) Rect(NewType) {
+        pub fn asOtherRect(
+            self: Self,
+            comptime NewType: type,
+        ) Rect(NewType) {
             return .{
                 .x = @as(NewType, self.x),
                 .y = @as(NewType, self.y),
@@ -99,12 +102,40 @@ pub fn Rect(comptime Type: type) type {
             };
         }
 
-        /// If the rectangle is empty (has no area).
-        pub fn empty(self: Self) bool {
+        /// Determine whether a rectangle has no area.
+        ///
+        /// ## Function Parameters
+        /// * `self`: The rectangle to test.
+        ///
+        /// ## Return Value
+        /// Returns true if the rectangle is "empty", false otherwise.
+        ///
+        /// ## Remarks
+        /// A rectangle is considered "empty" for this function if the rectangle's width and/or height are <= 0.
+        ///
+        /// ## Thread Safety
+        /// It is safe to call this function from any thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn empty(
+            self: Self,
+        ) bool {
             return self.x <= 0 and self.y <= 0;
         }
 
         // Equal does not need to exist, use std.meta.eql.
+
+        /// Test for equality with an epsilon value.
+        pub fn equalEpsilonFRect(
+            self: FRect,
+            other: FRect,
+            epsilon: Type,
+        ) bool {
+            const a = self.toSdl();
+            const b = other.toSdl();
+            return C.SDL_RectsEqualEpsilon(&a, &b, epsilon);
+        }
 
         /// Create from an SDL rect.c
         fn fromSdlFRect(rect: C.SDL_FRect) FRect {
@@ -127,7 +158,10 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// Get intersection with another rect.
-        fn getIntersectionFRect(self: FRect, other: FRect) ?FRect {
+        fn getIntersectionFRect(
+            self: FRect,
+            other: FRect,
+        ) ?FRect {
             const a = self.toSdl();
             const b = other.toSdl();
             var ret: C.SDL_FRect = undefined;
@@ -137,7 +171,10 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// Get intersection with another rect.
-        fn getIntersectionIRect(self: IRect, other: IRect) ?IRect {
+        fn getIntersectionIRect(
+            self: IRect,
+            other: IRect,
+        ) ?IRect {
             const a = self.toSdl();
             const b = other.toSdl();
             var ret: C.SDL_Rect = undefined;
@@ -147,7 +184,10 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// Calculate the intersection between a rect and lines. Returns null if there is no intersection.
-        fn getLineIntersectionFRect(self: FRect, line: [2]FPoint) ?[2]FPoint {
+        fn getLineIntersectionFRect(
+            self: FRect,
+            line: [2]FPoint,
+        ) ?[2]FPoint {
             const rect = self.toSdl();
             var p1 = line[0].toSdl();
             var p2 = line[1].toSdl();
@@ -157,7 +197,10 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// Calculate the intersection between a rect and lines. Returns null if there is no intersection.
-        fn getLineIntersectionIRect(self: IRect, line: [2]IPoint) ?[2]IPoint {
+        fn getLineIntersectionIRect(
+            self: IRect,
+            line: [2]IPoint,
+        ) ?[2]IPoint {
             const rect = self.toSdl();
             var p1 = line[0].toSdl();
             var p2 = line[1].toSdl();
@@ -180,7 +223,10 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Version
         /// This function is available since SDL 3.2.0.
-        pub fn getRectEnclosingPoints(points: []Point(Type), clip: ?Self) ?Self {
+        pub fn getRectEnclosingPoints(
+            points: []Point(Type),
+            clip: ?Self,
+        ) ?Self {
             if (points.len < 1)
                 return null;
 
@@ -238,7 +284,10 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// Get the union between two rectangles.
-        fn getUnionFRect(self: FRect, other: FRect) !FRect {
+        fn getUnionFRect(
+            self: FRect,
+            other: FRect,
+        ) !FRect {
             const a = self.toSdl();
             const b = other.toSdl();
             var ret: C.SDL_FRect = undefined;
@@ -247,7 +296,10 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// Get the union between two rectangles.
-        fn getUnionIRect(self: IRect, other: IRect) !IRect {
+        fn getUnionIRect(
+            self: IRect,
+            other: IRect,
+        ) !IRect {
             const a = self.toSdl();
             const b = other.toSdl();
             var ret: C.SDL_Rect = undefined;
@@ -256,21 +308,48 @@ pub fn Rect(comptime Type: type) type {
         }
 
         /// If two rectangles are intersecting.
-        fn hasIntersectionFRect(self: FRect, other: FRect) bool {
+        fn hasIntersectionFRect(
+            self: FRect,
+            other: FRect,
+        ) bool {
             const a = self.toSdl();
             const b = other.toSdl();
             return C.SDL_HasRectIntersectionFloat(&a, &b);
         }
 
         /// If two rectangles are intersecting.
-        fn hasIntersectionIRect(self: IRect, other: IRect) bool {
+        fn hasIntersectionIRect(
+            self: IRect,
+            other: IRect,
+        ) bool {
             const a = self.toSdl();
             const b = other.toSdl();
             return C.SDL_HasRectIntersection(&a, &b);
         }
 
-        /// Check to see if a point is inside this rectangle.
-        pub fn pointIn(self: Self, point: Point(Type)) bool {
+        /// Determine whether a point resides inside a rectangle.
+        ///
+        /// ## Function Parameters
+        /// * `self`: The rectangle to check for if a point is inside.
+        /// * `point`: The point to see if it is in the rectangle.
+        ///
+        /// ## Return Value
+        /// Returns if the point is inside the rectangle or not.
+        ///
+        /// ## Remarks
+        /// A point is considered part of a rectangle if the point's x and y coordinates are >= to the rectangle's top left corner,
+        /// and < the rectangle's x+w and y+h.
+        /// So a 1x1 rectangle considers point (0,0) as "inside" and (0,1) as not.
+        ///
+        /// ## Thread Safety
+        /// It is safe to call this function from any thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn pointIn(
+            self: Self,
+            point: Point(Type),
+        ) bool {
             return point.x >= self.x and (point.x < (self.x + self.w)) and
                 (point.y >= self.y) and (point.y < (self.y + self.h));
         }
@@ -347,7 +426,20 @@ pub fn Rect(comptime Type: type) type {
         /// This function is available since SDL 3.2.0.
         pub const getUnion = if (isIRect) getUnionIRect else if (isFRect) getUnionFRect else null;
 
-        /// If intersecting with another rectangle.
+        /// Determine whether two rectangles intersect.
+        ///
+        /// ## Function Parameters
+        /// * `self`: First rectangle.
+        /// * `other`: Second rectangle.
+        ///
+        /// ## Return Value
+        /// Returns true if there is an intersection, false otherwise.
+        ///
+        /// ## Thread Safety
+        /// It is safe to call this function from any thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
         pub const hasIntersection = if (isIRect) hasIntersectionIRect else if (isFRect) hasIntersectionFRect else null;
 
         /// Get the SDL rectangle.
@@ -383,4 +475,12 @@ test "Rect" {
     // getRectIntersectionFloat
     // getRectUnion
     // getRectUnionFloat
+    // hasIntersection
+    // hasIntersectionFloat
+    // pointIn
+    // pointInFloat
+    // empty
+    // emptyFloat
+    // equalEpsilon TODO!!!
+    // equal TODO!!!
 }

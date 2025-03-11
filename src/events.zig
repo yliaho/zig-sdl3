@@ -204,11 +204,11 @@ pub const Group = enum {
 pub const Type = enum(C.SDL_EventType) {
     /// User-requested quit.
     quit = C.SDL_EVENT_QUIT,
-    // /// The application is being terminated by the OS.
-    // /// This event must be handled in a callback set with `events.addWatch()`.
-    // /// Called on iOS in `applicationWillTerminate()`.
-    // /// Called on Android in `onDestroy()`.
-    // terminating = C.SDL_EVENT_TERMINATING,
+    /// The application is being terminated by the OS.
+    /// This event must be handled in a callback set with `events.addWatch()`.
+    /// Called on iOS in `applicationWillTerminate()`.
+    /// Called on Android in `onDestroy()`.
+    terminating = C.SDL_EVENT_TERMINATING,
     // /// The application is low on memory, free memory if possible.
     // /// This event must be handled in a callback set with `events.addWatch()`.
     // low_memory = C.SDL_EVENT_LOW_MEMORY,
@@ -322,7 +322,8 @@ pub const Type = enum(C.SDL_EventType) {
     // Private1,
     // Private2,
     // Private3,
-    // User,
+    /// User events, should be allocated with `events.register()`.
+    user,
     /// An unknown event type.
     unknown = C.SDL_EVENT_FIRST,
     /// For padding out the union.
@@ -352,6 +353,43 @@ pub const Unknown = struct {
     event_type: C.SDL_EventType,
 };
 
+/// A user-defined event type (event.user.*).
+///
+/// ## Remarks
+/// This event is unique; it is never created by SDL, but only by the application.
+/// The event can be pushed onto the event queue using `events.push()`.
+/// The contents of the structure members are completely up to the programmer;
+/// the only requirement is that '''type''' is a value obtained from `events.register()`.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+///
+/// ## Code Examples
+/// ```zig
+/// const event_type = events.register(1);
+/// if (event_type) |val| {
+///     try events.push(.{
+///         .common = .{ .timestamp = timer.getNanosecondsSinceInit() },
+///         .event_type = val,
+///         .code = 0,
+///     });
+/// }
+/// ```
+pub const User = struct {
+    /// Common event information.
+    common: Common,
+    /// The event type.
+    event_type: C.SDL_EventType,
+    /// Associated window if any.
+    window_id: ?video.WindowID = null,
+    /// User defined event code.
+    code: i32,
+    /// User defined pointer 1.
+    data1: ?*anyopaque = null,
+    /// User defined pointer 2.
+    data2: ?*anyopaque = null,
+};
+
 /// The "quit requested" event.
 pub const Quit = struct {
     /// Common event information.
@@ -374,6 +412,10 @@ const DummyUnion = union(DummyEnum) {
 pub const Event = union(Type) {
     /// Quit request event data.
     quit: Quit,
+    /// Application being terminated by the OS.
+    terminating: Common,
+    /// A user event.
+    user: User,
     /// An unknown event.
     unknown: Unknown,
     // Padding to make union the same size of a `C.SDL_Event`.
@@ -397,6 +439,18 @@ pub const Event = union(Type) {
             C.SDL_EVENT_QUIT => .{ .quit = .{
                 .common = Common.fromSdl(&event),
             } },
+            C.SDL_EVENT_TERMINATING => .{ .terminating = Common.fromSdl(&event) },
+            C.SDL_EVENT_USER...C.SDL_EVENT_LAST => .{ .user = .{
+                .common = Common.fromSdl(&event),
+                .event_type = event.type,
+                .window_id = if (event.user.windowID == 0) null else event.user.windowID,
+                .code = event.user.code,
+                .data1 = event.user.data1,
+                .data2 = event.user.data2,
+            } },
+            C.SDL_EVENT_ENUM_PADDING => .{
+                .padding = @splat(0),
+            },
             else => .{ .unknown = .{
                 .common = Common.fromSdl(&event),
                 .event_type = event.type,
@@ -463,9 +517,29 @@ pub const Event = union(Type) {
     /// This function is provided by zig-sdl3.
     pub fn toSdl(event: Event) C.SDL_Event {
         return switch (event) {
-            .quit => |val| .{ .quit = .{ .type = C.SDL_EVENT_QUIT, .timestamp = val.common.timestamp } },
-            .unknown => |val| .{ .common = .{ .type = val.event_type, .timestamp = val.common.timestamp } },
-            .padding => .{ .type = C.SDL_EVENT_ENUM_PADDING },
+            .quit => |val| .{ .quit = .{
+                .type = C.SDL_EVENT_QUIT,
+                .timestamp = val.common.timestamp,
+            } },
+            .terminating => |val| .{ .common = .{
+                .type = C.SDL_EVENT_TERMINATING,
+                .timestamp = val.timestamp,
+            } },
+            .unknown => |val| .{ .common = .{
+                .type = val.event_type,
+                .timestamp = val.common.timestamp,
+            } },
+            .user => |val| .{ .user = .{
+                .type = val.event_type,
+                .timestamp = val.common.timestamp,
+                .windowID = if (val.window_id) |id| id else 0,
+                .code = val.code,
+                .data1 = val.data1,
+                .data2 = val.data2,
+            } },
+            .padding => .{
+                .type = C.SDL_EVENT_ENUM_PADDING,
+            },
         };
     }
 

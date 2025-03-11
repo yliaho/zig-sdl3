@@ -215,6 +215,15 @@ pub const MetalView = @import("metal.zig").View;
 pub const openURL = @import("misc.zig").openURL;
 pub const pen = @import("pen.zig");
 pub const pixels = @import("pixels.zig");
+
+/// SDL power management routines.
+///
+/// There is a single function in this category: `PowerState.get()`.
+///
+/// This function is useful for games on the go.
+/// This allows an app to know if it's running on a draining battery, which can be useful if the app wants to reduce processing, or perhaps framerate,
+/// to extend the duration of the battery's charge.
+/// Perhaps the app just wants to show a battery meter when fullscreen, or alert the user when the power is getting extremely low, so they can save their game.
 pub const PowerState = @import("power.zig").PowerState;
 
 /// A property is a variable that can be created and retrieved by name at runtime.
