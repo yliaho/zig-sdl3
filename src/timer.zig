@@ -1,242 +1,559 @@
-// This file was generated using `zig build bindings`. Do not manually edit!
-
 const C = @import("c.zig").C;
+const errors = @import("errors.zig");
 const std = @import("std");
 
-/// Call a callback function at a future time. Has the current callback time interval, returns the new one with 0 to disable.
-pub fn MillisecondsTimerCallback(
-	comptime UserData: type,
-) type {
-	return *const fn (
-		user_data: *UserData,
-		timer: Timer,
-		millsecond_interval: u32,
-	) u32;
-}
+/// Number of microseconds in a second.
+///
+/// ## Remarks
+/// This is always 1000000.
+///
+/// ## Version
+/// This constant is available since SDL 3.2.0.
+pub const microseconds_per_second: comptime_int = C.SDL_US_PER_SECOND;
 
-/// Call a callback function at a future time. Has the current callback time interval, returns the new one with 0 to disable.
-pub fn MillisecondsTimerCallbackData(comptime UserData: type) type {
-	return struct {
-		cb: *const fn (
-			user_data: *UserData,
-			timer: Timer,
-			millsecond_interval: u32,
-		) u32,
-		data: *UserData,
-	};
-}
+/// Number of milliseconds in a second.
+///
+/// ## Remarks
+/// This is always 1000.
+///
+/// ## Version
+/// This constant is available since SDL 3.2.0.
+pub const milliseconds_per_second: comptime_int = C.SDL_MS_PER_SECOND;
 
-/// Call a callback function at a future time. Has the current callback time interval, returns the new one with 0 to disable.
-pub fn millisecondsTimerCallback(
-	user_data: ?*anyopaque,
-	timer: C.SDL_TimerID,
-	millsecond_interval: u32,
-) callconv(.C) u32 {
-	const cb_data: *MillisecondsTimerCallbackData(anyopaque) = @ptrCast(@alignCast(user_data));
-	const ret = cb_data.cb(
-		cb_data.data,
-		Timer{ .value = timer },
-		@intCast(millsecond_interval),
-	);
-	return @intCast(ret);
-}
+/// Number of nanoseconds in a microsecond.
+///
+/// ## Remarks
+/// This is always 1000.
+///
+/// ## Version
+/// This constant is available since SDL 3.2.0.
+pub const nanoseconds_per_microsecond: comptime_int = C.SDL_NS_PER_US;
 
-/// Call a callback function at a future time. Has the current callback time interval, returns the new one with 0 to disable.
-pub fn NanosecondsTimerCallback(
-	comptime UserData: type,
-) type {
-	return *const fn (
-		user_data: *UserData,
-		timer: Timer,
-		nanosecond_interval: u64,
-	) u32;
-}
+/// Number of nanoseconds in a millisecond.
+///
+/// ## Remarks
+/// This is always 1000000.
+///
+/// ## Version
+/// This constant is available since SDL 3.2.0.
+pub const nanoseconds_per_millisecond: comptime_int = C.SDL_NS_PER_MS;
 
-/// Call a callback function at a future time. Has the current callback time interval, returns the new one with 0 to disable.
-pub fn NanosecondsTimerCallbackData(comptime UserData: type) type {
-	return struct {
-		cb: *const fn (
-			user_data: *UserData,
-			timer: Timer,
-			nanosecond_interval: u64,
-		) u32,
-		data: *UserData,
-	};
-}
+/// Number of nanoseconds in a second.
+///
+/// ## Remarks
+/// This is always 1000000000.
+///
+/// ## Version
+/// This constant is available since SDL 3.2.0.
+pub const nanoseconds_per_second: comptime_int = C.SDL_NS_PER_SECOND;
 
-/// Call a callback function at a future time. Has the current callback time interval, returns the new one with 0 to disable.
-pub fn nanosecondsTimerCallback(
-	user_data: ?*anyopaque,
-	timer: C.SDL_TimerID,
-	nanosecond_interval: u64,
-) callconv(.C) u32 {
-	const cb_data: *NanosecondsTimerCallbackData(anyopaque) = @ptrCast(@alignCast(user_data));
-	const ret = cb_data.cb(
-		cb_data.data,
-		Timer{ .value = timer },
-		@intCast(nanosecond_interval),
-	);
-	return @intCast(ret);
-}
+/// Function prototype for the millisecond timer callback function.
+///
+/// ## Function Parameters
+/// * `user_data`: An arbitrary pointer provided by the app through `timer.Timer.initMilliseconds()`, for its own use.
+/// * `timer`: The current timer being processed.
+/// * `interval_milliseconds`: The current callback time interval.
+///
+/// ## Return Value
+/// Returns the new callback time interval, or `0` to disable further runs of the callback.
+///
+/// ## Remarks
+/// The callback function is passed the current timer interval and returns the next timer interval, in milliseconds.
+/// If the returned value is the same as the one passed in, the periodic alarm continues, otherwise a new alarm is scheduled.
+/// If the callback returns `0`, the periodic alarm is canceled and will be removed.
+///
+/// ## Thread Safety
+/// SDL may call this callback at any time from a background thread;
+/// the application is responsible for locking resources the callback touches that need to be protected.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const MillisecondsTimerCallback = *const fn (user_data: ?*anyopaque, timer: C.SDL_TimerID, interval_milliseconds: u32) callconv(.C) u32;
 
-/// For triggering timed callbacks.
-pub const Timer = struct {
-	value: C.SDL_TimerID,
-
-	/// Call a callback function at a future time in milliseconds.
-	pub fn initMilliseconds(
-		UserData: type,
-		interval_milliseconds: u32,
-		callback_data: *MillisecondsTimerCallbackData(UserData),
-	) !Timer {
-		const ret = C.SDL_AddTimer(
-			@intCast(interval_milliseconds),
-			millisecondsTimerCallback,
-			callback_data,
-		);
-		if (ret == 0)
-			return null;
-		return Timer{ .value = ret };
-	}
-
-	/// Call a callback function at a future time in nanoseconds.
-	pub fn initNanoseconds(
-		UserData: type,
-		interval_nanoseconds: u64,
-		callback_data: *NanosecondsTimerCallbackData(UserData),
-	) !Timer {
-		const ret = C.SDL_AddTimerNS(
-			@intCast(interval_nanoseconds),
-			nanosecondsTimerCallback,
-			callback_data,
-		);
-		if (ret == 0)
-			return null;
-		return Timer{ .value = ret };
-	}
-
-	/// Remove a created timer.
-	pub fn deinit(
-		self: Timer,
-	) !void {
-		const ret = C.SDL_RemoveTimer(
-			self.value,
-		);
-		if (!ret)
-			return error.SdlError;
-	}
-};
-
-/// Convert seconds into nanoseconds.
-pub fn secondsToNanoseconds(
-	seconds: u64,
-) u64 {
-	const ret = C.SDL_SECONDS_TO_NS(
-		@intCast(seconds),
-	);
-	return @intCast(ret);
-}
-
-/// Convert nanoseconds into seconds.
-pub fn nanosecondsToSeconds(
-	nanoseconds: u64,
-) u64 {
-	const ret = C.SDL_NS_TO_SECONDS(
-		@intCast(nanoseconds),
-	);
-	return @intCast(ret);
-}
-
-/// Convert millseconds into nanoseconds.
-pub fn millisecondsToNanoseconds(
-	millseconds: u64,
-) u64 {
-	const ret = C.SDL_MS_TO_NS(
-		@intCast(millseconds),
-	);
-	return @intCast(ret);
-}
-
-/// Convert nanoseconds into millseconds.
-pub fn nanosecondsToMilliseconds(
-	nanoseconds: u64,
-) u64 {
-	const ret = C.SDL_NS_TO_MS(
-		@intCast(nanoseconds),
-	);
-	return @intCast(ret);
-}
-
-/// Convert microseconds into nanoseconds.
-pub fn microsecondsToNanoseconds(
-	microseconds: u64,
-) u64 {
-	const ret = C.SDL_US_TO_NS(
-		@intCast(microseconds),
-	);
-	return @intCast(ret);
-}
-
-/// Convert nanoseconds into microseconds.
-pub fn nanosecondsToMicroseconds(
-	nanoseconds: u64,
-) u64 {
-	const ret = C.SDL_NS_TO_US(
-		@intCast(nanoseconds),
-	);
-	return @intCast(ret);
-}
-
-/// Get the number of milliseconds since SDL library initialization.
-pub fn getMillisecondsSinceInit() u64 {
-	const ret = C.SDL_GetTicks();
-	return @intCast(ret);
-}
-
-/// Get the number of nanoseconds since SDL library initialization.
-pub fn getNanosecondsSinceInit() u64 {
-	const ret = C.SDL_GetTicksNS();
-	return @intCast(ret);
-}
-
-/// Get the current value of the high resolution counter.
-pub fn getPerformanceCounter() u64 {
-	const ret = C.SDL_GetPerformanceCounter();
-	return @intCast(ret);
-}
-
-/// Get the count per second of the high resolution counter.
-pub fn getPerformanceFrequency() u64 {
-	const ret = C.SDL_GetPerformanceFrequency();
-	return @intCast(ret);
-}
+/// Function prototype for the nanosecond timer callback function.
+///
+/// ## Function Parameters
+/// * `user_data`: An arbitrary pointer provided by the app through `timer.Timer.initNanoseconds()`, for its own use.
+/// * `timer`: The current timer being processed.
+/// * `interval_nanoseconds`: The current callback time interval.
+///
+/// ## Return Value
+/// Returns the new callback time interval, or `0` to disable further runs of the callback.
+///
+/// ## Remarks
+/// The callback function is passed the current timer interval and returns the next timer interval, in nanoseconds.
+/// If the returned value is the same as the one passed in, the periodic alarm continues, otherwise a new alarm is scheduled.
+/// If the callback returns `0`, the periodic alarm is canceled and will be removed.
+///
+/// ## Thread Safety
+/// SDL may call this callback at any time from a background thread;
+/// the application is responsible for locking resources the callback touches that need to be protected.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const NanosecondsTimerCallback = *const fn (user_data: ?*anyopaque, timer: C.SDL_TimerID, interval_nanoseconds: u64) callconv(.C) u64;
 
 /// Wait a specified number of milliseconds before returning.
+///
+/// ## Function Parameters
+/// * `milliseconds`: The number of milliseconds to delay.
+///
+/// ## Remarks
+/// This function waits a specified number of milliseconds before returning.
+/// It waits at least the specified time, but possibly longer due to OS scheduling.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
 pub fn delayMilliseconds(
-	milliseconds: u32,
+    milliseconds: u32,
 ) void {
-	const ret = C.SDL_Delay(
-		@intCast(milliseconds),
-	);
-	_ = ret;
+    C.SDL_Delay(
+        @intCast(milliseconds),
+    );
 }
 
 /// Wait a specified number of nanoseconds before returning.
+///
+/// ## Function Parameters
+/// * `nanoseconds`: The number of nanoseconds to delay.
+///
+/// ## Remarks
+/// This function waits a specified number of nanoseconds before returning.
+/// It waits at least the specified time, but possibly longer due to OS scheduling.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
 pub fn delayNanoseconds(
-	nanoseconds: u64,
+    nanoseconds: u64,
 ) void {
-	const ret = C.SDL_DelayNS(
-		@intCast(nanoseconds),
-	);
-	_ = ret;
+    C.SDL_DelayNS(
+        @intCast(nanoseconds),
+    );
 }
 
-pub const milliseconds_per_second = C.SDL_MS_PER_SECOND;
+/// Wait a specified number of nanoseconds before returning.
+///
+/// ## Function Parameters
+/// * `nanoseconds`: The number of nanoseconds to delay.
+///
+/// ## Remarks
+/// This function waits a specified number of nanoseconds before returning.
+/// It will attempt to wait as close to the requested time as possible, busy waiting if necessary, but could return later due to OS scheduling.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn delayNanosecondsPrecise(
+    nanoseconds: u64,
+) void {
+    C.SDL_DelayNS(
+        @intCast(nanoseconds),
+    );
+}
 
-pub const microseconds_per_second = C.SDL_US_PER_SECOND;
+/// Get the number of milliseconds since SDL library initialization.
+///
+/// ## Return Value
+/// Returns an unsigned 64‑bit integer that represents the number of milliseconds that have elapsed since the SDL library was initialized
+/// (typically via a call to `init.init()`).
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+///
+/// ## Code Examples
+/// ```zig
+/// var quit = false;
+/// var last_time: u32 = 0;
+/// while (!quit) {
+///     // Do stuff.
+///     // ...
+///
+///     // Print a report once per second.
+///     const current_time = timer.getMillisecondsSinceInit();
+///     if (current_time > last_time + 1000) {
+///         std.debug.pring("Report\n");
+///         last_time = current_time;
+///     }
+/// }
+/// ```
+pub fn getMillisecondsSinceInit() u64 {
+    const ret = C.SDL_GetTicks();
+    return @intCast(ret);
+}
 
-pub const nanoseconds_per_second = C.SDL_NS_PER_SECOND;
+/// Get the number of nanoseconds since SDL library initialization.
+///
+/// ## Return Value
+/// Returns an unsigned 64‑bit integer that represents the number of nanoseconds that have elapsed since the SDL library was initialized
+/// (typically via a call to `init.init()`).
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getNanosecondsSinceInit() u64 {
+    const ret = C.SDL_GetTicksNS();
+    return @intCast(ret);
+}
 
-pub const nanoseconds_per_millisecond = C.SDL_NS_PER_MS;
+/// Get the current value of the high resolution counter.
+///
+/// ## Return Value
+/// Returns the current counter value.
+///
+/// ## Remarks
+/// This function is typically used for profiling.
+///
+/// The counter values are only meaningful relative to each other.
+/// Differences between values can be converted to times by using `timer.getPerformanceFrequency()`.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getPerformanceCounter() u64 {
+    const ret = C.SDL_GetPerformanceCounter();
+    return @intCast(ret);
+}
 
-pub const nanoseconds_per_microsecond = C.SDL_NS_PER_US;
+/// Get the count per second of the high resolution counter.
+///
+/// ## Return Value
+/// Returns a platform-specific count per second.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getPerformanceFrequency() u64 {
+    const ret = C.SDL_GetPerformanceFrequency();
+    return @intCast(ret);
+}
+
+/// Convert microseconds to nanoseconds.
+///
+/// ## Function Parameters
+/// * `microseconds`: The number of microseconds to convert.
+///
+/// ## Return Value
+/// Return `microseconds` expressed in nanoseconds.
+///
+/// ## Remarks
+/// This only converts whole numbers, not fractional microseconds.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn microsecondsToNanoseconds(
+    microseconds: u64,
+) u64 {
+    const ret = C.SDL_US_TO_NS(
+        microseconds,
+    );
+    return ret;
+}
+
+/// Convert milliseconds to nanoseconds.
+///
+/// ## Function Parameters
+/// * `milliseconds`: The number of milliseconds to convert.
+///
+/// ## Return Value
+/// Return `milliseconds` expressed in nanoseconds.
+///
+/// ## Remarks
+/// This only converts whole numbers, not fractional milliseconds.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn millisecondsToNanoseconds(
+    milliseconds: u64,
+) u64 {
+    const ret = C.SDL_MS_TO_NS(
+        milliseconds,
+    );
+    return ret;
+}
+
+/// Convert nanoseconds to microseconds.
+///
+/// ## Function Parameters
+/// * `nanoseconds`: The number of nanoseconds to convert.
+///
+/// ## Return Value
+/// Returns `nanoseconds`, expressed in microseconds.
+///
+/// ## Remarks
+/// This performs floating point division.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn nanosecondsToMicroseconds(
+    nanoseconds: f64,
+) f64 {
+    const ret = C.SDL_NS_TO_US(
+        nanoseconds,
+    );
+    return ret;
+}
+
+/// Convert nanoseconds into millseconds.
+///
+/// ## Function Parameters
+/// * `nanoseconds`: The number of nanoseconds to convert.
+///
+/// ## Return Value
+/// Returns nanoseconds, expressed in milliseconds.
+///
+/// ## Remarks
+/// This performs floating point division.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn nanosecondsToMilliseconds(
+    nanoseconds: f64,
+) f64 {
+    const ret = C.SDL_NS_TO_MS(
+        nanoseconds,
+    );
+    return ret;
+}
+
+/// Convert nanoseconds into seconds.
+///
+/// ## Function Parameters
+/// * `nanoseconds`: The number of nanoseconds to convert.
+///
+/// ## Return Value
+/// Returns `nanoseconds`, expressed in seconds.
+///
+/// ## Remarks
+/// This performs floating point division.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This macro is available since SDL 3.2.0.
+pub fn nanosecondsToSeconds(
+    nanoseconds: f64,
+) f64 {
+    const ret = C.SDL_NS_TO_SECONDS(
+        nanoseconds,
+    );
+    return ret;
+}
+
+/// Convert seconds to nanoseconds.
+///
+/// ## Function Parameters
+/// * `seconds`: The number of seconds to convert.
+///
+/// ## Return Value
+/// Returns `seconds`, expressed in nanoseconds.
+///
+/// ## Remarks
+/// This only converts whole numbers, not fractional seconds.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn secondsToNanoseconds(
+    seconds: u64,
+) u64 {
+    const ret = C.SDL_SECONDS_TO_NS(
+        seconds,
+    );
+    return ret;
+}
+
+/// Definition of the timer ID type.
+pub const Timer = struct {
+    value: C.SDL_TimerID,
+
+    /// Create a timer from SDL.
+    pub fn fromSdl(val: C.SDL_TimerID) ?Timer {
+        if (val == 0)
+            return null;
+        return .{ .value = val };
+    }
+
+    /// Conver the timer to SDL.
+    pub fn toSdl(self: ?Timer) C.SDL_TimerID {
+        if (self) |val|
+            return val.value;
+        return 0;
+    }
+
+    /// Remove a created timer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The timer to remove.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinit(
+        self: Timer,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_RemoveTimer(self.value));
+    }
+
+    /// Call a callback function at a future time in milliseconds.
+    ///
+    /// ## Function Parameters
+    /// * `interval_milliseconds`: The timer delay, in milliseconds, passed to callback.
+    /// * `callback`: The `timer.MillisecondsTimerCallback` function to call when the specified interval elapses.
+    /// * `user_data`: A pointer that is passed to callback.
+    ///
+    /// ## Return Value
+    /// Returns a timer.
+    ///
+    /// ## Remarks
+    /// The callback function is passed the current timer interval and the user supplied parameter from the `timer.Timer.initMilliseconds()` call
+    /// and should return the next timer interval.
+    /// If the value returned from the callback is an error, the timer is canceled and will be removed.
+    ///
+    /// The callback is run on a separate thread, and for short timeouts can potentially be called before this function returns.
+    ///
+    /// Timers take into account the amount of time it took to execute the callback.
+    /// For example, if the callback took 250 ms to execute and returned 1000 (ms), the timer would only wait another 750 ms before its next iteration.
+    ///
+    /// Timing may be inexact due to OS scheduling.
+    /// Be sure to note the current time with `timer.getNanosecondsSinceInit()` or `timer.getPerformanceCounter()` in case your callback needs to adjust for variances.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn initMilliseconds(
+        interval_milliseconds: u32,
+        callback: MillisecondsTimerCallback,
+        user_data: ?*anyopaque,
+    ) !Timer {
+        const ret = C.SDL_AddTimer(
+            @intCast(interval_milliseconds),
+            callback,
+            user_data,
+        );
+        return Timer{ .value = try errors.wrapCall(C.SDL_TimerID, ret, 0) };
+    }
+
+    /// Call a callback function at a future time in milliseconds.
+    ///
+    /// ## Function Parameters
+    /// * `interval_nanoseconds`: The timer delay, in nanoseconds, passed to callback.
+    /// * `callback`: The `timer.NanosecondsTimerCallback` function to call when the specified interval elapses.
+    /// * `user_data`: A pointer that is passed to callback.
+    ///
+    /// ## Return Value
+    /// Returns a timer.
+    ///
+    /// ## Remarks
+    /// The callback function is passed the current timer interval and the user supplied parameter from the `timer.Timer.initNanoseconds()` call
+    /// and should return the next timer interval.
+    /// If the value returned from the callback is an error, the timer is canceled and will be removed.
+    ///
+    /// The callback is run on a separate thread, and for short timeouts can potentially be called before this function returns.
+    ///
+    /// Timers take into account the amount of time it took to execute the callback.
+    /// For example, if the callback took 250 ns to execute and returned 1000 (ns), the timer would only wait another 750 ns before its next iteration.
+    ///
+    /// Timing may be inexact due to OS scheduling.
+    /// Be sure to note the current time with `timer.getNanosecondsSinceInit()` or `timer.getPerformanceCounter()` in case your callback needs to adjust for variances.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn initNanoseconds(
+        interval_nanoseconds: u64,
+        callback: NanosecondsTimerCallback,
+        user_data: ?*anyopaque,
+    ) !Timer {
+        const ret = C.SDL_AddTimerNS(
+            @intCast(interval_nanoseconds),
+            callback,
+            user_data,
+        );
+        return Timer{ .value = try errors.wrapCall(C.SDL_TimerID, ret, 0) };
+    }
+};
+
+fn dummyMsCallback(
+    user_data: ?*anyopaque,
+    timer: C.SDL_TimerID,
+    interval_milliseconds: u32,
+) callconv(.C) u32 {
+    _ = user_data;
+    _ = timer;
+    _ = interval_milliseconds;
+    return 0;
+}
+
+fn dummyNsCallback(
+    user_data: ?*anyopaque,
+    timer: C.SDL_TimerID,
+    interval_nanoseconds: u64,
+) callconv(.C) u64 {
+    _ = user_data;
+    _ = timer;
+    _ = interval_nanoseconds;
+    return 0;
+}
+
+// Test timer related functionality.
+test "Timer" {
+    comptime try std.testing.expectEqual(milliseconds_per_second, nanoseconds_per_second / millisecondsToNanoseconds(1));
+    comptime try std.testing.expectEqual(nanoseconds_per_millisecond, millisecondsToNanoseconds(1));
+    comptime try std.testing.expectEqual(nanoseconds_per_second, secondsToNanoseconds(1));
+    comptime try std.testing.expectEqual(nanoseconds_per_microsecond, microsecondsToNanoseconds(1));
+    comptime try std.testing.expectEqual(microseconds_per_second, nanoseconds_per_second / microsecondsToNanoseconds(1));
+
+    comptime try std.testing.expectEqual(0.001, nanosecondsToMicroseconds(1));
+    comptime try std.testing.expectEqual(0.000001, nanosecondsToMilliseconds(1));
+    comptime try std.testing.expectEqual(0.000000001, nanosecondsToSeconds(1));
+
+    delayMilliseconds(1);
+    delayNanoseconds(1);
+    delayNanosecondsPrecise(1);
+
+    _ = getPerformanceCounter() / getPerformanceFrequency();
+    _ = getMillisecondsSinceInit();
+    _ = getNanosecondsSinceInit();
+
+    _ = try Timer.initNanoseconds(3, dummyNsCallback, null);
+    const timer = try Timer.initMilliseconds(5000, dummyMsCallback, null);
+    try timer.deinit();
+}

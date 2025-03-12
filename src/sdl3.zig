@@ -244,6 +244,17 @@ pub const sensor = @import("sensor.zig");
 pub const stdinc = @import("stdinc.zig");
 pub const surface = @import("surface.zig");
 pub const time = @import("time.zig");
+
+/// SDL provides time management functionality.
+/// It is useful for dealing with (usually) small durations of time.
+///
+/// This is not to be confused with calendar time management, which is provided by `time`.
+///
+/// This category covers measuring time elapsed (`timer.getMillisecondsSinceInit()`, `timer.getPerformanceCounter()`),
+/// putting a thread to sleep for a certain amount of time (`timer.delayMilliseconds()`, `timer.delayNanoseconds()`, `timer.delayNanosecondsPrecise()`),
+/// and firing a callback function after a certain amount of time has elasped (`timer.Timer.initMilliseconds()`, etc).
+///
+/// There are also useful functions to convert between time units, like `timer.secondsToNanoseconds()` and such.
 pub const timer = @import("timer.zig");
 pub const Version = @import("version.zig").Version;
 pub const video = @import("video.zig");
