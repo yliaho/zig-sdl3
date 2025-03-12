@@ -208,6 +208,9 @@ pub export fn SDL_AppQuit(
 // |                             Custom Application Code Here                          |
 // =====================================================================================
 
+// https://www.pexels.com/photo/green-trees-on-the-field-1630049/
+const my_image = @embedFile("data/trees.jpeg");
+
 const WINDOW_WIDTH = 640;
 const WINDOW_HEIGHT = 480;
 
@@ -224,9 +227,9 @@ const log_app = sdl3.log.Category.application;
 
 /// Sample structure to use to hold our app state.
 const AppState = struct {
-    init_flags: sdl3.init.Flags,
     window: sdl3.video.Window,
     renderer: sdl3.render.Renderer,
+    tree_tex: sdl3.render.Texture,
 };
 
 /// An example function to handle errors from SDL.
@@ -323,12 +326,24 @@ fn init(
 
     // Prepare app state.
     const state = try allocator.create(AppState);
+    errdefer allocator.destroy(state);
 
     // Setup initial data.
-    const init_flags = sdl3.init.Flags{
-        .video = true,
-    };
-    const window_renderer = try sdl3.render.Renderer.initWithWindow("Hello SDL3", WINDOW_WIDTH, WINDOW_HEIGHT, .{});
+    const window_renderer = try sdl3.render.Renderer.initWithWindow(
+        "Hello SDL3",
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        .{},
+    );
+    errdefer window_renderer.renderer.deinit();
+    errdefer window_renderer.window.deinit();
+    var stream_source: std.io.StreamSource = undefined;
+    const tree_tex = try sdl3.image.loadTextureIo(
+        window_renderer.renderer,
+        try sdl3.Stream.fromConstMemory(my_image, &stream_source),
+        true,
+    );
+    errdefer tree_tex.deinit();
 
     // Prove error handling works.
     const dummy: ?sdl3.video.Window = sdl3.video.Window.fromID(99999) catch null;
@@ -338,9 +353,9 @@ fn init(
 
     // Set app state.
     state.* = .{
-        .init_flags = init_flags,
         .window = window_renderer.window,
         .renderer = window_renderer.renderer,
+        .tree_tex = tree_tex,
     };
     app_state.* = state;
 
@@ -365,6 +380,13 @@ fn iterate(
 ) !sdl3.AppResult {
     try app_state.renderer.setDrawColor(.{ .r = 128, .g = 30, .b = 255 });
     try app_state.renderer.clear();
+    const border = 10;
+    try app_state.renderer.renderTexture(app_state.tree_tex, null, .{
+        .x = border,
+        .y = border,
+        .w = WINDOW_WIDTH - border * 2,
+        .h = WINDOW_HEIGHT - border * 2,
+    });
     try app_state.renderer.present();
     return .run;
 }
@@ -409,6 +431,7 @@ fn quit(
 ) void {
     _ = result;
     if (app_state) |val| {
+        val.tree_tex.deinit();
         val.renderer.deinit();
         val.window.deinit();
         allocator.destroy(val);

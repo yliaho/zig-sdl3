@@ -13,6 +13,7 @@ pub fn build(b: *std.Build) void {
 
     const sdl3 = b.dependency("sdl3", .{
         .callbacks = true,
+        .ext_image = true,
     });
     exe.root_module.addImport("sdl3", sdl3.module("sdl3"));
     b.installArtifact(exe);
