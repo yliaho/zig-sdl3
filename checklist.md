@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (19/57)
+## Done (20/57)
 
 ### Basics
 * Main
@@ -21,6 +21,7 @@ For monitoring how close various subsystems are to completion.
 
 ### Time
 * Timer
+* Time
 
 ### Platform
 * Bits
@@ -32,7 +33,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (21/57)
+## In Progress (20/57)
 
 ### Basics
 * Hints
@@ -57,9 +58,6 @@ For monitoring how close various subsystems are to completion.
 
 ### Audio
 * Audio
-
-### Time
-* Time
 
 ### File IO
 * IO Streams

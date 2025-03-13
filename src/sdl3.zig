@@ -243,6 +243,13 @@ pub const Scancode = @import("scancode.zig").Scancode;
 pub const sensor = @import("sensor.zig");
 pub const stdinc = @import("stdinc.zig");
 pub const surface = @import("surface.zig");
+
+/// SDL realtime clock and date/time routines.
+///
+/// There are two data types that are used in this category: `time.Time`, which represents the nanoseconds since a specific moment (an "epoch"),
+/// and `time.DateTime`, which breaks time down into human-understandable components: years, months, days, hours, etc.
+///
+/// Much of the functionality is involved in converting those two types to other useful forms.
 pub const time = @import("time.zig");
 
 /// SDL provides time management functionality.
@@ -273,6 +280,7 @@ pub const vulkan = @import("vulkan.zig");
 
 pub const Stream = @import("io_stream.zig").Stream;
 
+// Others.
 const extension_options = @import("extension_options");
 const std = @import("std");
 

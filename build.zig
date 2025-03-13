@@ -26,7 +26,7 @@ pub fn build(b: *std.Build) !void {
     const sdl_image_dep = b.dependency("sdl_image", .{
         .target = target,
         .optimize = optimize,
-        //TODO add options here...
+        // TODO: Add options here...
     });
     const sdl_image_lib = sdl_image_dep.artifact("SDL3_image");
 
@@ -42,7 +42,7 @@ pub fn build(b: *std.Build) !void {
     const extension_options = b.addOptions();
     const ext_image = b.option(bool, "ext_image", "Enable SDL_image extension") orelse false;
     extension_options.addOption(bool, "image", ext_image);
-    // linking zig-sdl to sdl3, makes the library much easier to use
+    // Linking zig-sdl to sdl3, makes the library much easier to use.
     sdl3.addOptions("extension_options", extension_options);
     sdl3.linkLibrary(sdl_dep_lib);
     if (ext_image) {

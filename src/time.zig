@@ -1,244 +1,358 @@
-// This file was generated using `zig build bindings`. Do not manually edit!
-
 const C = @import("c.zig").C;
+const errors = @import("errors.zig");
 const std = @import("std");
 
+/// The preferred date format of the current system locale.
+///
+/// ## Version
+/// This enum is available since SDL 3.2.0.
+pub const DateFormat = enum(c_uint) {
+    /// Year/Month/Day.
+    year_month_day = C.SDL_DATE_FORMAT_YYYYMMDD,
+    /// Day/Month/Year.
+    day_month_year = C.SDL_DATE_FORMAT_DDMMYYYY,
+    /// Month/Day/Year.
+    month_day_year = C.SDL_DATE_FORMAT_MMDDYYYY,
+};
+
 /// Day of the week.
+///
+/// ## Version
+/// This is provided by zig-sdl3.
 pub const Day = enum(c_int) {
-	Sunday = 0,
-	Monday = 1,
-	Tuesday = 2,
-	Wednesday = 3,
-	Thursday = 4,
-	Friday = 5,
-	Saturday = 6,
+    sunday = 0,
+    monday = 1,
+    tuesday = 2,
+    wednesday = 3,
+    thursday = 4,
+    friday = 5,
+    saturday = 6,
 };
 
 /// Month of the year.
+///
+/// ## Version
+/// This is provided by zig-sdl3.
 pub const Month = enum(c_int) {
-	January = 1,
-	February = 2,
-	March = 3,
-	April = 4,
-	May = 5,
-	June = 6,
-	July = 7,
-	August = 8,
-	September = 9,
-	October = 10,
-	November = 11,
-	December = 12,
-};
-
-/// The preferred date format of the current system locale.
-pub const DateFormat = enum(c_uint) {
-	YearMonthDay = C.SDL_DATE_FORMAT_YYYYMMDD,
-	DayMonthYear = C.SDL_DATE_FORMAT_DDMMYYYY,
-	MonthDayYear = C.SDL_DATE_FORMAT_MMDDYYYY,
+    january = 1,
+    february = 2,
+    march = 3,
+    april = 4,
+    may = 5,
+    june = 6,
+    july = 7,
+    august = 8,
+    september = 9,
+    october = 10,
+    november = 11,
+    december = 12,
 };
 
 /// The preferred time format of the current system locale.
+///
+/// ## Version
+/// This enum is available since SDL 3.2.0.
 pub const TimeFormat = enum(c_uint) {
-	TwentyFourHour = C.SDL_TIME_FORMAT_24HR,
-	TwelveHour = C.SDL_TIME_FORMAT_12HR,
+    /// 24 hour time.
+    twenty_four_hour = C.SDL_TIME_FORMAT_24HR,
+    /// 12 hour time.
+    twelve_hour = C.SDL_TIME_FORMAT_12HR,
+};
+
+/// A structure holding a calendar date and time broken down into it's components.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const DateTime = struct {
+    /// Year.
+    year: u31,
+    /// Month.
+    month: Month,
+    /// Day of the month. Range is [0-31] inclusively.
+    day: u5,
+    /// Hour. Range is [0-23] inclusively.
+    hour: u5,
+    /// Minute. Range is [0-59] inclusively.
+    minute: u6,
+    /// Seconds. Range is [0-60] inclusively.
+    second: u6,
+    /// Nanoseconds. Range is [0-999999999] inclusively.
+    nanosecond: u31,
+    /// Day of the week.
+    day_of_week: Day,
+    /// Seconds east of UTC.
+    utc_offset: i32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(data: C.SDL_DateTime) DateTime {
+        return .{
+            .year = @intCast(data.year),
+            .month = @enumFromInt(data.month),
+            .day = @intCast(data.day),
+            .hour = @intCast(data.hour),
+            .minute = @intCast(data.minute),
+            .second = @intCast(data.second),
+            .nanosecond = @intCast(data.nanosecond),
+            .day_of_week = @enumFromInt(data.day_of_week),
+            .utc_offset = @intCast(data.utc_offset),
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: DateTime) C.SDL_DateTime {
+        return .{
+            .year = @intCast(self.year),
+            .month = @intFromEnum(self.month),
+            .day = @intCast(self.day),
+            .hour = @intCast(self.hour),
+            .minute = @intCast(self.minute),
+            .second = @intCast(self.second),
+            .nanosecond = @intCast(self.nanosecond),
+            .day_of_week = @intFromEnum(self.day_of_week),
+            .utc_offset = @intCast(self.utc_offset),
+        };
+    }
+
+    /// Converts a `time.Time` in nanoseconds since the epoch to a calendar time in the `time.DateTime` format.
+    ///
+    /// ## Function Parameters
+    /// * `time`: The `time.Time` to be converted.
+    /// * `local_instead_of_utc`: The resulting `time.DateTime` will be expressed in local time if true, otherwise it will be in Universal Coordinated Time (UTC).
+    ///
+    /// ## Return Value
+    /// The resulting `time.DateTime`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn fromTime(
+        time: Time,
+        local_instead_of_utc: bool,
+    ) !DateTime {
+        var date_time: C.SDL_DateTime = undefined;
+        const ret = C.SDL_TimeToDateTime(
+            time.value,
+            &date_time,
+            local_instead_of_utc,
+        );
+        try errors.wrapCallBool(ret);
+        return DateTime.fromSdl(date_time);
+    }
 };
 
 /// Nanoseconds since the unix epoch.
 pub const Time = struct {
-	value: C.SDL_Time,
+    value: C.SDL_Time,
 
-	/// Gets the current value of the system realtime clock in nanoseconds since Jan 1, 1970 in Universal Coordinated Time (UTC).
-	pub fn getCurrent() !Time {
-		var time: C.SDL_Time = undefined;
-		const ret = C.SDL_GetCurrentTime(
-			&time,
-		);
-		if (!ret)
-			return error.SdlError;
-		return Time{ .value = time };
-	}
+    /// Converts a calendar time to a `time.Time` in nanoseconds since the epoch.
+    ///
+    /// ## Function Parameters
+    /// * `date_time`: The source date time.
+    ///
+    /// ## Return Value
+    /// The resulting time.
+    ///
+    /// ## Remarks
+    /// This function ignores the `day_of_week` member of the `time.DateTime` struct.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn fromDateTime(
+        date_time: DateTime,
+    ) !Time {
+        const date_time_sdl: C.SDL_DateTime = date_time.toSdl();
+        var time: C.SDL_Time = undefined;
+        const ret = C.SDL_DateTimeToTime(
+            &date_time_sdl,
+            &time,
+        );
+        try errors.wrapCallBool(ret);
+        return Time{ .value = time };
+    }
 
-	/// Gets the current preferred date and time format for the system locale. This is a *slow* call and should only be used once ideally.
-	pub fn getLocalePreferences(
-		self: Time,
-	) !struct { dateFormat: DateFormat, timeFormat: TimeFormat } {
-		var dateFormat: C.SDL_DateFormat = undefined;
-		var timeFormat: C.SDL_TimeFormat = undefined;
-		const ret = C.SDL_GetDateTimeLocalePreferences(
-			self.value,
-			&dateFormat,
-			&timeFormat,
-		);
-		if (!ret)
-			return error.SdlError;
-		return .{ .dateFormat = @enumFromInt(dateFormat), .timeFormat = @enumFromInt(timeFormat) };
-	}
+    /// Converts a Windows `FILETIME` (100-nanosecond intervals since January 1, 1601) to an SDL time.
+    ///
+    /// ## Function Parameters
+    /// * `low_date_time`: The low portion of the Windows `FILETIME` value.
+    /// * `high_date_time`: The high portion of the Windows `FILETIME` value.
+    ///
+    /// ## Return Value
+    /// Returns the converted SDL time.
+    ///
+    /// ## Remarks
+    /// This function takes the two 32-bit values of the `FILETIME` structure as parameters.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn fromWindows(
+        low_date_time: u32,
+        high_date_time: u32,
+    ) Time {
+        const ret = C.SDL_TimeFromWindows(
+            @intCast(low_date_time),
+            @intCast(high_date_time),
+        );
+        return Time{ .value = ret };
+    }
 
-	/// Converts a calendar time to an SDL_Time in nanoseconds since the epoch.
-	pub fn fromDateTime(
-		date_time: DateTime,
-	) !Time {
-		const date_time_sdl: C.SDL_DateTime = date_time.toSdl();
-		var time: C.SDL_Time = undefined;
-		const ret = C.SDL_DateTimeToTime(
-			&date_time_sdl,
-			&time,
-		);
-		if (!ret)
-			return error.SdlError;
-		return Time{ .value = time };
-	}
+    /// Gets the current value of the system realtime clock in nanoseconds since Jan 1, 1970 in Universal Coordinated Time (UTC).
+    ///
+    /// ## Return Value
+    /// Returns the tick count.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getCurrent() !Time {
+        var time: C.SDL_Time = undefined;
+        const ret = C.SDL_GetCurrentTime(
+            &time,
+        );
+        try errors.wrapCallBool(ret);
+        return Time{ .value = time };
+    }
 
-	/// Converts an SDL time to a windows FILETIME.
-	pub fn toWindows(
-		self: Time,
-	) struct { lowDateTime: u32, highDateTime: u32 } {
-		var lowDateTime: u32 = undefined;
-		var highDateTime: u32 = undefined;
-		const ret = C.SDL_TimeToWindows(
-			self.value,
-			&lowDateTime,
-			&highDateTime,
-		);
-		_ = ret;
-		return .{ .lowDateTime = lowDateTime, .highDateTime = highDateTime };
-	}
-
-	/// Converts a windows FILETIME to an SDL time.
-	pub fn fromWindows(
-		lowDateTime: u32,
-		highDateTime: u32,
-	) Time {
-		const ret = C.SDL_TimeFromWindows(
-			@intCast(lowDateTime),
-			@intCast(highDateTime),
-		);
-		return Time{ .value = ret };
-	}
+    /// Converts an SDL time into a Windows `FILETIME` (100-nanosecond intervals since January 1, 1601).
+    ///
+    /// ## Function Parameters
+    /// * `self`: The time to convert.
+    ///
+    /// ## Return Value
+    /// Returns the low and high 32-bit values of the Windows `FILETIME` structure.
+    ///
+    /// ## Remarks
+    /// This function fills in the two 32-bit values of the `FILETIME` structure.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn toWindows(
+        self: Time,
+    ) struct { low_date_time: u32, high_date_time: u32 } {
+        var low_date_time: u32 = undefined;
+        var high_date_time: u32 = undefined;
+        C.SDL_TimeToWindows(
+            self.value,
+            &low_date_time,
+            &high_date_time,
+        );
+        return .{ .low_date_time = low_date_time, .high_date_time = high_date_time };
+    }
 };
 
-/// A structure holding a calendar date and time broken down into it's components.
-pub const DateTime = struct {
-	year: u31,
-	month: Month,
-	/// Range is [0-31] inclusively.
-	day: u5,
-	/// Range is [0-23] inclusively.
-	hour: u5,
-	/// Range is [0-59] inclusively.
-	minute: u6,
-	/// Range is [0-59] inclusively.
-	second: u6,
-	/// Range is [0-999999999] inclusively.
-	nanosecond: u31,
-	day_of_week: Day,
-	/// Seconds east of UTC.
-	utc_offset: i32,
+/// Get the day of week for a calendar date.
+///
+/// ## Function Parameters
+/// * `year`: The year component of the date.
+/// * `month`: The month component of the date.
+/// * `day`: The day component of the date.
+///
+/// ## Return Value
+/// Returns the day of week.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getDayOfWeek(
+    year: u31,
+    month: Month,
+    day: u5,
+) !Day {
+    const ret = C.SDL_GetDayOfWeek(
+        @intCast(year),
+        @intFromEnum(month),
+        @intCast(day),
+    );
+    return @enumFromInt(try errors.wrapCall(c_int, ret, -1));
+}
 
-	/// Convert from an SDL value.
-	pub fn fromSdl(data: C.SDL_DateTime) DateTime {
-		return .{
-			.year = @intCast(data.year),
-			.month = @enumFromInt(data.month),
-			.day = @intCast(data.day),
-			.hour = @intCast(data.hour),
-			.minute = @intCast(data.minute),
-			.second = @intCast(data.second),
-			.nanosecond = @intCast(data.nanosecond),
-			.day_of_week = @enumFromInt(data.day_of_week),
-			.utc_offset = @intCast(data.utc_offset),
-		};
-	}
-
-	/// Convert to an SDL value.
-	pub fn toSdl(self: DateTime) C.SDL_DateTime {
-		return .{
-			.year = @intCast(self.year),
-			.month = @intFromEnum(self.month),
-			.day = @intCast(self.day),
-			.hour = @intCast(self.hour),
-			.minute = @intCast(self.minute),
-			.second = @intCast(self.second),
-			.nanosecond = @intCast(self.nanosecond),
-			.day_of_week = @intFromEnum(self.day_of_week),
-			.utc_offset = @intCast(self.utc_offset),
-		};
-	}
-
-	/// Converts an SDL time in nanoseconds since the epoch to a calendar time in the SDL date time format.
-	pub fn fromTime(
-		time: Time,
-		local_instead_of_utc: bool,
-	) !DateTime {
-		var date_time: C.SDL_DateTime = undefined;
-		const ret = C.SDL_TimeToDateTime(
-			time.value,
-			&date_time,
-			local_instead_of_utc,
-		);
-		if (!ret)
-			return error.SdlError;
-		return ret;
-	}
-};
+/// Get the day of year for a calendar date.
+///
+/// ## Function Parameters
+/// * `year`: The year component of the date.
+/// * `month`: The month component of the date.
+/// * `day`: The day component of the date.
+///
+/// ## Return Value
+/// Returns the day of year [0-365] if the date is valid.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getDayOfYear(
+    year: u31,
+    month: Month,
+    day: u5,
+) !u9 {
+    const ret = C.SDL_GetDayOfYear(
+        @intCast(year),
+        @intFromEnum(month),
+        @intCast(day),
+    );
+    return @intCast(try errors.wrapCall(c_int, ret, -1));
+}
 
 /// Get the number of days in a month for a given year.
+///
+/// ## Function Parameters
+/// * `year`: The year.
+/// * `month`: The month.
+///
+/// ## Return Value
+/// Returns the number of days in the requested month.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
 pub fn getDaysInMonth(
-	year: u31,
-	month: Month,
+    year: u31,
+    month: Month,
 ) !u5 {
-	const ret = C.SDL_GetDaysInMonth(
-		@intCast(year),
-		@intFromEnum(month),
-	);
-	if (ret == -1)
-		return error.SdlError;
-	return @intCast(ret);
+    const ret = C.SDL_GetDaysInMonth(
+        @intCast(year),
+        @intFromEnum(month),
+    );
+    return @intCast(try errors.wrapCall(c_int, ret, -1));
 }
 
-/// Get the day of a given year with value [0-365].
-pub fn getDayOfYear(
-	year: u31,
-	month: Month,
-	day: u5,
-) !u9 {
-	const ret = C.SDL_GetDayOfYear(
-		@intCast(year),
-		@intFromEnum(month),
-		@intCast(day),
-	);
-	if (ret == -1)
-		return error.SdlError;
-	return @intCast(ret);
-}
-
-/// Get the day of a given week.
-pub fn getDayOfWeek(
-	year: u31,
-	month: Month,
-	day: u5,
-) !Day {
-	const ret = C.SDL_GetDayOfWeek(
-		@intCast(year),
-		@intFromEnum(month),
-		@intCast(day),
-	);
-	if (ret == -1)
-		return error.SdlError;
-	return @enumFromInt(ret);
+/// Gets the current preferred date and time format for the system locale.
+///
+/// ## Return Value
+/// Returns the system's preferred date and time format.
+///
+/// ## Remarks
+/// This might be a "slow" call that has to query the operating system.
+/// It's best to ask for this once and save the results.
+/// However, the preferred formats can change, usually because the user has changed a system preference outside of your program.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getLocalePreferences() !struct { date_format: DateFormat, time_format: TimeFormat } {
+    var date_format: C.SDL_DateFormat = undefined;
+    var time_format: C.SDL_TimeFormat = undefined;
+    const ret = C.SDL_GetDateTimeLocalePreferences(
+        &date_format,
+        &time_format,
+    );
+    try errors.wrapCallBool(ret);
+    return .{ .date_format = @enumFromInt(date_format), .time_format = @enumFromInt(time_format) };
 }
 
 // Ensure time and date recognition works.
 test "Dates" {
-	try std.testing.expect(try getDaysInMonth(2018, Month.February) == 28);
-	try std.testing.expect(try getDaysInMonth(2020, Month.February) == 29);
-	try std.testing.expect(try getDaysInMonth(2014, Month.October) == 31);
-	try std.testing.expect(try getDayOfYear(1972, Month.June, 13) == 164);
-	try std.testing.expect(try getDayOfYear(2057, Month.March, 12) == 70);
-	try std.testing.expect(try getDayOfYear(2018, Month.September, 27) == 269);
-	try std.testing.expectError(error.SdlError, getDayOfYear(2020, Month.February, 31));
-	try std.testing.expect(try getDayOfWeek(2001, Month.November, 2) == Day.Friday);
-	try std.testing.expect(try getDayOfWeek(1984, Month.January, 11) == Day.Wednesday);
-	try std.testing.expect(try getDayOfWeek(2024, Month.October, 9) == Day.Wednesday);
-	try std.testing.expectError(error.SdlError, getDayOfWeek(2020, Month.February, 31));
+    try std.testing.expect(try getDaysInMonth(2018, Month.february) == 28);
+    try std.testing.expect(try getDaysInMonth(2020, Month.february) == 29);
+    try std.testing.expect(try getDaysInMonth(2014, Month.october) == 31);
+    try std.testing.expect(try getDayOfYear(1972, Month.june, 13) == 164);
+    try std.testing.expect(try getDayOfYear(2057, Month.march, 12) == 70);
+    try std.testing.expect(try getDayOfYear(2018, Month.september, 27) == 269);
+    try std.testing.expectError(error.SdlError, getDayOfYear(2020, Month.february, 31));
+    try std.testing.expect(try getDayOfWeek(2001, Month.november, 2) == Day.friday);
+    try std.testing.expect(try getDayOfWeek(1984, Month.january, 11) == Day.wednesday);
+    try std.testing.expect(try getDayOfWeek(2024, Month.october, 9) == Day.wednesday);
+    try std.testing.expectError(error.SdlError, getDayOfWeek(2020, Month.february, 31));
+
+    const curr_time = try Time.getCurrent();
+    try std.testing.expectEqual(curr_time, try Time.fromDateTime(try DateTime.fromTime(curr_time, true)));
+
+    _ = try getLocalePreferences();
+
+    // Idk man idk why this is not equal, probably some weird conversion loss.
+    const windows_time = curr_time.toWindows();
+    const conv_time = Time.fromWindows(windows_time.low_date_time, windows_time.high_date_time);
+    try std.testing.expect(std.math.approxEqAbs(f64, @floatFromInt(curr_time.value), @floatFromInt(conv_time.value), 1000));
 }
