@@ -84,6 +84,19 @@ pub const camera = @import("camera.zig");
 /// the operating system will not ever attempt to change the string externally if it doesn't support a primary selection.
 pub const clipboard = @import("clipboard.zig");
 
+/// Functions converting endian-specific values to different byte orders.
+///
+/// These functions either unconditionally swap byte order (`endian.swap16()`, `endian.swap32()`, `endian.swap64()`, `endian.swapFloat()`),
+/// or they swap to/from the system's native byte order
+/// (`endian.swap16Le()`, `endian.swap16Be()`, `endian.swap32Le()`, `endian.swap32Be()`, `endian.swapFloatLe()`, `endian.swapfloatBe()`).
+/// In the latter case, the functionality is provided by macros that become no-ops if a swap isn't necessary: on an x86 (littleendian) processor,
+/// `endian.swap32Le()` does nothing, but `endian.swap32Be()` reverses the bytes of the data.
+/// On a PowerPC processor (bigendian), the macros behavior is reversed.
+///
+/// The swap routines are inline functions, and attempt to use compiler intrinsics,
+/// inline assembly, and other magic to make byteswapping efficient.
+pub const endian = @import("endian.zig");
+
 /// Simple error message routines for SDL.
 ///
 /// Most apps will interface with these APIs in exactly one function:

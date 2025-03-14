@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (20/57)
+## Done (21/57)
 
 ### Basics
 * Main
@@ -24,6 +24,7 @@ For monitoring how close various subsystems are to completion.
 * Time
 
 ### Platform
+* Endian
 * Bits
 
 ### Additional Functionality
@@ -67,7 +68,7 @@ For monitoring how close various subsystems are to completion.
 * Message Box
 * Standard Lib
 
-## Not Started (17/57)
+## Not Started (16/57)
 
 ### Input
 * Touch
@@ -93,7 +94,6 @@ For monitoring how close various subsystems are to completion.
 * Platform
 * CPU Info
 * Intrin
-* Endian
 
 ### Additional Functionality
 * File Dialogs
