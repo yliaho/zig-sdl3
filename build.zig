@@ -40,6 +40,8 @@ pub fn build(b: *std.Build) !void {
         sdl3.addCSourceFile(.{ .file = b.path("main_callbacks.c") });
     }
     const extension_options = b.addOptions();
+    const sdl3_main = b.option(bool, "main", "Enable SDL main") orelse false;
+    extension_options.addOption(bool, "main", sdl3_main);
     const ext_image = b.option(bool, "ext_image", "Enable SDL_image extension") orelse false;
     extension_options.addOption(bool, "image", ext_image);
     // Linking zig-sdl to sdl3, makes the library much easier to use.

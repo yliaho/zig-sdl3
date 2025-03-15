@@ -215,7 +215,7 @@ pub const log = @import("log.zig");
 ///
 /// For more information, see:
 /// [https://wiki.libsdl.org/SDL3/README/main-functions](https://wiki.libsdl.org/SDL3/README/main-functions).
-pub const main = @import("main.zig");
+pub const main = if (extension_options.main) @import("main.zig") else void;
 pub const message_box = @import("message_box.zig");
 
 /// Functions to creating Metal layers and views on SDL windows.
