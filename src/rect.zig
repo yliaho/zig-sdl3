@@ -94,12 +94,47 @@ pub fn Rect(comptime Type: type) type {
             self: Self,
             comptime NewType: type,
         ) Rect(NewType) {
-            return .{
-                .x = @as(NewType, self.x),
-                .y = @as(NewType, self.y),
-                .w = @as(NewType, self.w),
-                .h = @as(NewType, self.h),
+            const self_int = switch (@typeInfo(Type)) {
+                .int, .comptime_int => true,
+                else => false,
             };
+            const new_int = switch (@typeInfo(NewType)) {
+                .int, .comptime_int => true,
+                else => false,
+            };
+            if (self_int) {
+                if (new_int) {
+                    return .{
+                        .x = @as(NewType, @intCast(self.x)),
+                        .y = @as(NewType, @intCast(self.y)),
+                        .w = @as(NewType, @intCast(self.w)),
+                        .h = @as(NewType, @intCast(self.h)),
+                    };
+                } else {
+                    return .{
+                        .x = @as(NewType, @floatFromInt(self.x)),
+                        .y = @as(NewType, @floatFromInt(self.y)),
+                        .w = @as(NewType, @floatFromInt(self.w)),
+                        .h = @as(NewType, @floatFromInt(self.h)),
+                    };
+                }
+            } else {
+                if (new_int) {
+                    return .{
+                        .x = @as(NewType, @intFromFloat(self.x)),
+                        .y = @as(NewType, @intFromFloat(self.y)),
+                        .w = @as(NewType, @intFromFloat(self.w)),
+                        .h = @as(NewType, @intFromFloat(self.h)),
+                    };
+                } else {
+                    return .{
+                        .x = @as(NewType, @floatCast(self.x)),
+                        .y = @as(NewType, @floatCast(self.y)),
+                        .w = @as(NewType, @floatCast(self.w)),
+                        .h = @as(NewType, @floatCast(self.h)),
+                    };
+                }
+            }
         }
 
         /// Determine whether a rectangle has no area.
@@ -124,10 +159,31 @@ pub fn Rect(comptime Type: type) type {
             return self.x <= 0 and self.y <= 0;
         }
 
-        // Equal does not need to exist, use std.meta.eql.
+        /// Determine whether two rectangles are equal.
+        ///
+        /// ## Function Parameters
+        /// * `self`: The first rectangle to test.
+        /// * `other`: The second rectangle to test.
+        ///
+        /// ## Return Value
+        /// Returns true if the rectangles are equal, false otherwise.
+        ///
+        /// Rectangles are considered equal if each of their x, y, width and height match.
+        ///
+        /// ## Thread Safety
+        /// It is safe to call this function from any thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn equal(
+            self: Self,
+            other: Self,
+        ) bool {
+            return std.meta.eql(self, other);
+        }
 
         /// Test for equality with an epsilon value.
-        pub fn equalEpsilonFRect(
+        fn equalEpsilonFRect(
             self: FRect,
             other: FRect,
             epsilon: Type,
@@ -193,7 +249,7 @@ pub fn Rect(comptime Type: type) type {
             var p2 = line[1].toSdl();
             if (!C.SDL_GetRectAndLineIntersectionFloat(&rect, &p1.x, &p1.y, &p2.x, &p2.y))
                 return null;
-            return [_]FPoint{ p1.fromSdl(), p2.fromSdl() };
+            return [_]FPoint{ FPoint.fromSdl(p1), FPoint.fromSdl(p2) };
         }
 
         /// Calculate the intersection between a rect and lines. Returns null if there is no intersection.
@@ -206,7 +262,7 @@ pub fn Rect(comptime Type: type) type {
             var p2 = line[1].toSdl();
             if (!C.SDL_GetRectAndLineIntersection(&rect, &p1.x, &p1.y, &p2.x, &p2.y))
                 return null;
-            return [_]IPoint{ p1.fromSdl(), p2.fromSdl() };
+            return [_]IPoint{ IPoint.fromSdl(p1), IPoint.fromSdl(p2) };
         }
 
         /// Calculate a minimal rectangle enclosing a set of points.
@@ -224,7 +280,7 @@ pub fn Rect(comptime Type: type) type {
         /// ## Version
         /// This function is available since SDL 3.2.0.
         pub fn getRectEnclosingPoints(
-            points: []Point(Type),
+            points: []const Point(Type),
             clip: ?Self,
         ) ?Self {
             if (points.len < 1)
@@ -378,8 +434,29 @@ pub fn Rect(comptime Type: type) type {
         const isFRect = Type == FloatingType;
         const isIRect = Type == IntegerType;
 
+        /// Determine whether two floating point rectangles are equal, within some given epsilon.
+        ///
+        /// ## Function Parameters
+        /// * `self`: First rectangle to test.
+        /// * `other`: Second rectangle to test.
+        /// * `epsilon`: The epsilon value for comparison.
+        ///
+        /// ## Return Value
+        /// Returns true if the rectangles are equal, false otherwise.
+        ///
+        /// ## Remarks
+        /// Rectangles are considered equal if each of their x, y, width and height are within epsilon of each other.
+        /// If you don't know what value to use for epsilon, you should call the `rects.equal()` function instead.
+        ///
+        /// ## Thread Safety
+        /// It is safe to call this function from any thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub const equalEpsilon = if (isFRect) equalEpsilonFRect else {};
+
         /// Create a rectangle from an SDL rectangle.
-        pub const fromSdl = if (isIRect) fromSdlIRect else if (isFRect) fromSdlFRect else null;
+        pub const fromSdl = if (isIRect) fromSdlIRect else if (isFRect) fromSdlFRect else {};
 
         /// Calculate the intersection of two rectangles.
         ///
@@ -392,7 +469,7 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Version
         /// This function is available since SDL 3.2.0.
-        pub const getIntersection = if (isIRect) getIntersectionIRect else if (isFRect) getIntersectionFRect else null;
+        pub const getIntersection = if (isIRect) getIntersectionIRect else if (isFRect) getIntersectionFRect else {};
 
         /// Calculate the intersection of a rectangle and line segment.
         ///
@@ -411,7 +488,7 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Version
         /// This function is available since SDL 3.2.0.
-        pub const getLineIntersection = if (isIRect) getLineIntersectionIRect else if (isFRect) getLineIntersectionFRect else null;
+        pub const getLineIntersection = if (isIRect) getLineIntersectionIRect else if (isFRect) getLineIntersectionFRect else {};
 
         /// Calculate the union of two rectangles.
         ///
@@ -424,7 +501,7 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Version
         /// This function is available since SDL 3.2.0.
-        pub const getUnion = if (isIRect) getUnionIRect else if (isFRect) getUnionFRect else null;
+        pub const getUnion = if (isIRect) getUnionIRect else if (isFRect) getUnionFRect else {};
 
         /// Determine whether two rectangles intersect.
         ///
@@ -440,10 +517,10 @@ pub fn Rect(comptime Type: type) type {
         ///
         /// ## Version
         /// This function is available since SDL 3.2.0.
-        pub const hasIntersection = if (isIRect) hasIntersectionIRect else if (isFRect) hasIntersectionFRect else null;
+        pub const hasIntersection = if (isIRect) hasIntersectionIRect else if (isFRect) hasIntersectionFRect else {};
 
         /// Get the SDL rectangle.
-        pub const toSdl = if (isIRect) toSdlIRect else if (isFRect) toSdlFRect else null;
+        pub const toSdl = if (isIRect) toSdlIRect else if (isFRect) toSdlFRect else {};
     };
 }
 
@@ -460,27 +537,52 @@ pub const FRect = Rect(FloatingType);
 pub const IRect = Rect(IntegerType);
 
 test "Rect" {
-    //const a = IRect{ .x = 10, .y = 20, .w = 50, .h = 50 };
-    //const b = IRect{ .x = 30, .y = 30, .w = 10, .h = 10 };
-    //try std.testing.expect(a.hasIntersection(b));
-    //try std.testing.expect(std.meta.eql(a.intersection(b), .{ .x = 30, .y = 30, .w = 10, .h = 10 }));
-    // TODO: MORE TESTS!!!
+    const a = IRect{ .x = 10, .y = 20, .w = 50, .h = 50 }; // X: 10, 60; Y: 20, 70.
+    const b = IRect{ .x = 30, .y = 30, .w = 10, .h = 10 }; // X: 30, 40; Y: 30, 40.
 
-    // asOtherRect
-    // getRectAndLineIntersection
-    // getRectAndLineIntersectionFloat
-    // getRectEnclosingPoints
-    // getRectEnclosingPointsFloat
-    // getRectIntersection
-    // getRectIntersectionFloat
-    // getRectUnion
-    // getRectUnionFloat
-    // hasIntersection
-    // hasIntersectionFloat
-    // pointIn
-    // pointInFloat
-    // empty
-    // emptyFloat
-    // equalEpsilon TODO!!!
-    // equal TODO!!!
+    const line_intersections = [_]IPoint{ .{ .x = 10, .y = 20 }, .{ .x = 59, .y = 69 } };
+    try std.testing.expectEqual(
+        line_intersections,
+        a.getLineIntersection(.{ .{ .x = 0, .y = 10 }, .{ .x = 70, .y = 80 } }),
+    );
+
+    try std.testing.expectEqual(
+        a,
+        IRect.getRectEnclosingPoints(&.{ .{ .x = 10, .y = 20 }, .{ .x = 60, .y = 70 } }, a),
+    );
+
+    try std.testing.expectEqual(b, a.getIntersection(b));
+    try std.testing.expectEqual(a, a.getUnion(b));
+    try std.testing.expect(a.hasIntersection(b));
+    try std.testing.expect(a.pointIn(.{ .x = 21, .y = 25 }));
+    try std.testing.expect(!b.pointIn(.{ .x = 21, .y = 25 }));
+    try std.testing.expect(!a.empty());
+    try std.testing.expect(!a.equal(b));
+
+    const af = FRect{ .x = 10, .y = 20, .w = 50, .h = 50 }; // X: 10, 60; Y: 20, 70.
+    const bf = FRect{ .x = 30, .y = 30, .w = 10, .h = 10 }; // X: 30, 40; Y: 30, 40.
+
+    const line_intersections_f = [_]FPoint{ .{ .x = 10, .y = 20 }, .{ .x = 60, .y = 70 } };
+    try std.testing.expectEqual(
+        line_intersections_f,
+        af.getLineIntersection(.{ .{ .x = 0, .y = 10 }, .{ .x = 70, .y = 80 } }),
+    );
+
+    try std.testing.expectEqual(
+        af,
+        FRect.getRectEnclosingPoints(&.{ .{ .x = 10, .y = 20 }, .{ .x = 60, .y = 70 } }, af),
+    );
+
+    try std.testing.expectEqual(bf, af.getIntersection(bf));
+    try std.testing.expectEqual(af, af.getUnion(bf));
+    try std.testing.expect(af.hasIntersection(bf));
+    try std.testing.expect(af.pointIn(.{ .x = 21, .y = 25 }));
+    try std.testing.expect(!bf.pointIn(.{ .x = 21, .y = 25 }));
+    try std.testing.expect(!af.empty());
+    try std.testing.expect(!af.equal(bf));
+
+    try std.testing.expect(af.equalEpsilon(.{ .x = 10.1, .y = 19.7, .w = 49.77, .h = 50.25 }, 0.5));
+
+    try std.testing.expect(a.asOtherRect(FloatingType).equal(af));
+    try std.testing.expect(af.asOtherRect(IntegerType).equal(a));
 }
