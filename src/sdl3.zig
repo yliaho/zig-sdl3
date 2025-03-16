@@ -20,6 +20,16 @@ pub const blend_mode = @import("blend_mode.zig");
 /// This should only really be used for functions not yet implemented in zig-sdl3.
 pub const c = @import("c.zig").C;
 
+/// CPU feature detection for SDL.
+///
+/// These functions are largely concerned with reporting if the system has access to various SIMD instruction sets,
+/// but also has other important info to share, such as system RAM size and number of logical CPU cores.
+///
+/// CPU instruction set checks, like `cpu_info.hasSse()` and `cpu_info.hasNeon()`, are available on all platforms,
+/// even if they don't make sense (an ARM processor will never have SSE and an x86 processor will never have NEON,
+/// for example, but these functions still exist and will simply return false in these cases).
+pub const cpu_info = @import("cpu_info.zig");
+
 /// Video capture for the SDL library.
 ///
 /// This API lets apps read input from video sources, like webcams.
@@ -139,6 +149,9 @@ pub const image = if (extension_options.image) @import("image.zig") else void;
 /// This is completely optional, but it helps in small ways (we can provide an About dialog box for the macOS menu, we can name the app in the system's audio mixer, etc).
 /// Those that want to provide a lot of information should look at the more-detailed `init.setAppMetadataProperty()`.
 pub const init = @import("init.zig");
+
+// The `intrin` subsystem is only macros that may possibly be defined, and irrelevant since the `cpu_info` subsystem should be used instead anyways.
+
 pub const joystick = @import("joystick.zig");
 pub const keyboard = @import("keyboard.zig");
 pub const keycode = @import("keycode.zig");
