@@ -6,22 +6,22 @@ fn playGame() !bool {
         .title = "Question:",
         .message = "What is my favorite color?",
         .parent_window = null,
-        .buttons = &[_]sdl3.message_box.Button{ sdl3.message_box.Button{
+        .buttons = &.{ .{
             .text = "Red",
             .value = 0,
-        }, sdl3.message_box.Button{
+        }, .{
             .text = "Orange",
             .value = 0,
-        }, sdl3.message_box.Button{
+        }, .{
             .text = "Yellow",
             .value = 0,
-        }, sdl3.message_box.Button{
+        }, .{
             .text = "Green",
             .value = 0,
-        }, sdl3.message_box.Button{
+        }, .{
             .text = "Blue",
             .value = 0,
-        }, sdl3.message_box.Button{
+        }, .{
             .text = "Purple",
             .value = 1,
         } },
@@ -33,17 +33,17 @@ fn playGame() !bool {
             .title = "Wrong!",
             .message = "You have chosen the wrong answer. Please try again.",
             .parent_window = null,
-            .buttons = &[_]sdl3.message_box.Button{
-                sdl3.message_box.Button{
+            .buttons = &.{
+                .{
                     .text = "I Understand",
                     .value = 0,
                 },
             },
             .color_scheme = .{
-                .background = sdl3.message_box.Color{ .r = 10, .g = 10, .b = 10 },
+                .background = .{ .r = 10, .g = 10, .b = 10 },
                 .text = try sdl3.message_box.Color.fromHex("ffffff"),
                 .button_border = .{ .r = 75, .g = 55, .b = 50 },
-                .button_background = sdl3.message_box.Color{ .r = 160, .g = 20, .b = 20 },
+                .button_background = .{ .r = 160, .g = 20, .b = 20 },
                 .button_selected = try sdl3.message_box.Color.fromHex("fdfd22"),
             },
         });
@@ -54,17 +54,17 @@ fn playGame() !bool {
             .title = "Correct!",
             .message = "You have guessed correctly. Yippee!",
             .parent_window = null,
-            .buttons = &[_]sdl3.message_box.Button{
-                sdl3.message_box.Button{
+            .buttons = &.{
+                .{
                     .text = "Bye!",
                     .value = 0,
                 },
             },
             .color_scheme = .{
-                .background = sdl3.message_box.Color{ .r = 195, .g = 195, .b = 195 },
+                .background = .{ .r = 195, .g = 195, .b = 195 },
                 .text = try sdl3.message_box.Color.fromHex("660aa8"),
                 .button_border = .{ .r = 50, .g = 75, .b = 55 },
-                .button_background = sdl3.message_box.Color{ .r = 20, .g = 160, .b = 20 },
+                .button_background = .{ .r = 20, .g = 160, .b = 20 },
                 .button_selected = try sdl3.message_box.Color.fromHex("fdfd22"),
             },
         });
