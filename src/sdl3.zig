@@ -229,6 +229,16 @@ pub const log = @import("log.zig");
 /// For more information, see:
 /// [https://wiki.libsdl.org/SDL3/README/main-functions](https://wiki.libsdl.org/SDL3/README/main-functions).
 pub const main = if (extension_options.main) @import("main.zig") else void;
+
+/// SDL offers a simple message box API, which is useful for simple alerts,
+/// such as informing the user when something fatal happens at startup without the need to build a UI for it (or informing the user before your UI is ready).
+///
+/// These message boxes are native system dialogs where possible.
+///
+/// There is both a customizable function (`message_box.show()`) that offers lots of options for what to display and reports on what choice the user made,
+/// and also a much-simplified version (`message_box.showSimple()`), merely takes a text message and title,
+/// and waits until the user presses a single "OK" UI button.
+/// Often, this is all that is necessary.
 pub const message_box = @import("message_box.zig");
 
 /// Functions to creating Metal layers and views on SDL windows.
