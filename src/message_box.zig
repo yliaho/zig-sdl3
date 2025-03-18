@@ -291,6 +291,9 @@ test "Message Box" {
 
     comptime try std.testing.expectEqual(@sizeOf(C.SDL_MessageBoxButtonData), @sizeOf(Button));
     comptime try std.testing.expectEqual(@offsetOf(C.SDL_MessageBoxButtonData, "flags"), @offsetOf(Button, "flags"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "flags")), @sizeOf(@FieldType(Button, "flags")));
     comptime try std.testing.expectEqual(@offsetOf(C.SDL_MessageBoxButtonData, "buttonID"), @offsetOf(Button, "value"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "buttonID")), @sizeOf(@FieldType(Button, "value")));
     comptime try std.testing.expectEqual(@offsetOf(C.SDL_MessageBoxButtonData, "text"), @offsetOf(Button, "text"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "text")), @sizeOf(@FieldType(Button, "text")));
 }

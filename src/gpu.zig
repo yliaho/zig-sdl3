@@ -162,6 +162,9 @@ pub const BufferUsageFlags = struct {
     }
 };
 
+// TODO: MAKE THESE PACKED BC NEEDED BY SDL!
+pub const ColorComponentFlags = packed struct(C.SDL_GPUColorComponentFlags) {};
+
 /// Specifies a comparison operator for depth, stencil and sampler operations.
 ///
 /// ## Version

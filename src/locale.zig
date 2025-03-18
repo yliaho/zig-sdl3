@@ -58,7 +58,9 @@ pub const Locale = extern struct {
 test "Locale" {
     comptime try std.testing.expectEqual(@sizeOf(C.SDL_Locale), @sizeOf(Locale));
     comptime try std.testing.expectEqual(@offsetOf(C.SDL_Locale, "language"), @offsetOf(Locale, "language"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Locale, "language")), @sizeOf(@FieldType(Locale, "language")));
     comptime try std.testing.expectEqual(@offsetOf(C.SDL_Locale, "country"), @offsetOf(Locale, "country"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Locale, "country")), @sizeOf(@FieldType(Locale, "country")));
 
     const locales = Locale.getPreferred() catch return;
     defer stdinc.free(locales);
