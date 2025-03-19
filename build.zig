@@ -51,6 +51,19 @@ pub fn build(b: *std.Build) !void {
         sdl3.linkLibrary(sdl_image_lib);
     }
 
+    // Generate docs.
+    const sdl3_lib = b.addStaticLibrary(.{
+        .root_module = sdl3,
+        .name = "sdl3",
+    });
+    const docs = b.addInstallDirectory(.{
+        .source_dir = sdl3_lib.getEmittedDocs(),
+        .install_dir = .{ .prefix = {} },
+        .install_subdir = "docs",
+    });
+    const docs_step = b.step("docs", "Generate library documentation");
+    docs_step.dependOn(&docs.step);
+
     _ = setupTest(b, cfg, extension_options);
     _ = try setupExamples(b, sdl3, cfg);
     _ = try runExample(b, sdl3, cfg);

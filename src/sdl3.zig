@@ -240,7 +240,7 @@ pub const log = @import("log.zig");
 ///
 /// For more information, see:
 /// [https://wiki.libsdl.org/SDL3/README/main-functions](https://wiki.libsdl.org/SDL3/README/main-functions).
-pub const main = if (extension_options.main) @import("main.zig") else void;
+pub const main_funcs = if (extension_options.main) @import("main.zig") else void;
 
 /// SDL offers a simple message box API, which is useful for simple alerts,
 /// such as informing the user when something fatal happens at startup without the need to build a UI for it (or informing the user before your UI is ready).
