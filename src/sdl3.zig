@@ -259,6 +259,8 @@ pub const message_box = @import("message_box.zig");
 /// Most macOS and iOS apps can use SDL without these functions, but this API they can be useful for specific OS-level integration tasks.
 pub const MetalView = @import("metal.zig").View;
 
+pub const mouse = @import("mouse.zig");
+
 /// SDL API functions that don't fit elsewhere.
 pub const openURL = @import("misc.zig").openURL;
 pub const pen = @import("pen.zig");
