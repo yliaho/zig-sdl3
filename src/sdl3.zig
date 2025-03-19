@@ -264,6 +264,9 @@ pub const openURL = @import("misc.zig").openURL;
 pub const pen = @import("pen.zig");
 pub const pixels = @import("pixels.zig");
 
+/// SDL provides a means to identify the app's platform, both at compile time and runtime.
+pub const platform = @import("platform.zig");
+
 /// SDL power management routines.
 ///
 /// There is a single function in this category: `PowerState.get()`.
