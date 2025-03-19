@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (26/57)
+## Done (27/57)
 
 ### Basics
 * Main
@@ -19,6 +19,9 @@ For monitoring how close various subsystems are to completion.
 * Vulkan
 * Metal
 * Camera
+
+### Input
+* Mouse
 
 ### Time
 * Timer
@@ -39,7 +42,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (18/57)
+## In Progress (17/57)
 
 ### Basics
 * Hints
@@ -55,7 +58,6 @@ For monitoring how close various subsystems are to completion.
 * Keyboard
 * Keycode
 * Scancode
-* Mouse
 * Joystick
 * Gamepad
 * Pen

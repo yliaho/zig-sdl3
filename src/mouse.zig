@@ -1,7 +1,9 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
+const init = @import("init.zig");
 const rect = @import("rect.zig");
 const std = @import("std");
+const stdinc = @import("stdinc.zig");
 const surface = @import("surface.zig");
 const video = @import("video.zig");
 
@@ -78,6 +80,12 @@ pub const ButtonFlags = struct {
 /// This datatype is available since SDL 3.2.0.
 pub const ID = packed struct {
     value: C.SDL_MouseID,
+
+    /// The `mouse.ID` for mouse events simulated with pen input.
+    ///
+    /// ## Version
+    /// This constant is available since SDL 3.2.0.
+    pub const pen = ID{ .value = C.SDL_PEN_MOUSEID };
 
     /// The `mouse.ID` for mouse events simulated with touch input.
     ///
@@ -325,8 +333,8 @@ pub const Cursor = packed struct {
     ///
     /// ## Code Examples
     /// ```zig
-    /// const my_cursor = try cursor.Cursor.initSystem(.pointer);
-    /// my_cursor.set();
+    /// const my_cursor = try mouse.Cursor.initSystem(.pointer);
+    /// mouse.set(my_cursor);
     /// ```
     pub fn initSystem(
         id: SystemCursor,
@@ -335,29 +343,6 @@ pub const Cursor = packed struct {
             *C.SDL_Cursor,
             C.SDL_CreateSystemCursor(@intFromEnum(id)),
         ) };
-    }
-
-    /// Set the active cursor. TODO!!!
-    pub fn set(
-        self: Cursor,
-    ) !void {
-        return errors.wrapCallBool(C.SDL_SetCursor(self.value));
-    }
-
-    /// Return whether the cursor is currently being shown.
-    ///
-    /// ## Return Value
-    /// Returns true if the cursor is being shown, or false if the cursor is hidden.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn visible(
-        self: Cursor,
-    ) bool {
-        return C.SDL_CursorVisible(self.value);
     }
 };
 
@@ -441,7 +426,7 @@ pub fn get() ?Cursor {
 /// This function is available since SDL 3.2.0.
 pub fn getDefault() !Cursor {
     return .{
-        .value = errors.wrapNull(*C.SDL_Cursor, C.SDL_GetDefaultCursor()),
+        .value = try errors.wrapNull(*C.SDL_Cursor, C.SDL_GetDefaultCursor()),
     };
 }
 
@@ -666,27 +651,254 @@ pub fn hide() !void {
     return errors.wrapCallBool(C.SDL_HideCursor());
 }
 
+/// Set the active cursor.
+///
+/// ## Function Parameters
+/// * `cursor`: The cursor to make active.
+///
+/// ## Remarks
+/// This function sets the currently active cursor to the specified one.
+/// If the cursor is currently visible, the change will be immediately represented on the display.
+/// `mouse.set(null)` can be used to force cursor redraw, if this is desired for any reason.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn set(
+    cursor: ?Cursor,
+) !void {
+    return errors.wrapCallBool(C.SDL_SetCursor(if (cursor) |val| val.value else null));
+}
+
+// TODO: ADD THIS WHEN SDL IS UPDATED!
+// /// Set a user-defined function by which to transform relative mouse inputs.
+// ///
+// /// ## Function Parameters
+// /// * `callback`: A callback used to transform relative mouse motion, or `null` for default behavior.
+// /// * `user_data`: A pointer that will be passed to `callback`.
+// ///
+// /// ## Remarks
+// /// This overrides the relative system scale and relative speed scale hints.
+// /// Should be called prior to enabling relative mouse mode, fails otherwise.
+// ///
+// /// ## Thread Safety
+// /// This function should only be called on the main thread.
+// ///
+// /// ## Version
+// /// This function is available since SDL 3.4.0.
+// pub fn setRelativeTransform(
+//     callback: MotionTransformCallback,
+//     user_data: ?*anyopaque,
+// ) !void {
+//     return errors.wrapCallBool(C.SDL_SetRelativeMouseTransform(callback, user_data));
+// }
+
+/// Set a window's mouse grab mode.
+///
+/// ## Function Parameters
+/// * `window`: The window for which the mouse grab mode should be set.
+/// * `grabbed`: This is true to grab mouse, and false to release.
+///
+/// ## Remarks
+/// Mouse grab confines the mouse cursor to the window.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn setWindowGrab(
+    window: video.Window,
+    grabbed: bool,
+) !void {
+    return errors.wrapCallBool(C.SDL_SetWindowMouseGrab(window.value, grabbed));
+}
+
+/// Confines the cursor to the specified area of a window.
+///
+/// ## Function Parameters
+/// * `window`: The window that will be associated with the barrier.
+/// * `area`: A rectangle area in window-relative coordinates. If `null` the barrier for the specified window will be destroyed.
+///
+/// ## Remarks
+/// Note that this does **not** grab the cursor, it only defines the area a cursor is restricted to when the window has mouse focus.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn setWindowRect(
+    window: video.Window,
+    area: ?rect.IRect,
+) !void {
+    if (area) |val| {
+        const c_val = val.toSdl();
+        return errors.wrapCallBool(C.SDL_SetWindowMouseRect(window.value, &c_val));
+    }
+    return errors.wrapCallBool(C.SDL_SetWindowMouseRect(window.value, null));
+}
+
+/// Set relative mouse mode for a window.
+///
+/// ## Function Parameters
+/// * `window`: The window to change.
+/// * `enabled`: True to enable relative mode, false to disable.
+///
+/// ## Remarks
+/// While the window has focus and relative mouse mode is enabled, the cursor is hidden, the mouse position is constrained to the window,
+/// and SDL will report continuous relative mouse motion even if the mouse is at the edge of the window.
+///
+/// If you'd like to keep the mouse position fixed while in relative mode you can use `mouse.setWindowRect()`.
+/// If you'd like the cursor to be at a specific location when relative mode ends, you should use `mouse.warpInWindow()` before disabling relative mode.
+///
+/// This function will flush any pending mouse motion for this window.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn setWindowRelativeMode(
+    window: video.Window,
+    enabled: bool,
+) !void {
+    return errors.wrapCallBool(C.SDL_SetWindowRelativeMouseMode(window.value, enabled));
+}
+
+/// Show the cursor.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn show() !void {
+    return errors.wrapCallBool(C.SDL_ShowCursor());
+}
+
+/// Return whether the cursor is currently being shown.
+///
+/// ## Return Value
+/// Returns true if the cursor is being shown, or false if the cursor is hidden.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn visible() bool {
+    return C.SDL_CursorVisible();
+}
+
+/// Move the mouse to the given position in global screen space.
+///
+/// ## Function Parameters
+/// * `x`: The x coordinate.
+/// * `y`: The y coordinate.
+///
+/// ## Remarks
+/// This function generates a mouse motion event.
+///
+/// A failure of this function usually means that it is unsupported by a platform.
+///
+/// Note that this function will appear to succeed, but not actually move the mouse when used over Microsoft Remote Desktop.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn warpGlobal(
+    x: f32,
+    y: f32,
+) !void {
+    return errors.wrapCallBool(C.SDL_WarpMouseGlobal(x, y));
+}
+
+/// Move the mouse cursor to the given position within the window.
+///
+/// ## Function parameters
+/// * `window`: The window to move the mouse into, or `null` for the current mouse focus.
+/// * `x`: The x coordinate within the window.
+/// * `y`: The y coordinate within the window.
+///
+/// ## Remarks
+/// This function generates a mouse motion event if relative mode is not enabled.
+/// If relative mode is enabled, you can force mouse events for the warp by setting the `hints.Type.mouse_relative_warp_motion` hint.
+///
+/// Note that this function will appear to succeed, but not actually move the mouse when used over Microsoft Remote Desktop.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn warpInWindow(
+    window: ?video.Window,
+    x: f32,
+    y: f32,
+) void {
+    C.SDL_WarpMouseInWindow(if (window) |val| val.value else null, x, y);
+}
+
 // Mouse related tests.
 test "Mouse" {
     comptime try std.testing.expectEqual(@sizeOf(C.SDL_MouseID), @sizeOf(ID));
 
-    // capture
-    // Cursor.initColor
-    // Cursor.init
-    // Cursor.initSystem
-    // Cursor.visible
-    // Cursor.deinit
-    // get
-    // getDefault
-    // getGlobalState
-    // getMice
-    // getFocus
-    // ID.getName
-    // getState
-    // getRelativeState
-    // getWindowGrab
-    // getWindowRect
-    // getWindowRelativeMode
-    // has
-    // hide
+    defer init.shutdown();
+    try init.init(.{ .video = true });
+    defer init.quit(.{ .video = true });
+
+    const mice: ?[]ID = getMice() catch null;
+    if (mice) |val| {
+        for (val) |mouse|
+            _ = mouse.getName() catch {};
+        stdinc.free(val);
+    }
+
+    capture(false) catch {};
+
+    _ = get();
+    set(null) catch {};
+    _ = has();
+    hide() catch {};
+    show() catch {};
+    _ = visible();
+
+    const cursor1: ?Cursor = Cursor.init(&.{0}, &.{0}, 1, 1, 0, 0) catch null;
+    if (cursor1) |val|
+        val.deinit();
+
+    const cursor2: ?Cursor = Cursor.initSystem(.pointer) catch null;
+    if (cursor2) |val|
+        val.deinit();
+
+    _ = getDefault() catch {};
+    _ = getGlobalState();
+    _ = getFocus();
+    _ = getState();
+    _ = getRelativeState();
+    warpGlobal(0, 0) catch {};
+
+    const window: ?video.Window = video.Window.init("Test", 100, 100, .{}) catch null;
+    if (window) |val| {
+        defer val.deinit();
+
+        const cursor3: ?Cursor = Cursor.initColor(try val.getSurface(), 0, 0) catch null;
+        if (cursor3) |cursor|
+            cursor.deinit();
+
+        _ = getWindowGrab(val);
+        _ = getWindowRect(val);
+        _ = getWindowRelativeMode(val);
+        setWindowGrab(val, false) catch {};
+        setWindowRect(val, null) catch {};
+        setWindowRelativeMode(val, false) catch {};
+        warpInWindow(val, 0, 0);
+    }
+
+    // setRelativeTransform TODO: Test when added!
 }

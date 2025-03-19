@@ -259,6 +259,26 @@ pub const message_box = @import("message_box.zig");
 /// Most macOS and iOS apps can use SDL without these functions, but this API they can be useful for specific OS-level integration tasks.
 pub const MetalView = @import("metal.zig").View;
 
+/// Any GUI application has to deal with the mouse, and SDL provides functions to manage mouse input and the displayed cursor.
+///
+/// Most interactions with the mouse will come through the event subsystem.
+/// Moving a mouse generates an `event.Type.mouse_motion` event, pushing a button generates `event.Type.mouse_button_down`, etc,
+/// but one can also query the current state of the mouse at any time with `mouse.getState()`.
+///
+/// For certain games, it's useful to disassociate the mouse cursor from mouse input.
+/// An FPS, for example, would not want the player's motion to stop as the mouse hits the edge of the window.
+/// For these scenarios, use `mouse.setWindowRelativeMode()`, which hides the cursor, grabs mouse input to the window, and reads mouse input no matter how far it moves.
+///
+/// Games that want the system to track the mouse but want to draw their own cursor can use `moues.hide()` and `mouse.show()`.
+/// It might be more efficient to let the system manage the cursor, if possible, using `mouse.set()` with a custom image made through `mouse.Cursor.initColor()`,
+/// or perhaps just a specific system cursor from `mouse.Cursor.initSystem()`.
+///
+/// SDL can, on many platforms, differentiate between multiple connected mice, allowing for interesting input scenarios and multiplayer games.
+/// They can be enumerated with `mouse.getMice()`, and SDL will send `event.Type.mouse_added` and `event.Type.mouse_removed` events as they are connected and unplugged.
+///
+/// Since many apps only care about basic mouse input, SDL offers a virtual mouse device for touch and pen input,
+/// which often can make a desktop application work on a touchscreen phone without any code changes.
+/// Apps that care about touch/pen separately from mouse input should filter out events with a which field of `mouse.ID.touch` and `mouse.ID.pen`.
 pub const mouse = @import("mouse.zig");
 
 /// SDL API functions that don't fit elsewhere.
