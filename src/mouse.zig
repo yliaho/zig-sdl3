@@ -1,5 +1,6 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
+const rect = @import("rect.zig");
 const std = @import("std");
 const surface = @import("surface.zig");
 const video = @import("video.zig");
@@ -336,6 +337,13 @@ pub const Cursor = packed struct {
         ) };
     }
 
+    /// Set the active cursor. TODO!!!
+    pub fn set(
+        self: Cursor,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_SetCursor(self.value));
+    }
+
     /// Return whether the cursor is currently being shown.
     ///
     /// ## Return Value
@@ -410,7 +418,7 @@ pub fn capture(
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getCursor() ?Cursor {
+pub fn get() ?Cursor {
     const ret = C.SDL_GetCursor();
     if (ret) |val| {
         return .{ .value = val };
@@ -431,7 +439,7 @@ pub fn getCursor() ?Cursor {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getDefaultCursor() !Cursor {
+pub fn getDefault() !Cursor {
     return .{
         .value = errors.wrapNull(*C.SDL_Cursor, C.SDL_GetDefaultCursor()),
     };
@@ -510,6 +518,39 @@ pub fn getMice() ![]ID {
     return ret[0..@intCast(len)];
 }
 
+/// Query SDL's cache for the synchronous mouse button state and accumulated mouse delta since last call.
+///
+/// ## Return Value
+/// Returns the mouse button state, as well as the x and y delta accumulated from the last call.
+///
+/// ## Remarks
+/// This function returns the cached synchronous state as SDL understands it from the last pump of the event queue.
+///
+/// To query the platform for immediate asynchronous state, use `mouse.getGlobalState()`.
+///
+/// In Relative Mode, the platform-cursor's position usually contradicts the SDL-cursor's position
+/// as manually calculated from `mouse.getState()` and `video.Window.getPosition()`.
+///
+/// This function is useful for reducing overhead by processing relative mouse inputs in one go per-frame
+/// instead of individually per-event, at the expense of losing the order between events within the frame
+/// (e.g. quickly pressing and releasing a button within the same frame).
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getRelativeState() struct { flags: ButtonFlags, x: f32, y: f32 } {
+    var x: f32 = undefined;
+    var y: f32 = undefined;
+    const flags = C.SDL_GetRelativeMouseState(&x, &y);
+    return .{
+        .flags = ButtonFlags.fromSdl(flags),
+        .x = x,
+        .y = y,
+    };
+}
+
 /// Query SDL's cache for the synchronous mouse button state and the window-relative SDL-cursor position.
 ///
 /// ## Return Value
@@ -539,6 +580,92 @@ pub fn getState() struct { flags: ButtonFlags, x: f32, y: f32 } {
     };
 }
 
+/// Get a window's mouse grab mode.
+///
+/// ## Function Parameters
+/// * `window`: The window to query.
+///
+/// ## Return Value
+/// Returns true if mouse is grabbed, and false otherwise.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getWindowGrab(
+    window: video.Window,
+) bool {
+    return C.SDL_GetWindowMouseGrab(window.value);
+}
+
+/// Get the mouse confinement rectangle of a window
+///
+/// ## Function Parameters
+/// * `window`: The window to query.
+///
+/// ## Return Value
+/// Returns a rectangle to the mouse confinement rectangle of a window, or `null` if there isn't one.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getWindowRect(
+    window: video.Window,
+) ?rect.IRect {
+    const ret = C.SDL_GetWindowMouseRect(window.value);
+    if (ret) |val| {
+        return rect.IRect.fromSdl(val.*);
+    }
+    return null;
+}
+
+/// Query whether relative mouse mode is enabled for a window.
+///
+/// ## Function Parameters
+/// * `window`: The window to query.
+///
+/// ## Return Value
+/// Returns true if relative mode is enabled for a window or false otherwise.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getWindowRelativeMode(
+    window: video.Window,
+) bool {
+    return C.SDL_GetWindowRelativeMouseMode(window.value);
+}
+
+/// Return whether a mouse is currently connected.
+///
+/// ## Return Value
+/// Returns true if a mouse is connected, false otherwise.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn has() bool {
+    return C.SDL_HasMouse();
+}
+
+/// Hide the cursor.
+///
+/// ## Thread Safety
+/// This function should only be called on the main thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn hide() !void {
+    return errors.wrapCallBool(C.SDL_HideCursor());
+}
+
 // Mouse related tests.
 test "Mouse" {
     comptime try std.testing.expectEqual(@sizeOf(C.SDL_MouseID), @sizeOf(ID));
@@ -549,12 +676,17 @@ test "Mouse" {
     // Cursor.initSystem
     // Cursor.visible
     // Cursor.deinit
-    // getCursor
-    // getDefaultCursor
+    // get
+    // getDefault
     // getGlobalState
     // getMice
     // getFocus
     // ID.getName
     // getState
-    // getRelativeState TODO
+    // getRelativeState
+    // getWindowGrab
+    // getWindowRect
+    // getWindowRelativeMode
+    // has
+    // hide
 }
