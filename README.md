@@ -6,6 +6,9 @@ Note: This is not production ready and currently in development!
 I'm hoping to be done soon, great progress has been made so far!
 See the [checklist](checklist.md) for more details on progress.
 
+## Documentation
+[https://gota7.github.io/zig-sdl3/](https://gota7.github.io/zig-sdl3/)
+
 ## About
 
 This library aims to unite the power of SDL3 with general zigisms to feel right at home alongside the zig standard library.
