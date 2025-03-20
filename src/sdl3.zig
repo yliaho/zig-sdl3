@@ -312,6 +312,12 @@ pub const properties = @import("properties.zig");
 /// Some helper functions for managing rectangles and 2D points, in both integer and floating point versions.
 pub const rect = @import("rect.zig");
 pub const render = @import("render.zig");
+
+/// Defines keyboard scancodes.
+///
+/// Please refer to the Best Keyboard Practices document for details on what this information means and how best to use it.
+///
+/// https://wiki.libsdl.org/SDL3/BestKeyboardPractices
 pub const Scancode = @import("scancode.zig").Scancode;
 pub const sensor = @import("sensor.zig");
 pub const stdinc = @import("stdinc.zig");

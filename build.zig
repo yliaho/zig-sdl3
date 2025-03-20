@@ -51,7 +51,13 @@ pub fn build(b: *std.Build) !void {
         sdl3.linkLibrary(sdl_image_lib);
     }
 
-    // Generate docs.
+    _ = setupDocs(b, sdl3);
+    _ = setupTest(b, cfg, extension_options);
+    _ = try setupExamples(b, sdl3, cfg);
+    _ = try runExample(b, sdl3, cfg);
+}
+
+pub fn setupDocs(b: *std.Build, sdl3: *std.Build.Module) *std.Build.Step {
     const sdl3_lib = b.addStaticLibrary(.{
         .root_module = sdl3,
         .name = "sdl3",
@@ -63,10 +69,7 @@ pub fn build(b: *std.Build) !void {
     });
     const docs_step = b.step("docs", "Generate library documentation");
     docs_step.dependOn(&docs.step);
-
-    _ = setupTest(b, cfg, extension_options);
-    _ = try setupExamples(b, sdl3, cfg);
-    _ = try runExample(b, sdl3, cfg);
+    return docs_step;
 }
 
 pub fn setupExample(b: *std.Build, sdl3: *std.Build.Module, cfg: std.Build.TestOptions, name: []const u8) !*std.Build.Step.Compile {
