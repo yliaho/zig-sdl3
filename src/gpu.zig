@@ -1,6 +1,10 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
+const pixels = @import("pixels.zig");
+const properties = @import("properties.zig");
+const rect = @import("rect.zig");
 const std = @import("std");
+const surface = @import("surface.zig");
 
 /// Specifies a blending factor to be used when pixels in a render target are blended with existing pixels in the texture.
 ///
@@ -97,7 +101,91 @@ pub const BlendOperation = enum(c_uint) {
 /// ## Version
 /// This struct is available since SDL 3.2.0.
 pub const BlitInfo = struct {
-    // TODO!!!
+    /// The source region for the blit.
+    source: BlitRegion,
+    /// The destination region for the blit.
+    destination: BlitRegion,
+    /// What is done with the contents of the destination before the blit.
+    load_op: LoadOperation,
+    /// The color to clear the destination region to before the blit.
+    /// Ignored if `load_op` is not `gpu.LoadOperation.clear`.
+    clear_color: pixels.FColor,
+    /// The flip mode for the source region.
+    flip_mode: ?surface.FlipMode,
+    /// The filter mode used when blitting.
+    filter: Filter,
+    /// True cycles the destination texture if it is already bound.
+    cycle: bool,
+
+    /// Convert from SDL.
+    pub fn fromSdl(value: C.SDL_GPUBlitInfo) BlitInfo {
+        return .{
+            .source = BlitRegion.fromSdl(value.source),
+            .destination = BlitRegion.fromSdl(value.destination),
+            .load_op = @enumFromInt(value.load_op),
+            .clear_color = value.clear_color,
+            .flip_mode = surface.FlipMode.fromSdl(value.flip_mode),
+            .filter = @enumFromInt(value.filter),
+            .cycle = value.cycle,
+        };
+    }
+
+    /// Convert to SDL.
+    pub fn toSdl(self: BlitInfo) C.SDL_GPUBlitInfo {
+        return .{
+            .source = self.source.toSdl(),
+            .destination = self.destination.toSdl(),
+            .load_op = @intFromEnum(self.load_op),
+            .clear_color = self.clear_color,
+            .flip_mode = surface.FlipMode.toSdl(self.flip_mode),
+            .filter = @intFromEnum(self.filter),
+            .cycle = self.cycle,
+        };
+    }
+};
+
+/// A structure specifying a region of a texture used in the blit operation.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const BlitRegion = struct {
+    /// The texture.
+    texture: Texture,
+    /// The mip level index of the region.
+    mip_level: u32,
+    /// The layer index or depth plane of the region.
+    /// This value is treated as a layer index on 2D array and cube textures, and as a depth plane on 3D textures.
+    layer_or_depth_plane: u32,
+    /// The region.
+    region: rect.Rect(u32),
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUBlitRegion) BlitRegion {
+        return .{
+            .texture = .{ .value = value.texture.? },
+            .mip_level = value.mip_level,
+            .layer_or_depth_plane = value.layer_or_depth_plane,
+            .region = .{
+                .x = value.x,
+                .y = value.y,
+                .w = value.w,
+                .h = value.h,
+            },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: BlitRegion) C.SDL_GPUBlitRegion {
+        return .{
+            .texture = self.texture.value,
+            .mip_level = self.mip_level,
+            .layer_or_depth_plane = self.layer_or_depth_plane,
+            .x = self.region.x,
+            .y = self.region.y,
+            .w = self.region.w,
+            .h = self.region.h,
+        };
+    }
 };
 
 /// An opaque handle representing a buffer.
@@ -109,6 +197,49 @@ pub const BlitInfo = struct {
 /// This struct is available since SDL 3.2.0.
 pub const Buffer = packed struct {
     value: *C.SDL_GPUBuffer,
+};
+
+/// A structure specifying parameters in a buffer binding call.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const BufferBinding = extern struct {
+    /// The buffer to bind. Must have been created with `gpu.BufferUsageFlags.vertex` for `gpu.RenderPass.bindVertexBuffers()`,
+    /// or `gpu.BufferUsageFlags.index` for S`gpu.RenderPass.bindIndexBuffers()`.
+    buffer: Buffer,
+    /// The starting byte of the data to bind in the buffer.
+    offset: u32,
+};
+
+/// A structure specifying the parameters of a buffer.
+///
+/// ## Remarks
+/// Note that certain combinations of usage flags are invalid, for example `gpu.BufferUsageFlags.vertex` and `gpu.BufferUsageFlags.index`.
+pub const BufferCreateInfo = struct {
+    /// How the buffer is intended to be used by the client.
+    usage: BufferUsageFlags,
+    /// The size in bytes of the buffer.
+    size: u32,
+    /// Properties for extensions.
+    props: ?properties.Group,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUBufferCreateInfo) BufferCreateInfo {
+        return .{
+            .usage = BufferUsageFlags.fromSdl(value.usage),
+            .size = value.size,
+            .props = if (value.props == 0) null else .{ .value = value.props },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: BufferCreateInfo) C.SDL_GPUBufferCreateInfo {
+        return .{
+            .usage = self.usage.toSdl(),
+            .size = self.size,
+            .props = if (self.props) |val| val.value else 0,
+        };
+    }
 };
 
 /// Specifies how a buffer is intended to be used by the client.
@@ -1001,4 +1132,10 @@ test "Gpu" {
     comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_G, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .green = true })));
     comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_B, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .blue = true })));
     comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_A, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .alpha = true })));
+
+    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUBufferBinding), @sizeOf(BufferBinding));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUBufferBinding, "buffer")), @sizeOf(@FieldType(BufferBinding, "buffer")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUBufferBinding, "buffer"), @offsetOf(BufferBinding, "buffer"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUBufferBinding, "offset")), @sizeOf(@FieldType(BufferBinding, "offset")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUBufferBinding, "offset"), @offsetOf(BufferBinding, "offset"));
 }
