@@ -92,6 +92,14 @@ pub const BlendOperation = enum(c_uint) {
     }
 };
 
+/// A structure containing parameters for a blit command.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const BlitInfo = struct {
+    // TODO!!!
+};
+
 /// An opaque handle representing a buffer.
 ///
 /// ## Remarks
@@ -162,8 +170,37 @@ pub const BufferUsageFlags = struct {
     }
 };
 
-// TODO: MAKE THESE PACKED BC NEEDED BY SDL!
-pub const ColorComponentFlags = packed struct(C.SDL_GPUColorComponentFlags) {};
+/// Specifies which color components are written in a graphics pipeline.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const ColorComponentFlags = packed struct(C.SDL_GPUColorComponentFlags) {
+    red: bool = false,
+    green: bool = false,
+    blue: bool = false,
+    alpha: bool = false,
+    _: u4 = 0,
+};
+
+/// An opaque handle representing a command buffer.
+///
+/// ## Remarks
+/// Most state is managed via command buffers.
+/// When setting state using a command buffer, that state is local to the command buffer.
+///
+/// Commands only begin execution on the GPU once `gpu.CommandBuffer.submit()` is called.
+/// Once the command buffer is submitted, it is no longer valid to use it.
+///
+/// Command buffers are executed in submission order.
+/// If you submit command buffer A and then command buffer B all commands in A will begin executing before any command in B begins executing.
+///
+/// In multi-threading scenarios, you should only access a command buffer on the thread you acquired it from.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const CommandBuffer = packed struct {
+    value: *C.SDL_GPUCommandBuffer,
+};
 
 /// Specifies a comparison operator for depth, stencil and sampler operations.
 ///
@@ -204,6 +241,39 @@ pub const CompareOperation = enum(c_uint) {
     }
 };
 
+/// An opaque handle representing a compute pass.
+///
+/// ## Remarks
+/// This handle is transient and should not be held or referenced after `gpu.ComputePass.end()` is called.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const ComputePass = packed struct {
+    value: *C.SDL_GPUComputePass,
+};
+
+/// An opaque handle representing a compute pipeline.
+///
+/// ## Remarks
+/// Used during compute passes.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const ComputePipeline = packed struct {
+    value: *C.SDL_GPUComputePipeline,
+};
+
+/// An opaque handle representing a copy pass.
+///
+/// ## Remarks
+/// This handle is transient and should not be held or referenced after `gpu.CopyPass.end()` is called.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const CopyPass = packed struct {
+    value: *C.SDL_GPUCopyPass,
+};
+
 /// Specifies the face of a cube map.
 ///
 /// ## Remarks
@@ -233,9 +303,20 @@ pub const CullMode = enum(c_uint) {
     back = C.SDL_GPU_CULLMODE_BACK,
 };
 
-/// The GPU context.
-pub const Device = struct {
+/// An opaque handle representing the SDL_GPU context.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const Device = packed struct {
     value: *C.SDL_GPUDevice,
+};
+
+/// An opaque handle representing a fence.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const Fence = packed struct {
+    value: *C.SDL_GPUFence,
 };
 
 /// Specifies the fill mode of the graphics pipeline.
@@ -269,6 +350,17 @@ pub const FrontFace = enum(c_uint) {
     counter_clockwise = C.SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
     /// A triangle with clockwise vertex winding will be considered front-facing.
     clockwise = C.SDL_GPU_FRONTFACE_CLOCKWISE,
+};
+
+/// An opaque handle representing a graphics pipeline.
+///
+/// ## Remarks
+/// Used during render passes.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const GraphicsPipeline = packed struct {
+    value: *C.SDL_GPUGraphicsPipeline,
 };
 
 /// Specifies the size of elements in an index buffer.
@@ -351,6 +443,17 @@ pub const PrimitiveType = enum(c_uint) {
     point_list = C.SDL_GPU_PRIMITIVETYPE_POINTLIST,
 };
 
+/// An opaque handle representing a render pass.
+///
+/// ## Remarks
+/// This handle is transient and should not be held or referenced after `gpu.RenderPass.end()` is called.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const RenderPass = packed struct {
+    value: *C.SDL_GPURenderPass,
+};
+
 /// Specifies the sample count of a texture.
 ///
 /// ## Remarks
@@ -364,6 +467,14 @@ pub const SampleCount = enum(c_uint) {
     msaa_2x = C.SDL_GPU_SAMPLECOUNT_2,
     msaa_4x = C.SDL_GPU_SAMPLECOUNT_4,
     msaa_8x = C.SDL_GPU_SAMPLECOUNT_8,
+};
+
+/// An opaque handle representing a sampler.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const Sampler = packed struct {
+    value: *C.SDL_GPUSampler,
 };
 
 /// Specifies behavior of texture sampling when the coordinates exceed the 0-1 range.
@@ -388,6 +499,51 @@ pub const SamplerMipmapMode = enum(c_uint) {
     nearest = C.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
     /// Linear filtering.
     linear = C.SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+};
+
+/// An opaque handle representing a compiled shader object.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const Shader = packed struct {
+    value: *C.SDL_GPUShader,
+};
+
+/// Specifies the format of shader code.
+///
+/// ## Remarks
+/// Each format corresponds to a specific backend that accepts it.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const ShaderFormat = enum(c_uint) {
+    /// Shaders for NDA'd platforms.
+    private = C.SDL_GPU_SHADERFORMAT_PRIVATE,
+    /// SPIR-V shaders for Vulkan.
+    spirv = C.SDL_GPU_SHADERFORMAT_SPIRV,
+    /// DXBC SM5_1 shaders for D3D12.
+    dxbc = C.SDL_GPU_SHADERFORMAT_DXBC,
+    /// DXIL SM6_0 shaders for D3D12.
+    dxil = C.SDL_GPU_SHADERFORMAT_DXIL,
+    /// MSL shaders for Metal.
+    msl = C.SDL_GPU_SHADERFORMAT_MSL,
+    /// Precompiled metallib shaders for Metal.
+    metal_lib = C.SDL_GPU_SHADERFORMAT_METALLIB,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUShaderFormat) ?ShaderFormat {
+        if (value == C.SDL_GPU_SHADERFORMAT_INVALID)
+            return null;
+        return @enumFromInt(value);
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: ?ShaderFormat) C.SDL_GPUShaderFormat {
+        if (self) |val| {
+            return @intFromEnum(val);
+        }
+        return C.SDL_GPU_SHADERFORMAT_INVALID;
+    }
 };
 
 /// Specifies which stage a shader program corresponds to.
@@ -477,6 +633,14 @@ pub const SwapchainComposition = enum(c_uint) {
     /// A2R10G10B10 or A2B10G10R10 swapchain.
     /// Pixel values are in BT.2020 ST2084 (PQ) encoding.
     hdr10_st2084 = C.SDL_GPU_SWAPCHAINCOMPOSITION_HDR10_ST2084,
+};
+
+/// An opaque handle representing a texture.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const Texture = packed struct {
+    value: *C.SDL_GPUTexture,
 };
 
 /// Specifies the pixel format of a texture.
@@ -675,6 +839,71 @@ pub const TextureType = enum(c_uint) {
     cube_array = C.SDL_GPU_TEXTURETYPE_CUBE_ARRAY,
 };
 
+/// Specifies how a texture is intended to be used by the client.
+///
+/// ## Remarks
+/// A texture must have at least one usage flag.
+/// Note that some usage flag combinations are invalid.
+///
+/// With regards to compute storage usage, READ | WRITE means that you can have shader A that only writes into the texture
+/// and shader B that only reads from the texture and bind the same texture to either shader respectively.
+/// SIMULTANEOUS means that you can do reads and writes within the same shader or compute pass.
+/// It also implies that atomic ops can be used, since those are read-modify-write operations.
+/// If you use SIMULTANEOUS, you are responsible for avoiding data races, as there is no data synchronization within a compute pass.
+/// Note that SIMULTANEOUS usage is only supported by a limited number of texture formats.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const TextureUsageFlags = struct {
+    /// Texture supports sampling.
+    sampler: bool = false,
+    /// Texture is a color render target.
+    color_target: bool = false,
+    /// Texture is a depth stencil target.
+    depth_stencil_target: bool = false,
+    /// Texture supports storage reads in graphics stages.
+    graphics_storage_read: bool = false,
+    /// Texture supports storage reads in the compute stage.
+    compute_storage_read: bool = false,
+    /// Texture supports storage writes in the compute stage.
+    compute_storage_write: bool = false,
+    /// Texture supports reads and writes in the same compute shader. This is NOT equivalent to READ | WRITE.
+    compute_storage_simultaneous_read_write: bool = false,
+
+    /// Convert from SDL.
+    pub fn fromSdl(value: C.SDL_GPUTextureUsageFlags) TextureUsageFlags {
+        return .{
+            .sampler = value & C.SDL_GPU_TEXTUREUSAGE_SAMPLER > 0,
+            .color_target = value & C.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET > 0,
+            .depth_stencil_target = value & C.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET > 0,
+            .graphics_storage_read = value & C.SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ > 0,
+            .compute_storage_read = value & C.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ > 0,
+            .compute_storage_write = value & C.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE > 0,
+            .compute_storage_simultaneous_read_write = value & C.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_SIMULTANEOUS_READ_WRITE > 0,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: TextureUsageFlags) C.SDL_GPUTextureUsageFlags {
+        var ret: C.SDL_GPUTextureUsageFlags = 0;
+        if (self.sampler)
+            ret |= C.SDL_GPU_TEXTUREUSAGE_SAMPLER;
+        if (self.color_target)
+            ret |= C.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+        if (self.depth_stencil_target)
+            ret |= C.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+        if (self.graphics_storage_read)
+            ret |= C.SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ;
+        if (self.compute_storage_read)
+            ret |= C.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ;
+        if (self.compute_storage_write)
+            ret |= C.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE;
+        if (self.compute_storage_simultaneous_read_write)
+            ret |= C.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_SIMULTANEOUS_READ_WRITE;
+        return ret;
+    }
+};
+
 /// An opaque handle representing a transfer buffer.
 ///
 /// ## Remarks
@@ -764,3 +993,12 @@ pub const VertexInputRate = enum(c_uint) {
     /// Attribute addressing is a function of the instance index.
     instance = C.SDL_GPU_VERTEXINPUTRATE_INSTANCE,
 };
+
+// Test the GPU.
+test "Gpu" {
+    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUColorComponentFlags), @sizeOf(ColorComponentFlags));
+    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_R, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .red = true })));
+    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_G, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .green = true })));
+    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_B, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .blue = true })));
+    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_A, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .alpha = true })));
+}

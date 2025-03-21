@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (28/57)
+## Done (29/57)
 
 ### Basics
 * Main
@@ -23,6 +23,7 @@ For monitoring how close various subsystems are to completion.
 ### Input
 * Scancode
 * Mouse
+* Touch
 
 ### Time
 * Timer
@@ -73,10 +74,9 @@ For monitoring how close various subsystems are to completion.
 * Process Control
 * Standard Lib
 
-## Not Started (13/57)
+## Not Started (12/57)
 
 ### Input
-* Touch
 * HIDAPI
 
 ### Haptic

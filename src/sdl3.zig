@@ -343,6 +343,16 @@ pub const time = @import("time.zig");
 /// There are also useful functions to convert between time units, like `timer.secondsToNanoseconds()` and such.
 pub const timer = @import("timer.zig");
 
+/// SDL offers touch input, on platforms that support it.
+/// It can manage multiple touch devices and track multiple fingers on those devices.
+///
+/// Touches are mostly dealt with through the event system, in the `event.Type.finger_down`, `event.Type.finger_motion`, and `event.Type.finger_up` events,
+/// but there are also functions to query for hardware details, etc.
+///
+/// The touch system, by default, will also send virtual mouse events; this can be useful for making a some desktop apps work on a phone without significant changes.
+/// For apps that care about mouse and touch input separately, they should ignore mouse events that have a which field of `touch.ID.mouse`.
+pub const touch = @import("touch.zig");
+
 /// Functionality to query the current SDL version, both as headers the app was compiled against, and a library the app is linked to.
 pub const Version = @import("version.zig").Version;
 pub const video = @import("video.zig");
