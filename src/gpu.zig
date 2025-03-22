@@ -242,6 +242,70 @@ pub const BufferCreateInfo = struct {
     }
 };
 
+/// A structure specifying a location in a buffer.
+///
+/// ## Remarks
+/// Used when copying data between buffers.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const BufferLocation = struct {
+    /// The buffer.
+    buffer: Buffer,
+    /// The starting byte within the buffer.
+    offset: u32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUBufferLocation) BufferLocation {
+        return .{
+            .buffer = .{ .value = value.buffer.? },
+            .offset = value.offset,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: BufferLocation) C.SDL_GPUBufferLocation {
+        return .{
+            .buffer = self.buffer.value,
+            .offset = self.offset,
+        };
+    }
+};
+
+/// A structure specifying a region of a buffer.
+///
+/// ## Remarks
+/// Used when transferring data to or from buffers.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const BufferRegion = struct {
+    /// The buffer.
+    buffer: Buffer,
+    /// The starting byte within the buffer.
+    offset: u32,
+    /// The size in bytes of the region.
+    size: u32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUBufferRegion) BufferRegion {
+        return .{
+            .buffer = .{ .value = value.buffer.? },
+            .offset = value.offset,
+            .size = value.size,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: BufferRegion) C.SDL_GPUBufferRegion {
+        return .{
+            .buffer = self.buffer.value,
+            .offset = self.offset,
+            .size = self.size,
+        };
+    }
+};
+
 /// Specifies how a buffer is intended to be used by the client.
 ///
 /// ## Remarks
@@ -311,6 +375,78 @@ pub const ColorComponentFlags = packed struct(C.SDL_GPUColorComponentFlags) {
     blue: bool = false,
     alpha: bool = false,
     _: u4 = 0,
+};
+
+/// A structure specifying the blend state of a color target.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const ColorTargetBlendState = extern struct {
+    /// The value to be multiplied by the source RGB value.
+    source_color: BlendFactor,
+    /// The value to be multiplied by the destination RGB value.
+    destination_color: BlendFactor,
+    /// The blend operation for the RGB components.
+    color_blend: BlendOperation,
+    /// The value to be multiplied by the source alpha.
+    source_alpha: BlendFactor,
+    /// The value to be multiplied by the destination alpha.
+    destination_alpha: BlendFactor,
+    /// The blend operation for the alpha component.
+    alpha_blend: BlendOperation,
+    /// A bitmask specifying which of the RGBA components are enabled for writing.
+    /// Writes to all channels if `enable_color_write_mask` is false.
+    color_write_mask: ColorComponentFlags,
+    /// Whether blending is enabled for the color target.
+    enable_blend: bool,
+    /// Whether the color write mask is enabled.
+    enable_color_write_mask: bool,
+    _1: u8 = 0,
+    _2: u8 = 0,
+};
+
+/// A structure specifying the parameters of color targets used in a graphics pipeline.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const ColorTargetDescription = extern struct {
+    /// The pixel format of the texture to be used as a color target.
+    format: TextureFormat,
+    /// The blend state to be used for the color target.
+    blend_state: ColorTargetBlendState,
+};
+
+/// A structure specifying the parameters of a color target used by a render pass.
+///
+/// ## Remarks
+/// The load_op field determines what is done with the texture at the beginning of the render pass.
+///
+/// LOAD: Loads the data currently in the texture. Not recommended for multisample textures as it requires significant memory bandwidth.
+/// CLEAR: Clears the texture to a single color.
+/// DONT_CARE: The driver will do whatever it wants with the texture memory. This is a good option if you know that every single pixel will be touched in the render pass.
+/// The store_op field determines what is done with the color results of the render pass.
+///
+/// STORE: Stores the results of the render pass in the texture. Not recommended for multisample textures as it requires significant memory bandwidth.
+/// DONT_CARE: The driver will do whatever it wants with the texture memory. This is often a good option for depth/stencil textures.
+/// RESOLVE: Resolves a multisample texture into resolve_texture, which must have a sample count of 1. Then the driver may discard the multisample texture memory. This is the most performant method of resolving a multisample target.
+/// RESOLVE_AND_STORE: Resolves a multisample texture into the resolve_texture, which must have a sample count of 1. Then the driver stores the multisample texture's contents. Not recommended as it requires significant memory bandwidth.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const ColorTargetInfo = extern struct {
+    texture: Texture,
+    mip_level: u32,
+    layer_or_depth_plane: u32,
+    clear_color: pixels.FColor, // TODO: FIX DOCS ABOVE, GIVE THESE COMMENTS, WRITE TESTS!!!
+    load: LoadOperation,
+    store: StoreOperation,
+    resolve_texture: Texture,
+    resolve_mip_level: u32,
+    resolve_layer: u32,
+    cycle: bool,
+    cycle_resolve_texture: bool,
+    _1: u8 = 0,
+    _2: u8 = 0,
 };
 
 /// An opaque handle representing a command buffer.
@@ -1138,4 +1274,30 @@ test "Gpu" {
     comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUBufferBinding, "buffer"), @offsetOf(BufferBinding, "buffer"));
     comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUBufferBinding, "offset")), @sizeOf(@FieldType(BufferBinding, "offset")));
     comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUBufferBinding, "offset"), @offsetOf(BufferBinding, "offset"));
+
+    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUColorTargetBlendState), @sizeOf(ColorTargetBlendState));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "src_color_blendfactor"), @offsetOf(ColorTargetBlendState, "source_color"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "src_color_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "source_color")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "dst_color_blendfactor"), @offsetOf(ColorTargetBlendState, "destination_color"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "dst_color_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "destination_color")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "color_blend_op"), @offsetOf(ColorTargetBlendState, "color_blend"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "color_blend_op")), @sizeOf(@FieldType(ColorTargetBlendState, "color_blend")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "src_alpha_blendfactor"), @offsetOf(ColorTargetBlendState, "source_alpha"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "src_alpha_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "source_alpha")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "dst_alpha_blendfactor"), @offsetOf(ColorTargetBlendState, "destination_alpha"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "dst_alpha_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "destination_alpha")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "alpha_blend_op"), @offsetOf(ColorTargetBlendState, "alpha_blend"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "alpha_blend_op")), @sizeOf(@FieldType(ColorTargetBlendState, "alpha_blend")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "color_write_mask"), @offsetOf(ColorTargetBlendState, "color_write_mask"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "color_write_mask")), @sizeOf(@FieldType(ColorTargetBlendState, "color_write_mask")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "enable_blend"), @offsetOf(ColorTargetBlendState, "enable_blend"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "enable_blend")), @sizeOf(@FieldType(ColorTargetBlendState, "enable_blend")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "enable_color_write_mask"), @offsetOf(ColorTargetBlendState, "enable_color_write_mask"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "enable_color_write_mask")), @sizeOf(@FieldType(ColorTargetBlendState, "enable_color_write_mask")));
+
+    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUColorTargetDescription), @sizeOf(ColorTargetDescription));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetDescription, "format"), @offsetOf(ColorTargetDescription, "format"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetDescription, "format")), @sizeOf(@FieldType(ColorTargetDescription, "format")));
+    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetDescription, "blend_state"), @offsetOf(ColorTargetDescription, "blend_state"));
+    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetDescription, "blend_state")), @sizeOf(@FieldType(ColorTargetDescription, "blend_state")));
 }

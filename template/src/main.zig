@@ -347,9 +347,7 @@ fn init(
 
     // Prove error handling works.
     const dummy: ?sdl3.video.Window = sdl3.video.Window.fromID(99999) catch null;
-    if (dummy) |val| {
-        val.deinit();
-    }
+    _ = dummy;
 
     // Set app state.
     state.* = .{
