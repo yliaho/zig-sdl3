@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (29/57)
+## Done (30/57)
 
 ### Basics
 * Main
@@ -24,6 +24,7 @@ For monitoring how close various subsystems are to completion.
 * Scancode
 * Mouse
 * Touch
+* Pen
 
 ### Time
 * Timer
@@ -44,7 +45,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (16/57)
+## In Progress (15/57)
 
 ### Basics
 * Hints
@@ -61,7 +62,6 @@ For monitoring how close various subsystems are to completion.
 * Keycode
 * Joystick
 * Gamepad
-* Pen
 * Sensor
 
 ### Audio

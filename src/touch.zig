@@ -45,12 +45,6 @@ pub const Finger = extern struct {
 /// This datatype is available since SDL 3.2.0.
 pub const FingerID = packed struct {
     value: C.SDL_FingerID,
-
-    /// The SDL_TouchID for touch events simulated with mouse input.
-    ///
-    /// ## Version
-    /// This constant is available since SDL 3.2.0.
-    pub const mouse = FingerID{ .value = C.SDL_MOUSE_TOUCHID };
 };
 
 /// A unique ID for a touch device.
@@ -62,6 +56,18 @@ pub const FingerID = packed struct {
 /// This datatype is available since SDL 3.2.0.
 pub const ID = packed struct {
     value: C.SDL_TouchID,
+
+    /// The touch ID for touch events simulated with mouse input.
+    ///
+    /// ## Version
+    /// This constant is available since SDL 3.2.0.
+    pub const mouse = ID{ .value = C.SDL_MOUSE_TOUCHID };
+
+    /// The touch ID for touch events simulated with pen input.
+    ///
+    /// ## Version
+    /// This constant is available since SDL 3.2.0.
+    pub const pen = ID{ .value = C.SDL_PEN_TOUCHID };
 
     /// Get a list of active fingers for a given touch device.
     ///
