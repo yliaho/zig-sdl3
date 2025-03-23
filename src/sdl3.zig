@@ -166,6 +166,12 @@ pub const intrin = @import("intrin.zig");
 
 pub const joystick = @import("joystick.zig");
 pub const keyboard = @import("keyboard.zig");
+
+/// Defines constants which identify keyboard keys and modifiers.
+///
+/// Please refer to the Best Keyboard Practices document for details on what this information means and how best to use it.
+///
+/// https://wiki.libsdl.org/SDL3/BestKeyboardPractices
 pub const keycode = @import("keycode.zig");
 
 /// System-dependent library loading routines.

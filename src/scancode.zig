@@ -57,8 +57,8 @@ pub const Scancode = struct {
     pub const space = Scancode{ .value = C.SDL_SCANCODE_SPACE };
     pub const minus = Scancode{ .value = C.SDL_SCANCODE_MINUS };
     pub const equals = Scancode{ .value = C.SDL_SCANCODE_EQUALS };
-    pub const leftbracket = Scancode{ .value = C.SDL_SCANCODE_LEFTBRACKET };
-    pub const rightbracket = Scancode{ .value = C.SDL_SCANCODE_RIGHTBRACKET };
+    pub const left_bracket = Scancode{ .value = C.SDL_SCANCODE_LEFTBRACKET };
+    pub const right_bracket = Scancode{ .value = C.SDL_SCANCODE_RIGHTBRACKET };
 
     /// Located at the lower left of the return key on ISO keyboards and at the right end of the QWERTY row on ANSI keyboards.
     /// Produces REVERSE SOLIDUS (backslash) and VERTICAL LINE in a US layout, REVERSE SOLIDUS and VERTICAL LINE in a UK Mac layout,
@@ -70,7 +70,7 @@ pub const Scancode = struct {
     /// So, as an implementor, unless your keyboard generates both of those codes and your OS treats them differently,
     /// you should generate SDL_SCANCODE_BACKSLASH instead of this code.
     /// As a user, you should not rely on this code because SDL will never generate it with most (all?) keyboards.
-    pub const nonushash = Scancode{ .value = C.SDL_SCANCODE_NONUSHASH };
+    pub const non_us_hash = Scancode{ .value = C.SDL_SCANCODE_NONUSHASH };
     pub const semicolon = Scancode{ .value = C.SDL_SCANCODE_SEMICOLON };
     pub const apostrophe = Scancode{ .value = C.SDL_SCANCODE_APOSTROPHE };
 
@@ -84,7 +84,7 @@ pub const Scancode = struct {
     pub const comma = Scancode{ .value = C.SDL_SCANCODE_COMMA };
     pub const period = Scancode{ .value = C.SDL_SCANCODE_PERIOD };
     pub const slash = Scancode{ .value = C.SDL_SCANCODE_SLASH };
-    pub const capslock = Scancode{ .value = C.SDL_SCANCODE_CAPSLOCK };
+    pub const caps_lock = Scancode{ .value = C.SDL_SCANCODE_CAPSLOCK };
     pub const func1 = Scancode{ .value = C.SDL_SCANCODE_F1 };
     pub const func2 = Scancode{ .value = C.SDL_SCANCODE_F2 };
     pub const func3 = Scancode{ .value = C.SDL_SCANCODE_F3 };
@@ -97,8 +97,8 @@ pub const Scancode = struct {
     pub const func10 = Scancode{ .value = C.SDL_SCANCODE_F10 };
     pub const func11 = Scancode{ .value = C.SDL_SCANCODE_F11 };
     pub const func12 = Scancode{ .value = C.SDL_SCANCODE_F12 };
-    pub const printscreen = Scancode{ .value = C.SDL_SCANCODE_PRINTSCREEN };
-    pub const scrolllock = Scancode{ .value = C.SDL_SCANCODE_SCROLLLOCK };
+    pub const print_screen = Scancode{ .value = C.SDL_SCANCODE_PRINTSCREEN };
+    pub const scroll_lock = Scancode{ .value = C.SDL_SCANCODE_SCROLLLOCK };
     pub const pause = Scancode{ .value = C.SDL_SCANCODE_PAUSE };
 
     /// Insert on PC, help on some Mac keyboards (but does send code 73, not 117).
@@ -114,7 +114,7 @@ pub const Scancode = struct {
     pub const up = Scancode{ .value = C.SDL_SCANCODE_UP };
 
     /// Num lock on PC, clear on Mac keyboards.
-    pub const numlockclear = Scancode{ .value = C.SDL_SCANCODE_NUMLOCKCLEAR };
+    pub const num_lock_clear = Scancode{ .value = C.SDL_SCANCODE_NUMLOCKCLEAR };
     pub const kp_divide = Scancode{ .value = C.SDL_SCANCODE_KP_DIVIDE };
     pub const kp_multiply = Scancode{ .value = C.SDL_SCANCODE_KP_MULTIPLY };
     pub const kp_minus = Scancode{ .value = C.SDL_SCANCODE_KP_MINUS };
@@ -135,7 +135,7 @@ pub const Scancode = struct {
     /// This is the additional key that ISO keyboards have over ANSI ones, located between left shift and Y.
     /// Produces GRAVE ACCENT and TILDE in a US or UK Mac layout, REVERSE SOLIDUS (backslash) and VERTICAL LINE in a US or UK Windows layout,
     /// and LESS-THAN SIGN and GREATER-THAN SIGN in a Swiss German, German, or French layout.
-    pub const nonusbackslash = Scancode{ .value = C.SDL_SCANCODE_NONUSBACKSLASH };
+    pub const non_us_backslash = Scancode{ .value = C.SDL_SCANCODE_NONUSBACKSLASH };
 
     /// Windows contextual menu, compose.
     pub const application = Scancode{ .value = C.SDL_SCANCODE_APPLICATION };
@@ -185,10 +185,10 @@ pub const Scancode = struct {
     /// AC Find.
     pub const find = Scancode{ .value = C.SDL_SCANCODE_FIND };
     pub const mute = Scancode{ .value = C.SDL_SCANCODE_MUTE };
-    pub const volumeup = Scancode{ .value = C.SDL_SCANCODE_VOLUMEUP };
-    pub const volumedown = Scancode{ .value = C.SDL_SCANCODE_VOLUMEDOWN };
+    pub const volume_up = Scancode{ .value = C.SDL_SCANCODE_VOLUMEUP };
+    pub const volume_down = Scancode{ .value = C.SDL_SCANCODE_VOLUMEDOWN };
     pub const kp_comma = Scancode{ .value = C.SDL_SCANCODE_KP_COMMA };
-    pub const kp_equalsas400 = Scancode{ .value = C.SDL_SCANCODE_KP_EQUALSAS400 };
+    pub const kp_equals_as_400 = Scancode{ .value = C.SDL_SCANCODE_KP_EQUALSAS400 };
 
     /// Used on Asian keyboards, see footnotes in USB doc.
     pub const international1 = Scancode{ .value = C.SDL_SCANCODE_INTERNATIONAL1 };
@@ -231,7 +231,7 @@ pub const Scancode = struct {
     pub const lang9 = Scancode{ .value = C.SDL_SCANCODE_LANG9 };
 
     /// Erase-Eaze.
-    pub const alterase = Scancode{ .value = C.SDL_SCANCODE_ALTERASE };
+    pub const alt_erase = Scancode{ .value = C.SDL_SCANCODE_ALTERASE };
     pub const sysreq = Scancode{ .value = C.SDL_SCANCODE_SYSREQ };
 
     /// AC Cancel.
@@ -242,19 +242,19 @@ pub const Scancode = struct {
     pub const separator = Scancode{ .value = C.SDL_SCANCODE_SEPARATOR };
     pub const out = Scancode{ .value = C.SDL_SCANCODE_OUT };
     pub const oper = Scancode{ .value = C.SDL_SCANCODE_OPER };
-    pub const clearagain = Scancode{ .value = C.SDL_SCANCODE_CLEARAGAIN };
-    pub const crsel = Scancode{ .value = C.SDL_SCANCODE_CRSEL };
-    pub const exsel = Scancode{ .value = C.SDL_SCANCODE_EXSEL };
+    pub const clear_again = Scancode{ .value = C.SDL_SCANCODE_CLEARAGAIN };
+    pub const cr_sel = Scancode{ .value = C.SDL_SCANCODE_CRSEL };
+    pub const ex_sel = Scancode{ .value = C.SDL_SCANCODE_EXSEL };
     pub const kp_00 = Scancode{ .value = C.SDL_SCANCODE_KP_00 };
     pub const kp_000 = Scancode{ .value = C.SDL_SCANCODE_KP_000 };
-    pub const thousandsseparator = Scancode{ .value = C.SDL_SCANCODE_THOUSANDSSEPARATOR };
-    pub const decimalseparator = Scancode{ .value = C.SDL_SCANCODE_DECIMALSEPARATOR };
-    pub const currencyunit = Scancode{ .value = C.SDL_SCANCODE_CURRENCYUNIT };
-    pub const currencysubunit = Scancode{ .value = C.SDL_SCANCODE_CURRENCYSUBUNIT };
-    pub const kp_leftparen = Scancode{ .value = C.SDL_SCANCODE_KP_LEFTPAREN };
-    pub const kp_rightparen = Scancode{ .value = C.SDL_SCANCODE_KP_RIGHTPAREN };
-    pub const kp_leftbrace = Scancode{ .value = C.SDL_SCANCODE_KP_LEFTBRACE };
-    pub const kp_rightbrace = Scancode{ .value = C.SDL_SCANCODE_KP_RIGHTBRACE };
+    pub const thousands_separator = Scancode{ .value = C.SDL_SCANCODE_THOUSANDSSEPARATOR };
+    pub const decimals_eparator = Scancode{ .value = C.SDL_SCANCODE_DECIMALSEPARATOR };
+    pub const currency_unit = Scancode{ .value = C.SDL_SCANCODE_CURRENCYUNIT };
+    pub const currency_subunit = Scancode{ .value = C.SDL_SCANCODE_CURRENCYSUBUNIT };
+    pub const kp_left_paren = Scancode{ .value = C.SDL_SCANCODE_KP_LEFTPAREN };
+    pub const kp_right_paren = Scancode{ .value = C.SDL_SCANCODE_KP_RIGHTPAREN };
+    pub const kp_left_brace = Scancode{ .value = C.SDL_SCANCODE_KP_LEFTBRACE };
+    pub const kp_right_brace = Scancode{ .value = C.SDL_SCANCODE_KP_RIGHTBRACE };
     pub const kp_tab = Scancode{ .value = C.SDL_SCANCODE_KP_TAB };
     pub const kp_backspace = Scancode{ .value = C.SDL_SCANCODE_KP_BACKSPACE };
     pub const kp_a = Scancode{ .value = C.SDL_SCANCODE_KP_A };
@@ -269,44 +269,44 @@ pub const Scancode = struct {
     pub const kp_less = Scancode{ .value = C.SDL_SCANCODE_KP_LESS };
     pub const kp_greater = Scancode{ .value = C.SDL_SCANCODE_KP_GREATER };
     pub const kp_ampersand = Scancode{ .value = C.SDL_SCANCODE_KP_AMPERSAND };
-    pub const kp_dblampersand = Scancode{ .value = C.SDL_SCANCODE_KP_DBLAMPERSAND };
-    pub const kp_verticalbar = Scancode{ .value = C.SDL_SCANCODE_KP_VERTICALBAR };
-    pub const kp_dblverticalbar = Scancode{ .value = C.SDL_SCANCODE_KP_DBLVERTICALBAR };
+    pub const kp_dbl_ampersand = Scancode{ .value = C.SDL_SCANCODE_KP_DBLAMPERSAND };
+    pub const kp_vertical_bar = Scancode{ .value = C.SDL_SCANCODE_KP_VERTICALBAR };
+    pub const kp_dbl_vertical_bar = Scancode{ .value = C.SDL_SCANCODE_KP_DBLVERTICALBAR };
     pub const kp_colon = Scancode{ .value = C.SDL_SCANCODE_KP_COLON };
     pub const kp_hash = Scancode{ .value = C.SDL_SCANCODE_KP_HASH };
     pub const kp_space = Scancode{ .value = C.SDL_SCANCODE_KP_SPACE };
     pub const kp_at = Scancode{ .value = C.SDL_SCANCODE_KP_AT };
     pub const kp_exclam = Scancode{ .value = C.SDL_SCANCODE_KP_EXCLAM };
-    pub const kp_memstore = Scancode{ .value = C.SDL_SCANCODE_KP_MEMSTORE };
-    pub const kp_memrecall = Scancode{ .value = C.SDL_SCANCODE_KP_MEMRECALL };
-    pub const kp_memclear = Scancode{ .value = C.SDL_SCANCODE_KP_MEMCLEAR };
-    pub const kp_memadd = Scancode{ .value = C.SDL_SCANCODE_KP_MEMADD };
-    pub const kp_memsubtract = Scancode{ .value = C.SDL_SCANCODE_KP_MEMSUBTRACT };
-    pub const kp_memmultiply = Scancode{ .value = C.SDL_SCANCODE_KP_MEMMULTIPLY };
-    pub const kp_memdivide = Scancode{ .value = C.SDL_SCANCODE_KP_MEMDIVIDE };
-    pub const kp_plusminus = Scancode{ .value = C.SDL_SCANCODE_KP_PLUSMINUS };
+    pub const kp_mem_store = Scancode{ .value = C.SDL_SCANCODE_KP_MEMSTORE };
+    pub const kp_mem_recall = Scancode{ .value = C.SDL_SCANCODE_KP_MEMRECALL };
+    pub const kp_mem_clear = Scancode{ .value = C.SDL_SCANCODE_KP_MEMCLEAR };
+    pub const kp_mem_add = Scancode{ .value = C.SDL_SCANCODE_KP_MEMADD };
+    pub const kp_mem_subtract = Scancode{ .value = C.SDL_SCANCODE_KP_MEMSUBTRACT };
+    pub const kp_mem_multiply = Scancode{ .value = C.SDL_SCANCODE_KP_MEMMULTIPLY };
+    pub const kp_mem_divide = Scancode{ .value = C.SDL_SCANCODE_KP_MEMDIVIDE };
+    pub const kp_plus_minus = Scancode{ .value = C.SDL_SCANCODE_KP_PLUSMINUS };
     pub const kp_clear = Scancode{ .value = C.SDL_SCANCODE_KP_CLEAR };
-    pub const kp_clearentry = Scancode{ .value = C.SDL_SCANCODE_KP_CLEARENTRY };
+    pub const kp_clear_entry = Scancode{ .value = C.SDL_SCANCODE_KP_CLEARENTRY };
     pub const kp_binary = Scancode{ .value = C.SDL_SCANCODE_KP_BINARY };
     pub const kp_octal = Scancode{ .value = C.SDL_SCANCODE_KP_OCTAL };
     pub const kp_decimal = Scancode{ .value = C.SDL_SCANCODE_KP_DECIMAL };
     pub const kp_hexadecimal = Scancode{ .value = C.SDL_SCANCODE_KP_HEXADECIMAL };
-    pub const lctrl = Scancode{ .value = C.SDL_SCANCODE_LCTRL };
-    pub const lshift = Scancode{ .value = C.SDL_SCANCODE_LSHIFT };
+    pub const left_ctrl = Scancode{ .value = C.SDL_SCANCODE_LCTRL };
+    pub const left_shift = Scancode{ .value = C.SDL_SCANCODE_LSHIFT };
 
     /// Alt, option.
-    pub const lalt = Scancode{ .value = C.SDL_SCANCODE_LALT };
+    pub const left_alt = Scancode{ .value = C.SDL_SCANCODE_LALT };
 
     /// Windows, command (apple), meta.
-    pub const lgui = Scancode{ .value = C.SDL_SCANCODE_LGUI };
-    pub const rctrl = Scancode{ .value = C.SDL_SCANCODE_RCTRL };
-    pub const rshift = Scancode{ .value = C.SDL_SCANCODE_RSHIFT };
+    pub const left_gui = Scancode{ .value = C.SDL_SCANCODE_LGUI };
+    pub const right_ctrl = Scancode{ .value = C.SDL_SCANCODE_RCTRL };
+    pub const right_shift = Scancode{ .value = C.SDL_SCANCODE_RSHIFT };
 
     /// Alt gr, option.
-    pub const ralt = Scancode{ .value = C.SDL_SCANCODE_RALT };
+    pub const right_alt = Scancode{ .value = C.SDL_SCANCODE_RALT };
 
     /// Windows, command (apple), meta.
-    pub const rgui = Scancode{ .value = C.SDL_SCANCODE_RGUI };
+    pub const right_gui = Scancode{ .value = C.SDL_SCANCODE_RGUI };
 
     /// I'm not sure if this is really not covered by any of the above, but since there's a special `keycode.KeyModifier.mode` for it I'm adding it here.
     pub const mode = Scancode{ .value = C.SDL_SCANCODE_MODE };
@@ -399,16 +399,16 @@ pub const Scancode = struct {
     pub const ac_bookmarks = Scancode{ .value = C.SDL_SCANCODE_AC_BOOKMARKS };
 
     /// Usually situated below the display on phones and used as a multi-function feature key for selecting a software defined function shown on the bottom left of the display.
-    pub const softleft = Scancode{ .value = C.SDL_SCANCODE_SOFTLEFT };
+    pub const soft_left = Scancode{ .value = C.SDL_SCANCODE_SOFTLEFT };
 
     /// Usually situated below the display on phones and used as a multi-function feature key for selecting a software defined function shown on the bottom right of the display.
-    pub const softright = Scancode{ .value = C.SDL_SCANCODE_SOFTRIGHT };
+    pub const soft_right = Scancode{ .value = C.SDL_SCANCODE_SOFTRIGHT };
 
     /// Used for accepting phone calls.
     pub const call = Scancode{ .value = C.SDL_SCANCODE_CALL };
 
     /// Used for rejecting phone calls.
-    pub const endcall = Scancode{ .value = C.SDL_SCANCODE_ENDCALL };
+    pub const end_call = Scancode{ .value = C.SDL_SCANCODE_ENDCALL };
 
     /// Reserved for dynamic keycodes.
     pub const reserved_start = Scancode{ .value = C.SDL_SCANCODE_RESERVED_START };
