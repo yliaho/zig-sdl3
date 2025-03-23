@@ -118,6 +118,17 @@ pub const errors = @import("errors.zig");
 
 pub const events = @import("events.zig");
 
+/// File dialog support.
+///
+/// SDL offers file dialogs, to let users select files with native GUI interfaces.
+/// There are "open" dialogs, "save" dialogs, and folder selection dialogs.
+/// The app can control some details, such as filtering to specific files,
+/// or whether multiple files can be selected by the user.
+///
+/// Note that launching a file dialog is a non-blocking operation; control returns to the app immediately,
+/// and a callback is called later (possibly in another thread) when the user makes a choice.
+pub const file_dialog = @import("file_dialog.zig");
+
 pub const gpu = @import("gpu.zig");
 
 /// A GUID is a 128-bit value that represents something that is uniquely identifiable by this value: "globally unique."
