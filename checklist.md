@@ -46,7 +46,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (14/57)
+## In Progress (15/57)
 
 ### Basics
 * Hints
@@ -67,6 +67,9 @@ For monitoring how close various subsystems are to completion.
 ### Audio
 * Audio
 
+### GPU
+* GPU
+
 ### File IO
 * IO Streams
 
@@ -74,16 +77,13 @@ For monitoring how close various subsystems are to completion.
 * Process Control
 * Standard Lib
 
-## Not Started (12/57)
+## Not Started (11/57)
 
 ### Input
 * HIDAPI
 
 ### Haptic
 * Haptic
-
-### GPU
-* GPU
 
 ### Threads
 * Thread
