@@ -215,7 +215,7 @@ pub const ColorScheme = struct {
 /// * `data`: Message box data parameters.
 ///
 /// ## Return Value
-/// Returns the hit button value.
+/// Returns the hit button value, or `-1` if cancelled.
 ///
 /// ## Remarks
 /// If your needs aren't complex, it might be easier to use `message_box.showSimple()`.
