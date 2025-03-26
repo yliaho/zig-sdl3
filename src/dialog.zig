@@ -1,5 +1,6 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
+const properties = @import("properties.zig");
 const std = @import("std");
 const video = @import("video.zig");
 
@@ -72,6 +73,55 @@ pub const FileFilter = extern struct {
     /// File extensions may only contain alphanumeric characters, hyphens, underscores and periods.
     /// Alternatively, the whole string can be a single asterisk ("*"), which serves as an "All files" filter.
     pattern: [*:0]const u8,
+};
+
+/// File dialog properties.
+///
+/// ## Remarks
+/// Note that each platform may or may not support any of the properties.
+///
+/// ## Version
+/// This struct is provided by zig-sdl3.
+pub const Properties = struct {
+    /// Filters for file-based selections.
+    /// Ignored if the dialog is an "Open Folder" dialog.
+    /// If non-`null`, the array of filters must remain valid at least until the callback is invoked.
+    filters: ?[]const FileFilter = null,
+    /// The window that the dialog should be modal for.
+    window: ?video.Window = null,
+    /// The default folder or file to start the dialog at.
+    location: ?[:0]const u8 = null,
+    /// True to allow the user to select more than one entry.
+    many: ?bool = null,
+    /// The title for the dialog.
+    title: ?[:0]const u8 = null,
+    /// The label that the accept button should have.
+    accept: ?[:0]const u8 = null,
+    /// The label that the cancel button should have.
+    cancel: ?[:0]const u8 = null,
+
+    /// Convert to properties. This must be freed after.
+    pub fn toProperties(self: Properties) !properties.Group {
+        const ret = try properties.Group.init();
+        errdefer ret.deinit();
+        if (self.filters) |val| {
+            try ret.set(C.SDL_PROP_FILE_DIALOG_FILTERS_POINTER, .{ .pointer = @constCast(@as([*]const C.SDL_DialogFileFilter, @ptrCast(val.ptr))) });
+            try ret.set(C.SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, .{ .number = @intCast(val.len) });
+        }
+        if (self.window) |val|
+            try ret.set(C.SDL_PROP_FILE_DIALOG_WINDOW_POINTER, .{ .pointer = val.value });
+        if (self.location) |val|
+            try ret.set(C.SDL_PROP_FILE_DIALOG_LOCATION_STRING, .{ .string = val });
+        if (self.many) |val|
+            try ret.set(C.SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, .{ .boolean = val });
+        if (self.title) |val|
+            try ret.set(C.SDL_PROP_FILE_DIALOG_TITLE_STRING, .{ .string = val });
+        if (self.accept) |val|
+            try ret.set(C.SDL_PROP_FILE_DIALOG_ACCEPT_STRING, .{ .string = val });
+        if (self.cancel) |val|
+            try ret.set(C.SDL_PROP_FILE_DIALOG_CANCEL_STRING, .{ .string = val });
+        return ret;
+    }
 };
 
 /// Various types of file dialogs.
@@ -258,6 +308,39 @@ pub fn showSaveFile(
         if (filters) |val| @intCast(val.len) else 0,
         if (default_location) |val| val.ptr else null,
     );
+}
+
+/// Create and launch a file dialog with the specified properties.
+///
+/// ## Function Parameters
+/// * `dialog_type`: The type of file dialog.
+/// * `callback`: A function pointer to be invoked when the user selects a file and accepts, or cancels the dialog, or an error occurs.
+/// * `user_data`: An optional pointer to pass extra data to the callback when it will be invoked.
+/// * `props`: The properties to use.
+///
+/// ## Return Value
+/// Returns created properties that must be freed later.
+///
+/// ## Thread Safety
+/// This function should be called only from the main thread.
+/// The callback may be invoked from the same thread or from a different one, depending on the OS's constraints.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn showWithProperties(
+    dialog_type: Type,
+    callback: FileCallback,
+    user_data: ?*anyopaque,
+    props: Properties,
+) !properties.Group {
+    const ret = try props.toProperties();
+    C.SDL_ShowFileDialogWithProperties(
+        @intFromEnum(dialog_type),
+        callback,
+        user_data,
+        ret.value,
+    );
+    return ret;
 }
 
 // File dialog related tests.

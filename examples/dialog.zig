@@ -108,6 +108,11 @@ fn showMenu(state: *State) !void {
                 },
             }, state.last_file);
         },
+        3 => {
+            state.is_file = true;
+            const props = try sdl3.dialog.showWithProperties(.save_file, fileCallback, state, .{});
+            defer props.deinit();
+        },
         else => {},
     }
 }
@@ -124,10 +129,8 @@ pub fn main() !void {
     try sdl3.init.init(.{ .video = true });
     defer sdl3.init.quit(.{ .video = false });
 
-    const window = try sdl3.video.Window.init("Dialog Example Backing", 100, 100, .{
-        // .hidden = true,
-        // .minimized = true,
-        // .utility = true,
+    const window = try sdl3.video.Window.init("Dialog Example Backing", 500, 300, .{
+        .transparent = true,
     });
     defer window.deinit();
 
