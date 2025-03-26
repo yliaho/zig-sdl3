@@ -369,6 +369,11 @@ pub const time = @import("time.zig");
 /// There are also useful functions to convert between time units, like `timer.secondsToNanoseconds()` and such.
 pub const timer = @import("timer.zig");
 
+/// SDL offers a way to add items to the "system tray" (more correctly called the "notification area" on Windows).
+/// On platforms that offer this concept, an SDL app can add a tray icon, submenus, checkboxes, and clickable entries,
+/// and register a callback that is fired when the user clicks on these pieces.
+pub const tray = @import("tray.zig");
+
 /// SDL offers touch input, on platforms that support it.
 /// It can manage multiple touch devices and track multiple fingers on those devices.
 ///

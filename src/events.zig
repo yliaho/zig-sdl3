@@ -10,11 +10,11 @@ const video = @import("video.zig");
 /// This enum is available since SDL 3.2.0.
 pub const Action = enum(c_uint) {
     /// Add events to the back of the queue.
-    Add,
+    add,
     /// Check but don't remove events from the queue front.
-    Peek,
+    peek,
     /// Retrieve/remove events from the front of the queue.
-    Get,
+    get,
 };
 
 /// A function pointer used for callbacks that watch the event queue.
@@ -1114,9 +1114,9 @@ test "Events" {
     try std.testing.expect(available());
     try std.testing.expect(enabled(.quit));
 
-    try std.testing.expect(try peepSize(1, .Peek, .application) > 0);
+    try std.testing.expect(try peepSize(1, .peek, .application) > 0);
     var buf = [_]Event{undefined};
-    _ = try peep(&buf, .Peek, .application);
+    _ = try peep(&buf, .peek, .application);
 
     try std.testing.expect(poll() != null);
     // _ = try wait(false); // This is not deterministic and may hang so don't.

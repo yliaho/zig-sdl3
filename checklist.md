@@ -47,7 +47,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (15/57)
+## In Progress (16/57)
 
 ### Basics
 * Hints
@@ -76,9 +76,10 @@ For monitoring how close various subsystems are to completion.
 
 ### Additional Functionality
 * Process Control
+* System Tray
 * Standard Lib
 
-## Not Started (10/57)
+## Not Started (9/57)
 
 ### Input
 * HIDAPI
@@ -97,5 +98,4 @@ For monitoring how close various subsystems are to completion.
 * Async
 
 ### Additional Functionality
-* System Tray
 * System
