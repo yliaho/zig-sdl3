@@ -129,6 +129,21 @@ pub const errors = @import("errors.zig");
 
 pub const events = @import("events.zig");
 
+/// SDL offers an API for examining and manipulating the system's filesystem.
+/// This covers most things one would need to do with directories, except for actual file I/O (which is covered by `io_stream` and `async_io` instead).
+///
+/// There are functions to answer necessary path questions:
+/// * Where is my app's data? `filesystem.getBasePath()`.
+/// * Where can I safely write files? `filesystem.getPrefPath()`.
+/// * Where are paths like Downloads, Desktop, Music? `filesystem.getUserFolder()`.
+/// * What is this thing at this location? `filesystem.getPathInfo()`.
+/// * What items live in this folder? `filesystem.enumerateDirectory()`.
+/// * What items live in this folder by wildcard? `filesystem.globDirectory()`.
+/// * What is my current working directory? `filesystem.getCurrentDirectory()`.
+///
+/// SDL also offers functions to manipulate the directory tree: renaming, removing, copying files.
+pub const filesystem = @import("filesystem.zig");
+
 pub const gpu = @import("gpu.zig");
 
 /// A GUID is a 128-bit value that represents something that is uniquely identifiable by this value: "globally unique."

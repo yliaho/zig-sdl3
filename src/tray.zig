@@ -10,7 +10,7 @@ const surface = @import("surface.zig");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const Callback = *const fn (user_date: ?*anyopaque, entry: [*c]C.SDL_TrayEntry) callconv(.C) void;
+pub const Callback = *const fn (user_data: ?*anyopaque, entry: ?*C.SDL_TrayEntry) callconv(.C) void;
 
 /// An opaque handle representing an entry on a system tray object.
 ///
@@ -34,6 +34,247 @@ pub const Entry = struct {
     ) void {
         C.SDL_ClickTrayEntry(self.value);
     }
+
+    /// Create a submenu for a system tray entry.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The tray entry to bind the menu to.
+    ///
+    /// ## Return Value
+    /// Returns the newly created menu.
+    ///
+    /// ## Remarks
+    /// This should be called at most once per tray entry.
+    ///
+    /// This function does the same thing as `tray.Tray.createMenu()`, except that it takes a `tray.Entry` instead of a `tray.Tray`.
+    ///
+    /// A menu does not need to be destroyed; it will be destroyed with the tray.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createSubmenu(
+        self: Entry,
+    ) Menu {
+        return .{
+            .value = C.SDL_CreateTraySubmenu(self.value).?,
+        };
+    }
+
+    /// Gets whether or not an entry is checked.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be read.
+    ///
+    /// ## Return Value
+    /// Returns true if the entry is checked; false otherwise.
+    ///
+    /// ## Remarks
+    /// The entry must have been created with the `entry` field being a `checkbox`.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getChecked(
+        self: Entry,
+    ) bool {
+        return C.SDL_GetTrayEntryChecked(self.value);
+    }
+
+    /// Gets whether or not an entry is enabled.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be read.
+    ///
+    /// ## Return Value
+    /// Returns true if the entry is enabled; false otherwise.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getEnabled(
+        self: Entry,
+    ) bool {
+        return C.SDL_GetTrayEntryEnabled(self.value);
+    }
+
+    /// Gets the label of an entry.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be read.
+    ///
+    /// ## Return Value
+    /// Returns the label of the entry in UTF-8 encoding.
+    ///
+    /// ## Remarks
+    /// If the returned value is `null`, the entry is a separator.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getLabel(
+        self: Entry,
+    ) ?[]const u8 {
+        const ret = C.SDL_GetTrayEntryLabel(self.value);
+        if (ret == null)
+            return null;
+        return std.mem.span(ret);
+    }
+
+    /// Gets the menu containing a certain tray entry.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry for which to get the parent menu.
+    ///
+    /// ## Return Value
+    /// Returns the parent menu.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getParent(
+        self: Entry,
+    ) Menu {
+        return .{
+            .value = C.SDL_GetTrayEntryParent(self.value).?,
+        };
+    }
+
+    /// Gets a previously created tray entry submenu.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The tray entry to bind the menu to.
+    ///
+    /// ## Return Value
+    /// Returns the newly created menu.
+    ///
+    /// ## Remarks
+    /// You should have called `tray.Entry.createSubmenu()` on the entry object.
+    /// This function allows you to fetch it again later.
+    ///
+    /// This function does the same thing as `tray.Tray.getMenu()`, except that it takes a `tray.Entry` instead of a `tray.Tray`.
+    ///
+    /// A menu does not need to be destroyed; it will be destroyed with the tray.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSubmenu(
+        self: Entry,
+    ) Menu {
+        return .{
+            .value = C.SDL_GetTraySubmenu(self.value).?,
+        };
+    }
+
+    /// Removes a tray entry.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be deleted.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn remove(
+        self: Entry,
+    ) void {
+        C.SDL_RemoveTrayEntry(self.value);
+    }
+
+    /// Sets a callback to be invoked when the entry is selected.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be updated.
+    /// * `callback`: A callback to be invoked when the entry is selected.
+    /// * `user_data`: An optional pointer to pass extra data to the callback when it will be invoked.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setCallback(
+        self: Entry,
+        callback: Callback,
+        user_data: ?*anyopaque,
+    ) void {
+        C.SDL_SetTrayEntryCallback(self.value, callback, user_data);
+    }
+
+    /// Sets whether or not an entry is checked.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be updated.
+    /// * `checked`: True if the entry should be checked; false otherwise.
+    ///
+    /// ## Remarks
+    /// The entry must have been created with the `EntryFlags.entry.checkbox` value used.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setChecked(
+        self: Entry,
+        checked: bool,
+    ) void {
+        C.SDL_SetTrayEntryChecked(self.value, checked);
+    }
+
+    /// Sets whether or not an entry is enabled.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be updated.
+    /// * `enabled`: True if the entry should be enabled; false otherwise.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setEnabled(
+        self: Entry,
+        enabled: bool,
+    ) void {
+        C.SDL_SetTrayEntryEnabled(self.value, enabled);
+    }
+
+    /// Sets the label of an entry.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The entry to be updated.
+    /// * `label`: The new label for the entry in UTF-8 encoding.
+    ///
+    /// ## Remarks
+    /// An entry cannot change between a separator and an ordinary entry; that is, it is not possible to set a non-`null` label on an entry that has a `null` label (separators).
+    /// The function will silently fail if that happens.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setLabel(
+        self: Entry,
+        label: [:0]const u8,
+    ) void {
+        C.SDL_SetTrayEntryLabel(self.value, label.ptr);
+    }
 };
 
 /// Flags that control the creation of system tray entries.
@@ -52,6 +293,23 @@ pub const EntryFlags = struct {
     },
     /// Make the entry disabled.
     disabled: bool = false,
+
+    /// Convert this to an SDL value.
+    pub fn toSdl(self: EntryFlags) C.SDL_TrayEntryFlags {
+        var ret: C.SDL_TrayEntryFlags = 0;
+        switch (self.entry) {
+            .button => ret |= C.SDL_TRAYENTRY_BUTTON,
+            .checkbox => |val| {
+                ret |= C.SDL_TRAYENTRY_CHECKBOX;
+                if (val)
+                    ret |= C.SDL_TRAYENTRY_CHECKED;
+            },
+            .submenu => ret |= C.SDL_TRAYENTRY_SUBMENU,
+        }
+        if (self.disabled)
+            ret |= C.SDL_TRAYENTRY_DISABLED;
+        return ret;
+    }
 };
 
 /// An entry type for a system tray.
@@ -73,6 +331,124 @@ pub const EntryType = enum(C.SDL_TrayEntryFlags) {
 /// This struct is available since SDL 3.2.0.
 pub const Menu = struct {
     value: *C.SDL_TrayMenu,
+
+    /// Returns a list of entries in the menu, in order.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The menu to get entries from.
+    ///
+    /// ## Return Value
+    /// Returns a slice of tray entries within the given menu.
+    /// This becomes invalid once any function that creates or destroys entries in the menu is called.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getEntries(
+        self: Menu,
+    ) []const Entry {
+        var count: c_int = undefined;
+        const ret: [*]C.SDL_TrayEntry = @ptrCast(C.SDL_GetTrayEntries(self.value, &count).?);
+        return ret[0..@intCast(count)];
+    }
+
+    /// Gets the entry for which the menu is a submenu, if the current menu is a submenu.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The menu for which to get the parent entry.
+    ///
+    /// ## Return Value
+    /// Returns the parent entry, or `null` if this menu is not a submenu.
+    ///
+    /// ## Remarks
+    /// Either this function or `tray.Menu.getParentTray()` will return non-`null` for any given menu.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getParentEntry(
+        self: Menu,
+    ) ?Entry {
+        const ret = C.SDL_GetTrayMenuParentEntry(self.value);
+        if (ret) |val| {
+            return .{
+                .value = val,
+            };
+        }
+        return null;
+    }
+
+    /// Gets the tray for which this menu is the first-level menu, if the current menu isn't a submenu.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The menu for which to get the parent entry.
+    ///
+    /// ## Return Value
+    /// Returns the parent tray, or `null` if this menu is a submenu.
+    ///
+    /// ## Remarks
+    /// Either this function or `tray.Menu.getParentEntry()` will return non-`null` for any given menu.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getParentTray(
+        self: Menu,
+    ) ?Tray {
+        const ret = C.SDL_GetTrayMenuParentTray(self.value);
+        if (ret) |val| {
+            return .{
+                .value = val,
+            };
+        }
+        return null;
+    }
+
+    /// Insert a tray entry at a given position.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The menu to append the entry to.
+    /// * `pos`: The desired position for the new entry. Entries at or following this place will be moved. If this is `null`, the entry is appended.
+    /// * `label`: The text to be displayed on the entry, in UTF-8 encoding, or `null` for a separator.
+    /// * `flags`: How to create the entry.
+    ///
+    /// ## Return Value
+    /// Returns the newly created entry, or `null` if `pos` is out of bounds.
+    ///
+    /// ## Remarks
+    /// If label is `null`, the entry will be a separator.
+    /// Many functions won't work for an entry that is a separator.
+    ///
+    /// An entry does not need to be destroyed; it will be destroyed with the tray.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn insertAt(
+        self: Menu,
+        pos: ?usize,
+        label: ?[:0]const u8,
+        flags: EntryFlags,
+    ) ?Entry {
+        const ret = C.SDL_InsertTrayEntryAt(
+            self.value,
+            if (pos) |val| @intCast(val) else -1,
+            if (label) |val| val.ptr else null,
+            flags.toSdl(),
+        );
+        if (ret) |val| {
+            return .{ .value = val };
+        }
+        return null;
+    }
 };
 
 /// An opaque handle representing a toplevel system tray object.
@@ -106,8 +482,74 @@ pub const Tray = struct {
         self: Tray,
     ) Menu {
         return .{
-            .value = C.SDL_CreateTrayMenu(self.value),
+            .value = C.SDL_CreateTrayMenu(self.value).?,
         };
+    }
+
+    /// Destroys a tray object.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The tray icon to be destroyed.
+    ///
+    /// ## Remarks
+    /// This also destroys all associated menus and entries.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinit(
+        self: Tray,
+    ) void {
+        C.SDL_DestroyTray(self.value);
+    }
+
+    /// Gets a previously created tray menu.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The tray entry to bind the menu to.
+    ///
+    /// ## Return Value
+    /// Returns the newly created menu.
+    ///
+    /// ## Remarks
+    /// You should have called `tray.Tray.createMenu()` on the tray object.
+    /// This function allows you to fetch it again later.
+    ///
+    /// This function does the same thing as `tray.Entry.getSubmenu()` except that it takes a `tray.Tray` instead of a `tray.Entry`.
+    ///
+    /// A menu does not need to be destroyed; it will be destroyed with the tray.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getMenu(
+        self: Tray,
+    ) Menu {
+        return .{
+            .value = C.SDL_GetTrayMenu(self.value).?,
+        };
+    }
+
+    /// Updates the system tray icon's icon.
+    ///
+    /// ## Function Parameters
+    /// * `tray`: The tray icon to be updated.
+    /// * `icon`: The new icon. May be `null`.
+    ///
+    /// ## Thread Safety
+    /// This function should be called on the thread that created the tray.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setIcon(
+        self: Tray,
+        icon: ?surface.Surface,
+    ) void {
+        C.SDL_SetTrayIcon(self.value, if (icon) |val| val.value else null);
     }
 
     /// Create an icon to be placed in the operating system's tray, or equivalent.
@@ -178,10 +620,19 @@ pub fn update() void {
 
 // Tray testing.
 test "Tray" {
-    // Entry.click
-    // Tray.init
-    // Tray.createMenu
+    try std.testing.expectEqual(@sizeOf(*C.SDL_TrayEntry), @sizeOf(Entry));
+
     // Entry.createSubmenu
-    // setTooltip
-    // update
+    // Tray.setTooltip
+    // Menu.getEntries
+    // Entry.getEnabled
+    // Entry.getLabel
+    // Entry.getParent
+    // Menu.getParentEntry
+    // Menu.getParentTray
+    // Entry.getSubmenu
+    // Entry.remove
+    // Entry.setEnabled
+    // Entry.setLabel
+    // Tray.setIcon
 }
