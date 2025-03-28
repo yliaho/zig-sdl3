@@ -47,7 +47,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (17/57)
+## In Progress (18/57)
 
 ### Basics
 * Hints
@@ -73,6 +73,7 @@ For monitoring how close various subsystems are to completion.
 
 ### File IO
 * Filesystem
+* Storage
 * IO Streams
 
 ### Additional Functionality
@@ -80,7 +81,7 @@ For monitoring how close various subsystems are to completion.
 * System Tray
 * Standard Lib
 
-## Not Started (8/57)
+## Not Started (7/57)
 
 ### Input
 * HIDAPI
@@ -94,7 +95,6 @@ For monitoring how close various subsystems are to completion.
 * Atomic
 
 ### File IO
-* Storage
 * Async
 
 ### Additional Functionality

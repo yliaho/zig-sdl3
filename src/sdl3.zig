@@ -190,6 +190,8 @@ pub const init = @import("init.zig");
 /// it will also `#include <emmintrin.h>` as well.
 pub const intrin = @import("intrin.zig");
 
+pub const Stream = @import("io_stream.zig").Stream;
+
 pub const joystick = @import("joystick.zig");
 pub const keyboard = @import("keyboard.zig");
 
@@ -362,6 +364,7 @@ pub const render = @import("render.zig");
 pub const Scancode = @import("scancode.zig").Scancode;
 pub const sensor = @import("sensor.zig");
 pub const stdinc = @import("stdinc.zig");
+pub const storage = @import("storage.zig");
 pub const surface = @import("surface.zig");
 
 /// SDL realtime clock and date/time routines.
@@ -414,8 +417,6 @@ pub const video = @import("video.zig");
 /// Unlike OpenGL, most of the details of "context" creation and window buffer swapping are handled by the Vulkan API directly,
 /// so SDL doesn't provide Vulkan equivalents of `video.gl.swapWindow()`, etc; they aren't necessary.
 pub const vulkan = @import("vulkan.zig");
-
-pub const Stream = @import("io_stream.zig").Stream;
 
 // Others.
 const extension_options = @import("extension_options");
