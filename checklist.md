@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (32/57)
+## Done (33/57)
 
 ### Basics
 * Main
@@ -43,11 +43,12 @@ For monitoring how close various subsystems are to completion.
 * Power Management
 * Message Box
 * File Dialogs
+* System Tray
 * Locale
 * GUID
 * Misc
 
-## In Progress (18/57)
+## In Progress (17/57)
 
 ### Basics
 * Hints
@@ -78,7 +79,6 @@ For monitoring how close various subsystems are to completion.
 
 ### Additional Functionality
 * Process Control
-* System Tray
 * Standard Lib
 
 ## Not Started (7/57)

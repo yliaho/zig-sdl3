@@ -142,6 +142,7 @@ pub fn main() !void {
 
     while (!state.quit) {
         switch ((try sdl3.events.wait(true)).?) {
+            .terminating => break,
             .quit => break,
             else => {},
         }
