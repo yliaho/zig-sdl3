@@ -350,7 +350,7 @@ pub const Menu = struct {
         self: Menu,
     ) []const Entry {
         var count: c_int = undefined;
-        const ret: [*]C.SDL_TrayEntry = @ptrCast(C.SDL_GetTrayEntries(self.value, &count).?);
+        const ret: [*]const Entry = @ptrCast(C.SDL_GetTrayEntries(self.value, &count).?);
         return ret[0..@intCast(count)];
     }
 
@@ -621,18 +621,4 @@ pub fn update() void {
 // Tray testing.
 test "Tray" {
     try std.testing.expectEqual(@sizeOf(*C.SDL_TrayEntry), @sizeOf(Entry));
-
-    // Entry.createSubmenu
-    // Tray.setTooltip
-    // Menu.getEntries
-    // Entry.getEnabled
-    // Entry.getLabel
-    // Entry.getParent
-    // Menu.getParentEntry
-    // Menu.getParentTray
-    // Entry.getSubmenu
-    // Entry.remove
-    // Entry.setEnabled
-    // Entry.setLabel
-    // Tray.setIcon
 }

@@ -67,6 +67,19 @@ pub const Storage = packed struct {
         return errors.wrapCallBool(C.SDL_CreateStorageDirectory(self.value, path.ptr));
     }
 
+    /// Closes and frees a storage container.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A storage container to close.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinit(
+        self: Storage,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_CloseStorage(self.value));
+    }
+
     /// Enumerate a directory in a storage container through a callback function.
     ///
     /// ## Function Parameters
@@ -96,17 +109,50 @@ pub const Storage = packed struct {
         return errors.wrapCallBool(C.SDL_EnumerateStorageDirectory(storage, if (path) |val| val.ptr else null, callback, user_data));
     }
 
-    /// Closes and frees a storage container.
+    /// Query the size of a file within a storage container.
     ///
     /// ## Function Parameters
-    /// * `self`: A storage container to close.
+    /// * `self`: A storage container to query.
+    /// * `path`: The relative path of the file to query.
+    ///
+    /// ## Return Value
+    /// Returns the file's length.
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    pub fn deinit(
+    pub fn getFileSize(
         self: Storage,
-    ) !void {
-        return errors.wrapCallBool(C.SDL_CloseStorage(self.value));
+        path: [:0]const u8,
+    ) !u64 {
+        var size: u64 = undefined;
+        try errors.wrapCallBool(C.SDL_GetStorageFileSize(self.value, path.ptr, &size));
+        return size;
+    }
+
+    /// Get information about a filesystem path in a storage container.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A storage container to query.
+    /// * `path`: The path to query.
+    ///
+    /// ## Return Value
+    /// Returns the path info for the path.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getPathInfo(
+        self: Storage,
+        path: [:0]const u8,
+    ) !filesystem.PathInfo {
+        var info: filesystem.PathInfo = undefined;
+        try errors.wrapCallBool(C.SDL_GetStoragePathInfo(self.value, path.ptr, &info));
+        return .{
+            .path_type = filesystem.PathType.fromSdl(info.type),
+            .file_size = info.size,
+            .create_time = .{ .value = info.create_time },
+            .modify_time = .{ .value = info.modify_time },
+            .access_time = .{ .value = info.access_time },
+        };
     }
 };
 
@@ -116,4 +162,6 @@ test "Storage" {
     // Storage.copyFile
     // Storage.createDirectory
     // Storage.enumerateDirectory
+    // Storage.getFileSize
+    // Storage.getPathInfo
 }

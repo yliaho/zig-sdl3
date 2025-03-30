@@ -408,6 +408,7 @@ fn eventHandler(
 ) !sdl3.AppResult {
     _ = app_state;
     switch (event) {
+        .terminating => return .success,
         .quit => return .success,
         else => {},
     }
