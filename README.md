@@ -70,14 +70,11 @@ pub fn main() !void {
     try surface.fillRect(null, surface.mapRgb(128, 30, 255));
     try window.updateSurface();
 
-    main: while (true) {
-        while (sdl.events.poll()) |event| {
-            switch (event) {
-                .quit => break :main,
-                .terminating => break :main,
-
-                else => {}
-            }
+    while (true) {
+        switch ((try sdl3.events.wait(true)).?) {
+            .quit => break,
+            .terminating => break,
+            else => {}
         }
     }
 }
