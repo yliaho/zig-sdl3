@@ -362,9 +362,18 @@ pub const render = @import("render.zig");
 ///
 /// https://wiki.libsdl.org/SDL3/BestKeyboardPractices
 pub const Scancode = @import("scancode.zig").Scancode;
+
+/// SDL sensor management.
+///
+/// These APIs grant access to gyros and accelerometers on various platforms.
+///
+/// In order to use these functions, `init.init()` must have been called with the `sensor` flag.
+/// This causes SDL to scan the system for sensors, and load appropriate drivers.
 pub const sensor = @import("sensor.zig");
 pub const stdinc = @import("stdinc.zig");
-pub const storage = @import("storage.zig");
+
+/// TODO: DESCRIPTION AND SAMPLE CODE!!!
+pub const Storage = @import("storage.zig").Storage;
 pub const surface = @import("surface.zig");
 
 /// SDL realtime clock and date/time routines.

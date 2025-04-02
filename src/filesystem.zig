@@ -293,8 +293,24 @@ pub fn getBasePath() ![]const u8 {
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getCurrentDirectory() ![]u8 {
-    const ret = try errors.wrapCallCPtr(u8, C.SDL_GetCurrentDirectory());
+    const ret: [*:0]u8 = @ptrCast(try errors.wrapCallCPtr(u8, C.SDL_GetCurrentDirectory()));
     return std.mem.span(ret);
+}
+
+/// Check if a path exists.
+///
+/// ## Function Parameters
+/// * `path`: The path to query.
+///
+/// ## Return Value
+/// Returns if the path exists.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getPathExists(
+    path: [:0]const u8,
+) bool {
+    return C.SDL_GetPathInfo(path.ptr, null);
 }
 
 /// Get information about a filesystem path.
@@ -472,11 +488,8 @@ test "Filesystem" {
     // copyFile
     // createDirectory
     // enumerateDirectory
-    // getBasePath
-    // getCurrentDirectory
     // getPathInfo
     // getPrefPath
-    // getUserFolder
     // globDirectory
     // removePath
     // renamePath
