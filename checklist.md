@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (35/57)
+## Done (36/57)
 
 ### Basics
 * Main
@@ -29,6 +29,9 @@ For monitoring how close various subsystems are to completion.
 * Pen
 * Sensor
 
+### Threads
+* Thread
+
 ### Time
 * Timer
 * Time
@@ -50,7 +53,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (15/57)
+## In Progress (14/57)
 
 ### Basics
 * Hints
@@ -90,7 +93,6 @@ For monitoring how close various subsystems are to completion.
 * Haptic
 
 ### Threads
-* Thread
 * Mutex
 * Atomic
 
