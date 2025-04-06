@@ -347,6 +347,18 @@ pub const platform = @import("platform.zig");
 /// Perhaps the app just wants to show a battery meter when fullscreen, or alert the user when the power is getting extremely low, so they can save their game.
 pub const PowerState = @import("power.zig").PowerState;
 
+/// Process control support.
+///
+/// These functions provide a cross-platform way to spawn and manage OS-level processes.
+///
+/// You can create a new subprocess with `Process.init()` and optionally read and write to it using `Process.read()` or `Process.getInput()` and `Process.getOutput()`.
+/// If more advanced functionality like chaining input between processes is necessary, you can use `Process.initWithProperties()`.
+///
+/// You can get the status of a created process with `Process.wait()`, or terminate the process with `Process.kill()`.
+///
+/// Don't forget to call `Process.deinit()` to clean up, whether the process process was killed, terminated on its own, or is still running!
+pub const Process = @import("process.zig").Process;
+
 /// A property is a variable that can be created and retrieved by name at runtime.
 ///
 /// All properties are part of a property group `properties.Group`.
