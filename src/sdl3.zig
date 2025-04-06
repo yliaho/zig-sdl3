@@ -193,6 +193,11 @@ pub const intrin = @import("intrin.zig");
 pub const Stream = @import("io_stream.zig").Stream;
 
 pub const joystick = @import("joystick.zig");
+
+/// SDL keyboard management.
+///
+/// Please refer to the Best Keyboard Practices document for details on how best to accept keyboard input in various types of programs:
+/// https://wiki.libsdl.org/SDL3/BestKeyboardPractices
 pub const keyboard = @import("keyboard.zig");
 
 /// Defines constants which identify keyboard keys and modifiers.
