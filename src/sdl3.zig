@@ -381,6 +381,20 @@ pub const stdinc = @import("stdinc.zig");
 pub const Storage = @import("storage.zig").Storage;
 pub const surface = @import("surface.zig");
 
+/// SDL offers cross-platform thread management functions.
+/// These are mostly concerned with starting threads, setting their priority, and dealing with their termination.
+///
+/// In addition, there is support for Thread Local Storage (data that is unique to each thread, but accessed from a single key).
+///
+/// On platforms without thread support (such as Emscripten when built without pthreads),
+/// these functions still exist, but things like `thread.Thread.init()` will report failure without doing anything.
+///
+/// If you're going to work with threads, you almost certainly need to have a good understanding of `mutex` as well.
+///
+/// This part of the SDL API handles management of threads, but an app also will need locks to manage thread safety.
+/// Those pieces are in `mutex`.
+pub const thread = @import("thread.zig");
+
 /// SDL realtime clock and date/time routines.
 ///
 /// There are two data types that are used in this category: `time.Time`, which represents the nanoseconds since a specific moment (an "epoch"),
