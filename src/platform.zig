@@ -234,7 +234,7 @@ pub const xbox_series = @hasDecl(C, "SDL_PLATFORM_XBOXSERIES");
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn get() []const u8 {
+pub fn get() [:0]const u8 {
     return std.mem.span(C.SDL_GetPlatform());
 }
 

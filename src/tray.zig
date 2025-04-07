@@ -122,7 +122,7 @@ pub const Entry = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getLabel(
         self: Entry,
-    ) ?[]const u8 {
+    ) ?[:0]const u8 {
         const ret = C.SDL_GetTrayEntryLabel(self.value);
         if (ret == null)
             return null;

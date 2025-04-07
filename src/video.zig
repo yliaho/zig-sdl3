@@ -298,7 +298,7 @@ pub const Display = packed struct {
     /// TODO!!!
     pub fn getName(
         self: Display,
-    ) ![]const u8 {
+    ) ![:0]const u8 {
         const ret = C.SDL_GetDisplayName(
             self.value,
         );
@@ -1530,7 +1530,7 @@ pub fn enableScreenSaver() !void {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getCurrentDriverName() ?[]const u8 {
+pub fn getCurrentDriverName() ?[:0]const u8 {
     const ret = C.SDL_GetCurrentVideoDriver();
     if (ret) |val|
         return std.mem.span(val);
@@ -1649,7 +1649,7 @@ pub fn getSystemTheme() ?SystemTheme {
 /// This function is available since SDL 3.2.0.
 pub fn getDriverName(
     index: usize,
-) ?[]const u8 {
+) ?[:0]const u8 {
     const ret = C.SDL_GetVideoDriver(
         @intCast(index),
     );

@@ -344,7 +344,7 @@ pub fn setAppMetadataProperty(
 /// This function is available since SDL 3.2.0.
 pub fn getAppMetadataProperty(
     property: AppMetadataProperty,
-) ?[]const u8 {
+) ?[:0]const u8 {
     const ret = C.SDL_GetAppMetadataProperty(
         property.toSdl(),
     );

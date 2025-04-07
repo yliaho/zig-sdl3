@@ -65,14 +65,14 @@ pub fn clearData() !void {
 /// This function is available since SDL 3.2.0.
 pub fn getData(
     mime_type: [:0]const u8,
-) ![]const u8 {
+) ![:0]const u8 {
     var size: usize = undefined;
     const val = C.SDL_GetClipboardData(
         mime_type,
         &size,
     );
     const ret: [*]const u8 = @ptrCast(try errors.wrapNull(*anyopaque, val));
-    return ret[0..size];
+    return ret[0..size :0];
 }
 
 /// Retrieve the list of mime types available in the clipboard.

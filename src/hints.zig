@@ -244,7 +244,7 @@ pub fn addCallback(
 /// This function is available since SDL 3.2.0.
 pub fn get(
     hint: Type,
-) ?[]const u8 {
+) ?[:0]const u8 {
     const ret = C.SDL_GetHint(
         hint.toSdl(),
     );

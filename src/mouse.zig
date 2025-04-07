@@ -123,7 +123,7 @@ pub const ID = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getName(
         self: ID,
-    ) !?[]const u8 {
+    ) !?[:0]const u8 {
         const ret = try errors.wrapCallCString(C.SDL_GetMouseNameForID(self.value));
         if (std.mem.eql(u8, ret, ""))
             return null;

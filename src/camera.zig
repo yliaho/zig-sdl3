@@ -73,7 +73,7 @@ pub const ID = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getName(
         self: ID,
-    ) ![]const u8 {
+    ) ![:0]const u8 {
         const ret = C.SDL_GetCameraName(
             self.value,
         );
@@ -469,7 +469,7 @@ pub const Specification = struct {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getCurrentDriverName() ?[]const u8 {
+pub fn getCurrentDriverName() ?[:0]const u8 {
     const ret = C.SDL_GetCurrentCameraDriver();
     if (ret == null)
         return null;
@@ -498,7 +498,7 @@ pub fn getCurrentDriverName() ?[]const u8 {
 /// This function is available since SDL 3.2.0.
 pub fn getDriverName(
     driver_index: usize,
-) ?[]const u8 {
+) ?[:0]const u8 {
     const ret = C.SDL_GetCameraDriver(
         @intCast(driver_index),
     );

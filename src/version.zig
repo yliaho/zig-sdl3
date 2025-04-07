@@ -133,7 +133,7 @@ pub const Version = packed struct {
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    pub fn getRevision() ?[]const u8 {
+    pub fn getRevision() ?[:0]const u8 {
         const ret = C.SDL_GetRevision();
         const converted_ret = std.mem.span(ret);
         if (std.mem.eql(u8, converted_ret, ""))

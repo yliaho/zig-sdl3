@@ -126,7 +126,7 @@ pub const ID = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getName(
         self: ID,
-    ) ?[]const u8 {
+    ) ?[:0]const u8 {
         const ret = C.SDL_GetSensorNameForID(
             self.value,
         );
@@ -255,7 +255,7 @@ pub const Sensor = packed struct {
     /// Returns the sensor name.
     pub fn getName(
         self: Sensor,
-    ) ![]const u8 {
+    ) ![:0]const u8 {
         const ret = C.SDL_GetSensorName(
             self.value,
         );

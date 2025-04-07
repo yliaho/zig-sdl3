@@ -130,7 +130,7 @@ pub const ID = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getName(
         self: ID,
-    ) !?[]const u8 {
+    ) !?[:0]const u8 {
         const ret = try errors.wrapCallCString(C.SDL_GetKeyboardNameForID(
             self.value,
         ));
@@ -276,7 +276,7 @@ pub fn getKeyFromScancode(
 /// This function is available since SDL 3.2.0.
 pub fn getKeyName(
     key: keycode.Keycode,
-) ?[]const u8 {
+) ?[:0]const u8 {
     const ret = C.SDL_GetKeyName(
         key.value,
     );
@@ -375,7 +375,7 @@ pub fn getScancodeFromName(
 /// This function is available since SDL 3.2.0.
 pub fn getScancodeName(
     code: scancode.Scancode,
-) ?[]const u8 {
+) ?[:0]const u8 {
     const ret = C.SDL_GetScancodeName(
         code.value,
     );

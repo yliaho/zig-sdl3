@@ -273,7 +273,7 @@ pub fn enumerateDirectory(
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getBasePath() ![]const u8 {
+pub fn getBasePath() ![:0]const u8 {
     return errors.wrapCallCString(C.SDL_GetBasePath());
 }
 
@@ -292,7 +292,7 @@ pub fn getBasePath() ![]const u8 {
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn getCurrentDirectory() ![]u8 {
+pub fn getCurrentDirectory() ![:0]u8 {
     const ret: [*:0]u8 = @ptrCast(try errors.wrapCallCPtr(u8, C.SDL_GetCurrentDirectory()));
     return std.mem.span(ret);
 }
@@ -379,7 +379,7 @@ pub fn getPathInfo(
 pub fn getPrefPath(
     org: [:0]const u8,
     app: [:0]const u8,
-) ![]u8 {
+) ![:0]u8 {
     const ret = try errors.wrapCallCPtr(u8, C.SDL_GetPrefPath(org.ptr, app.ptr));
     return std.mem.span(ret);
 }
@@ -405,7 +405,7 @@ pub fn getPrefPath(
 /// This function is available since SDL 3.2.0.
 pub fn getUserFolder(
     folder: Folder,
-) ![]const u8 {
+) ![:0]const u8 {
     return errors.wrapCallCString(C.SDL_GetUserFolder(@intFromEnum(folder)));
 }
 

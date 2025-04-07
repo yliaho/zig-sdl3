@@ -101,7 +101,7 @@ pub const ID = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getName(
         self: ID,
-    ) ![]const u8 {
+    ) ![:0]const u8 {
         return errors.wrapCallCString(C.SDL_GetTouchDeviceName(self.value));
     }
 

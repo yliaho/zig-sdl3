@@ -8,7 +8,7 @@ const std = @import("std");
 /// ## Version
 /// This is provided by zig-sdl3.
 pub threadlocal var error_callback: ?*const fn (
-    err: ?[]const u8,
+    err: ?[:0]const u8,
 ) void = null;
 
 /// An SDL error.
@@ -74,7 +74,7 @@ pub fn invalidParamError(
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub fn get() ?[]const u8 {
+pub fn get() ?[:0]const u8 {
     const ret = C.SDL_GetError();
     const converted_ret = std.mem.span(ret);
     if (std.mem.eql(u8, converted_ret, ""))
@@ -252,7 +252,7 @@ pub fn wrapCallCPtrConst(
 /// This is provided by zig-sdl3.
 pub fn wrapCallCString(
     result: [*c]const u8,
-) ![]const u8 {
+) ![:0]const u8 {
     if (result != null)
         return std.mem.span(result);
     return error.SdlError;

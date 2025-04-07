@@ -38,7 +38,7 @@ pub const Renderer = struct {
     /// Use this function to get the name of a built in 2D rendering driver.
     pub fn getDriverName(
         index: usize,
-    ) ?[]const u8 {
+    ) ?[:0]const u8 {
         const ret = C.SDL_GetRenderDriver(
             @intCast(index),
         );
@@ -134,7 +134,7 @@ pub const Renderer = struct {
     /// Get the name of a renderer.
     pub fn getName(
         self: Renderer,
-    ) ![]const u8 {
+    ) ![:0]const u8 {
         const ret = C.SDL_GetRendererName(
             self.value,
         );

@@ -244,7 +244,7 @@ pub const Thread = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getName(
         self: Thread,
-    ) ?[]const u8 {
+    ) ?[:0]const u8 {
         const ret = C.SDL_GetThreadName(self.value);
         if (ret) |val|
             return std.mem.span(val);
