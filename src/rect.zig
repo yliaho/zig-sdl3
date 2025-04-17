@@ -15,6 +15,53 @@ pub fn Point(comptime Type: type) type {
         x: Type,
         y: Type,
 
+        /// Get this as a different type of point.
+        ///
+        /// ## Function Parameters
+        /// * `self`: Point to convert.
+        /// * `NewType`: New underlying type to use for values in the point.
+        ///
+        /// ## Return Value
+        /// Returns a new point with each member casted to the new type.
+        pub fn asOtherPoint(
+            self: Self,
+            comptime NewType: type,
+        ) Point(NewType) {
+            const self_int = switch (@typeInfo(Type)) {
+                .int, .comptime_int => true,
+                else => false,
+            };
+            const new_int = switch (@typeInfo(NewType)) {
+                .int, .comptime_int => true,
+                else => false,
+            };
+            if (self_int) {
+                if (new_int) {
+                    return .{
+                        .x = @as(NewType, @intCast(self.x)),
+                        .y = @as(NewType, @intCast(self.y)),
+                    };
+                } else {
+                    return .{
+                        .x = @as(NewType, @floatFromInt(self.x)),
+                        .y = @as(NewType, @floatFromInt(self.y)),
+                    };
+                }
+            } else {
+                if (new_int) {
+                    return .{
+                        .x = @as(NewType, @intFromFloat(self.x)),
+                        .y = @as(NewType, @intFromFloat(self.y)),
+                    };
+                } else {
+                    return .{
+                        .x = @as(NewType, @floatCast(self.x)),
+                        .y = @as(NewType, @floatCast(self.y)),
+                    };
+                }
+            }
+        }
+
         /// From an SDL point.
         fn fromSdlFPoint(self: C.SDL_FPoint) Self {
             return .{
@@ -617,4 +664,10 @@ test "Rect" {
 
     try std.testing.expect(a.asOtherRect(FloatingType).equal(af));
     try std.testing.expect(af.asOtherRect(IntegerType).equal(a));
+
+    const p: IPoint = .{ .x = 45, .y = 67 };
+    const Fp: FPoint = .{ .x = 45.0, .y = 67.0 };
+
+    try std.testing.expectEqual(p.asOtherPoint(FloatingType), Fp);
+    try std.testing.expectEqual(Fp.asOtherPoint(IntegerType), p);
 }
