@@ -666,8 +666,8 @@ test "Rect" {
     try std.testing.expect(af.asOtherRect(IntegerType).equal(a));
 
     const p: IPoint = .{ .x = 45, .y = 67 };
-    const Fp: FPoint = .{ .x = 45.0, .y = 67.0 };
+    const fp: FPoint = .{ .x = 45.0, .y = 67.0 };
 
-    try std.testing.expectEqual(p.asOtherPoint(FloatingType), Fp);
-    try std.testing.expectEqual(Fp.asOtherPoint(IntegerType), p);
+    try std.testing.expectEqual(p.asOtherPoint(FloatingType), fp);
+    try std.testing.expectEqual(fp.asOtherPoint(IntegerType), p);
 }

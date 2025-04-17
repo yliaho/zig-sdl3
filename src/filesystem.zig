@@ -5,6 +5,63 @@ const time = @import("time.zig");
 
 // TODO: MAKE ENUMERATION ITERATOR AS WELL AS OTHER CONVENIENCE FUNCTIONS!!! Some good ones would be to get the path separator, join paths, etc.
 
+/// Helper for filesystem paths.
+///
+/// ## Provided by zig-sdl3.
+pub const Path = struct {
+    data: std.ArrayList(u8),
+    separator: u8,
+
+    /// Get the path separator.
+    ///
+    /// ## Return Value
+    /// Returns the path separator (usually `\` for Windows and `/` for others).
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn getSeparator() !u8 {
+        const base = try getBasePath();
+        return base[base.len - 1];
+    }
+
+    /// Initialize a path.
+    ///
+    /// ## Function Parameters
+    /// * `allocator`: The memory allocator to use.
+    /// * `path`: Optional path to start out with. This must use the proper path separators.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    // pub fn init(
+    //     allocator: std.mem.Allocator,
+    //     path: ?[:0]const u8,
+    // ) !Path {
+    //     if (path) |val| {
+    //         var data = try std.ArrayList(u8).initCapacity(allocator, val.len);
+    //         @memcpy(data.items.ptr, val.ptr);
+    //     } else {
+    //         var data = try std.ArrayList(u8).initCapacity(allocator, 1);
+    //         const separator = try getSeparator();
+    //         data[0] = 0;
+    //         return .{
+    //             .data = data,
+    //             .separator = separator,
+    //         };
+    //     }
+    // }
+
+    /// Deinitialize the path.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn deinit(self: Path) void {
+        self.data.deinit();
+    }
+};
+
 /// Callback for directory enumeration.
 ///
 /// ## Function Parameters
@@ -217,7 +274,7 @@ pub fn copyFile(
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn createDirectory(
-    path: [*:0]const u8,
+    path: [:0]const u8,
 ) !void {
     return errors.wrapCallBool(C.SDL_CreateDirectory(path.ptr));
 }
