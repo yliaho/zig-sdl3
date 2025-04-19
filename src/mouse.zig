@@ -81,6 +81,11 @@ pub const ButtonFlags = struct {
 pub const ID = packed struct {
     value: C.SDL_MouseID,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_MouseID) == @sizeOf(ID));
+    }
+
     /// The `mouse.ID` for mouse events simulated with pen input.
     ///
     /// ## Version
@@ -846,8 +851,6 @@ pub fn warpInWindow(
 
 // Mouse related tests.
 test "Mouse" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_MouseID), @sizeOf(ID));
-
     defer init.shutdown();
     try init.init(.{ .video = true });
     defer init.quit(.{ .video = true });

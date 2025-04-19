@@ -209,6 +209,15 @@ pub const BufferBinding = extern struct {
     buffer: Buffer,
     /// The starting byte of the data to bind in the buffer.
     offset: u32,
+
+    // Binding tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUBufferBinding) == @sizeOf(BufferBinding));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUBufferBinding, "buffer")) == @sizeOf(@FieldType(BufferBinding, "buffer")));
+        std.debug.assert(@offsetOf(C.SDL_GPUBufferBinding, "buffer") == @offsetOf(BufferBinding, "buffer"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUBufferBinding, "offset")) == @sizeOf(@FieldType(BufferBinding, "offset")));
+        std.debug.assert(@offsetOf(C.SDL_GPUBufferBinding, "offset") == @offsetOf(BufferBinding, "offset"));
+    }
 };
 
 /// A structure specifying the parameters of a buffer.
@@ -375,6 +384,15 @@ pub const ColorComponentFlags = packed struct(C.SDL_GPUColorComponentFlags) {
     blue: bool = false,
     alpha: bool = false,
     _: u4 = 0,
+
+    // Flag tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUColorComponentFlags) == @sizeOf(ColorComponentFlags));
+        std.debug.assert(C.SDL_GPU_COLORCOMPONENT_R == @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .red = true })));
+        std.debug.assert(C.SDL_GPU_COLORCOMPONENT_G == @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .green = true })));
+        std.debug.assert(C.SDL_GPU_COLORCOMPONENT_B == @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .blue = true })));
+        std.debug.assert(C.SDL_GPU_COLORCOMPONENT_A == @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .alpha = true })));
+    }
 };
 
 /// A structure specifying the blend state of a color target.
@@ -403,6 +421,29 @@ pub const ColorTargetBlendState = extern struct {
     enable_color_write_mask: bool,
     _1: u8 = 0,
     _2: u8 = 0,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUColorTargetBlendState) == @sizeOf(ColorTargetBlendState));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "src_color_blendfactor") == @offsetOf(ColorTargetBlendState, "source_color"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "src_color_blendfactor")) == @sizeOf(@FieldType(ColorTargetBlendState, "source_color")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "dst_color_blendfactor") == @offsetOf(ColorTargetBlendState, "destination_color"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "dst_color_blendfactor")) == @sizeOf(@FieldType(ColorTargetBlendState, "destination_color")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "color_blend_op") == @offsetOf(ColorTargetBlendState, "color_blend"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "color_blend_op")) == @sizeOf(@FieldType(ColorTargetBlendState, "color_blend")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "src_alpha_blendfactor") == @offsetOf(ColorTargetBlendState, "source_alpha"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "src_alpha_blendfactor")) == @sizeOf(@FieldType(ColorTargetBlendState, "source_alpha")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "dst_alpha_blendfactor") == @offsetOf(ColorTargetBlendState, "destination_alpha"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "dst_alpha_blendfactor")) == @sizeOf(@FieldType(ColorTargetBlendState, "destination_alpha")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "alpha_blend_op") == @offsetOf(ColorTargetBlendState, "alpha_blend"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "alpha_blend_op")) == @sizeOf(@FieldType(ColorTargetBlendState, "alpha_blend")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "color_write_mask") == @offsetOf(ColorTargetBlendState, "color_write_mask"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "color_write_mask")) == @sizeOf(@FieldType(ColorTargetBlendState, "color_write_mask")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "enable_blend") == @offsetOf(ColorTargetBlendState, "enable_blend"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "enable_blend")) == @sizeOf(@FieldType(ColorTargetBlendState, "enable_blend")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetBlendState, "enable_color_write_mask") == @offsetOf(ColorTargetBlendState, "enable_color_write_mask"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "enable_color_write_mask")) == @sizeOf(@FieldType(ColorTargetBlendState, "enable_color_write_mask")));
+    }
 };
 
 /// A structure specifying the parameters of color targets used in a graphics pipeline.
@@ -414,6 +455,15 @@ pub const ColorTargetDescription = extern struct {
     format: TextureFormat,
     /// The blend state to be used for the color target.
     blend_state: ColorTargetBlendState,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUColorTargetDescription) == @sizeOf(ColorTargetDescription));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetDescription, "format") == @offsetOf(ColorTargetDescription, "format"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetDescription, "format")) == @sizeOf(@FieldType(ColorTargetDescription, "format")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetDescription, "blend_state") == @offsetOf(ColorTargetDescription, "blend_state"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetDescription, "blend_state")) == @sizeOf(@FieldType(ColorTargetDescription, "blend_state")));
+    }
 };
 
 /// A structure specifying the parameters of a color target used by a render pass.
@@ -1262,42 +1312,4 @@ pub const VertexInputRate = enum(c_uint) {
 };
 
 // Test the GPU.
-test "Gpu" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUColorComponentFlags), @sizeOf(ColorComponentFlags));
-    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_R, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .red = true })));
-    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_G, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .green = true })));
-    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_B, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .blue = true })));
-    comptime try std.testing.expectEqual(C.SDL_GPU_COLORCOMPONENT_A, @as(C.SDL_GPUColorComponentFlags, @bitCast(ColorComponentFlags{ .alpha = true })));
-
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUBufferBinding), @sizeOf(BufferBinding));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUBufferBinding, "buffer")), @sizeOf(@FieldType(BufferBinding, "buffer")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUBufferBinding, "buffer"), @offsetOf(BufferBinding, "buffer"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUBufferBinding, "offset")), @sizeOf(@FieldType(BufferBinding, "offset")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUBufferBinding, "offset"), @offsetOf(BufferBinding, "offset"));
-
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUColorTargetBlendState), @sizeOf(ColorTargetBlendState));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "src_color_blendfactor"), @offsetOf(ColorTargetBlendState, "source_color"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "src_color_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "source_color")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "dst_color_blendfactor"), @offsetOf(ColorTargetBlendState, "destination_color"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "dst_color_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "destination_color")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "color_blend_op"), @offsetOf(ColorTargetBlendState, "color_blend"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "color_blend_op")), @sizeOf(@FieldType(ColorTargetBlendState, "color_blend")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "src_alpha_blendfactor"), @offsetOf(ColorTargetBlendState, "source_alpha"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "src_alpha_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "source_alpha")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "dst_alpha_blendfactor"), @offsetOf(ColorTargetBlendState, "destination_alpha"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "dst_alpha_blendfactor")), @sizeOf(@FieldType(ColorTargetBlendState, "destination_alpha")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "alpha_blend_op"), @offsetOf(ColorTargetBlendState, "alpha_blend"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "alpha_blend_op")), @sizeOf(@FieldType(ColorTargetBlendState, "alpha_blend")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "color_write_mask"), @offsetOf(ColorTargetBlendState, "color_write_mask"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "color_write_mask")), @sizeOf(@FieldType(ColorTargetBlendState, "color_write_mask")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "enable_blend"), @offsetOf(ColorTargetBlendState, "enable_blend"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "enable_blend")), @sizeOf(@FieldType(ColorTargetBlendState, "enable_blend")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetBlendState, "enable_color_write_mask"), @offsetOf(ColorTargetBlendState, "enable_color_write_mask"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetBlendState, "enable_color_write_mask")), @sizeOf(@FieldType(ColorTargetBlendState, "enable_color_write_mask")));
-
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_GPUColorTargetDescription), @sizeOf(ColorTargetDescription));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetDescription, "format"), @offsetOf(ColorTargetDescription, "format"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetDescription, "format")), @sizeOf(@FieldType(ColorTargetDescription, "format")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_GPUColorTargetDescription, "blend_state"), @offsetOf(ColorTargetDescription, "blend_state"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_GPUColorTargetDescription, "blend_state")), @sizeOf(@FieldType(ColorTargetDescription, "blend_state")));
-}
+test "Gpu" {}

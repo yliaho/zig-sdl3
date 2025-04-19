@@ -15,6 +15,21 @@ pub fn Point(comptime Type: type) type {
         x: Type,
         y: Type,
 
+        // Size tests.
+        comptime {
+            std.debug.assert(@sizeOf(C.SDL_Point) == @sizeOf(IPoint));
+            std.debug.assert(@offsetOf(C.SDL_Point, "x") == @offsetOf(IPoint, "x"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_Point, "x")) == @sizeOf(@FieldType(IPoint, "x")));
+            std.debug.assert(@offsetOf(C.SDL_Point, "y") == @offsetOf(IPoint, "y"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_Point, "y")) == @sizeOf(@FieldType(IPoint, "y")));
+
+            std.debug.assert(@sizeOf(C.SDL_FPoint) == @sizeOf(FPoint));
+            std.debug.assert(@offsetOf(C.SDL_FPoint, "x") == @offsetOf(FPoint, "x"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_FPoint, "x")) == @sizeOf(@FieldType(FPoint, "x")));
+            std.debug.assert(@offsetOf(C.SDL_FPoint, "y") == @offsetOf(FPoint, "y"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_FPoint, "y")) == @sizeOf(@FieldType(FPoint, "y")));
+        }
+
         /// Get this as a different type of point.
         ///
         /// ## Function Parameters
@@ -128,6 +143,29 @@ pub fn Rect(comptime Type: type) type {
         y: Type,
         w: Type,
         h: Type,
+
+        // Size tests.
+        comptime {
+            std.debug.assert(@sizeOf(C.SDL_Rect) == @sizeOf(IRect));
+            std.debug.assert(@offsetOf(C.SDL_Rect, "x") == @offsetOf(IRect, "x"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_Rect, "x")) == @sizeOf(@FieldType(IRect, "x")));
+            std.debug.assert(@offsetOf(C.SDL_Rect, "y") == @offsetOf(IRect, "y"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_Rect, "y")) == @sizeOf(@FieldType(IRect, "y")));
+            std.debug.assert(@offsetOf(C.SDL_Rect, "w") == @offsetOf(IRect, "w"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_Rect, "w")) == @sizeOf(@FieldType(IRect, "w")));
+            std.debug.assert(@offsetOf(C.SDL_Rect, "h") == @offsetOf(IRect, "h"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_Rect, "h")) == @sizeOf(@FieldType(IRect, "h")));
+
+            std.debug.assert(@sizeOf(C.SDL_FRect) == @sizeOf(FRect));
+            std.debug.assert(@offsetOf(C.SDL_FRect, "x") == @offsetOf(FRect, "x"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_FRect, "x")) == @sizeOf(@FieldType(FRect, "x")));
+            std.debug.assert(@offsetOf(C.SDL_FRect, "y") == @offsetOf(FRect, "y"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_FRect, "y")) == @sizeOf(@FieldType(FRect, "y")));
+            std.debug.assert(@offsetOf(C.SDL_FRect, "w") == @offsetOf(FRect, "w"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_FRect, "w")) == @sizeOf(@FieldType(FRect, "w")));
+            std.debug.assert(@offsetOf(C.SDL_FRect, "h") == @offsetOf(FRect, "h"));
+            std.debug.assert(@sizeOf(@FieldType(C.SDL_FRect, "h")) == @sizeOf(@FieldType(FRect, "h")));
+        }
 
         /// Get this as a different type of rectangle.
         ///
@@ -584,38 +622,6 @@ pub const FRect = Rect(FloatingType);
 pub const IRect = Rect(IntegerType);
 
 test "Rect" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_Point), @sizeOf(IPoint));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Point, "x"), @offsetOf(IPoint, "x"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Point, "x")), @sizeOf(@FieldType(IPoint, "x")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Point, "y"), @offsetOf(IPoint, "y"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Point, "y")), @sizeOf(@FieldType(IPoint, "y")));
-
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_FPoint), @sizeOf(FPoint));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_FPoint, "x"), @offsetOf(FPoint, "x"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_FPoint, "x")), @sizeOf(@FieldType(FPoint, "x")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_FPoint, "y"), @offsetOf(FPoint, "y"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_FPoint, "y")), @sizeOf(@FieldType(FPoint, "y")));
-
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_Rect), @sizeOf(IRect));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Rect, "x"), @offsetOf(IRect, "x"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Rect, "x")), @sizeOf(@FieldType(IRect, "x")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Rect, "y"), @offsetOf(IRect, "y"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Rect, "y")), @sizeOf(@FieldType(IRect, "y")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Rect, "w"), @offsetOf(IRect, "w"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Rect, "w")), @sizeOf(@FieldType(IRect, "w")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Rect, "h"), @offsetOf(IRect, "h"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Rect, "h")), @sizeOf(@FieldType(IRect, "h")));
-
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_FRect), @sizeOf(FRect));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_FRect, "x"), @offsetOf(FRect, "x"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_FRect, "x")), @sizeOf(@FieldType(FRect, "x")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_FRect, "y"), @offsetOf(FRect, "y"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_FRect, "y")), @sizeOf(@FieldType(FRect, "y")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_FRect, "w"), @offsetOf(FRect, "w"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_FRect, "w")), @sizeOf(@FieldType(FRect, "w")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_FRect, "h"), @offsetOf(FRect, "h"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_FRect, "h")), @sizeOf(@FieldType(FRect, "h")));
-
     const a = IRect{ .x = 10, .y = 20, .w = 50, .h = 50 }; // X: 10, 60; Y: 20, 70.
     const b = IRect{ .x = 30, .y = 30, .w = 10, .h = 10 }; // X: 30, 40; Y: 30, 40.
 

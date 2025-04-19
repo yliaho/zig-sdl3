@@ -421,6 +421,11 @@ pub const Event = union(Type) {
     // Padding to make union the same size of a `C.SDL_Event`.
     padding: [@sizeOf(C.SDL_Event) - @sizeOf(DummyUnion)]u8,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_Event) == @sizeOf(Event));
+    }
+
     /// Create a managed event from an SDL event.
     ///
     /// ## Function Parameters
@@ -1100,8 +1105,6 @@ fn dummyFilter(
 
 // Test SDL events.
 test "Events" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_Event), @sizeOf(Event));
-
     defer init.shutdown();
     try init.init(.{ .events = true });
     defer init.quit(.{ .events = true });

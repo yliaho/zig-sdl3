@@ -112,6 +112,11 @@ pub const TextInputType = enum(c_uint) {
 pub const ID = packed struct {
     value: C.SDL_KeyboardID,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_KeyboardID) == @sizeOf(ID));
+    }
+
     /// Get the name of a keyboard.
     ///
     /// ## Function Parameters

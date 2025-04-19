@@ -73,6 +73,15 @@ pub const FileFilter = extern struct {
     /// File extensions may only contain alphanumeric characters, hyphens, underscores and periods.
     /// Alternatively, the whole string can be a single asterisk ("*"), which serves as an "All files" filter.
     pattern: [*:0]const u8,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_DialogFileFilter) == @sizeOf(FileFilter));
+        std.debug.assert(@offsetOf(C.SDL_DialogFileFilter, "name") == @offsetOf(FileFilter, "name"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_DialogFileFilter, "name")) == @sizeOf(@FieldType(FileFilter, "name")));
+        std.debug.assert(@offsetOf(C.SDL_DialogFileFilter, "pattern") == @offsetOf(FileFilter, "pattern"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_DialogFileFilter, "pattern")) == @sizeOf(@FieldType(FileFilter, "pattern")));
+    }
 };
 
 /// File dialog properties.
@@ -341,13 +350,4 @@ pub fn showWithProperties(
         ret.value,
     );
     return ret;
-}
-
-// File dialog related tests.
-test "File Dialog" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_DialogFileFilter), @sizeOf(FileFilter));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_DialogFileFilter, "name"), @offsetOf(FileFilter, "name"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_DialogFileFilter, "name")), @sizeOf(@FieldType(FileFilter, "name")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_DialogFileFilter, "pattern"), @offsetOf(FileFilter, "pattern"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_DialogFileFilter, "pattern")), @sizeOf(@FieldType(FileFilter, "pattern")));
 }

@@ -12,6 +12,32 @@ pub const Path = struct {
     data: std.ArrayList(u8),
     separator: u8,
 
+    /// Deinitialize the path.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn deinit(
+        self: Path,
+    ) void {
+        self.data.deinit();
+    }
+
+    /// Get the current path.
+    ///
+    /// ## Return Value
+    /// Returns the current path as a string.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn get(
+        self: Path,
+    ) [:0]const u8 {
+        return @as([*:0]const u8, @ptrCast(self.data.items.ptr))[0..self.data.items.len];
+    }
+
     /// Get the path separator.
     ///
     /// ## Return Value
@@ -28,37 +54,52 @@ pub const Path = struct {
     ///
     /// ## Function Parameters
     /// * `allocator`: The memory allocator to use.
-    /// * `path`: Optional path to start out with. This must use the proper path separators.
+    /// * `path`: Optional path to start out with. This must use the proper path separators and end with a path separator.
     ///
     /// ## Version
     /// This function is provided by zig-sdl3.
-    // pub fn init(
-    //     allocator: std.mem.Allocator,
-    //     path: ?[:0]const u8,
-    // ) !Path {
-    //     if (path) |val| {
-    //         var data = try std.ArrayList(u8).initCapacity(allocator, val.len);
-    //         @memcpy(data.items.ptr, val.ptr);
-    //     } else {
-    //         var data = try std.ArrayList(u8).initCapacity(allocator, 1);
-    //         const separator = try getSeparator();
-    //         data[0] = 0;
-    //         return .{
-    //             .data = data,
-    //             .separator = separator,
-    //         };
-    //     }
-    // }
+    pub fn init(
+        allocator: std.mem.Allocator,
+        path: ?[:0]const u8,
+    ) !Path {
+        if (path) |val| {
+            var data = try std.ArrayList(u8).initCapacity(allocator, val.len + 1);
+            @memcpy(data.items.ptr, val.ptr);
+            data.items[data.items.len - 1] = 0;
+            return .{
+                .data = data,
+                .separator = val[val.len - 1],
+            };
+        } else {
+            var data = try std.ArrayList(u8).initCapacity(allocator, 1);
+            const separator = try getSeparator();
+            data[0] = 0;
+            return .{
+                .data = data,
+                .separator = separator,
+            };
+        }
+    }
 
-    /// Deinitialize the path.
+    /// Join this path with a new one.
     ///
     /// ## Function Parameters
-    /// * `self`: The path.
+    /// * `self`: The path to join to.
+    /// * `path`: The child path to join with. This should not have any path separators in it.
+    ///
+    /// ## Remarks
+    /// This function can be undone by `Path.parent()`.
     ///
     /// ## Version
     /// This function is provided by zig-sdl3.
-    pub fn deinit(self: Path) void {
-        self.data.deinit();
+    pub fn join(
+        self: Path,
+        path: []const u8,
+    ) !void {
+        try self.data.resize(self.data.items.len - 1);
+        try self.data.append(self.separator);
+        try self.data.appendSlice(path);
+        try self.data.append(0);
     }
 };
 

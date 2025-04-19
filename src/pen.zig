@@ -1,4 +1,5 @@
 const C = @import("c.zig").C;
+const std = @import("std");
 
 /// Pen axis indices.
 ///
@@ -40,6 +41,11 @@ pub const Axis = enum(c_uint) {
 /// This datatype is available since SDL 3.2.0.
 pub const ID = packed struct {
     value: C.SDL_PenID,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_PenID) == @sizeOf(ID));
+    }
 };
 
 /// Pen input flags, as reported by various pen events.

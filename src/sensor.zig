@@ -92,6 +92,11 @@ pub const Type = enum(c_int) {
 pub const ID = packed struct {
     value: C.SDL_SensorID,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_SensorID) == @sizeOf(ID));
+    }
+
     /// Return the SDL_Sensor associated with an instance ID.
     ///
     /// ## Function Parameters
@@ -370,8 +375,6 @@ pub fn update() void {
 
 // Sensor related tests.
 test "Sensor" {
-    try std.testing.expectEqual(@sizeOf(C.SDL_SensorID), @sizeOf(ID));
-
     defer init.shutdown();
     try init.init(.{ .sensor = true });
     defer init.quit(.{ .sensor = true });

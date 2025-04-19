@@ -19,6 +19,15 @@ pub const Locale = extern struct {
     /// Can be `null`.
     country: ?[*:0]const u8,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_Locale) == @sizeOf(Locale));
+        std.debug.assert(@offsetOf(C.SDL_Locale, "language") == @offsetOf(Locale, "language"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_Locale, "language")) == @sizeOf(@FieldType(Locale, "language")));
+        std.debug.assert(@offsetOf(C.SDL_Locale, "country") == @offsetOf(Locale, "country"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_Locale, "country")) == @sizeOf(@FieldType(Locale, "country")));
+    }
+
     /// Report the user's preferred locale.
     ///
     /// ## Return Value
@@ -56,12 +65,6 @@ pub const Locale = extern struct {
 
 // Test fetching locale.
 test "Locale" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_Locale), @sizeOf(Locale));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Locale, "language"), @offsetOf(Locale, "language"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Locale, "language")), @sizeOf(@FieldType(Locale, "language")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Locale, "country"), @offsetOf(Locale, "country"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Locale, "country")), @sizeOf(@FieldType(Locale, "country")));
-
     const locales = Locale.getPreferred() catch return;
     defer stdinc.free(locales);
 }

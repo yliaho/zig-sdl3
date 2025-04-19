@@ -38,6 +38,11 @@ pub const Position = enum(c_uint) {
 pub const ID = packed struct {
     value: C.SDL_CameraID,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_CameraID) == @sizeOf(ID));
+    }
+
     /// Get a list of currently connected camera devices.
     ///
     /// ## Return Value
@@ -159,6 +164,11 @@ pub const ID = packed struct {
 /// This struct is available since SDL 3.2.0.
 pub const Camera = packed struct {
     value: *C.SDL_Camera,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(*C.SDL_Camera) == @sizeOf(Camera));
+    }
 
     /// Acquire a frame.
     ///
@@ -532,8 +542,6 @@ pub fn getNumDrivers() usize {
 
 // Test camera functionality.
 test "Camera" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_CameraID), @sizeOf(ID));
-    comptime try std.testing.expectEqual(@sizeOf(*C.SDL_Camera), @sizeOf(Camera));
 
     // Global functions.
     const num_drivers = getNumDrivers();

@@ -95,6 +95,17 @@ pub const Button = extern struct {
     /// The UTF-8 button text.
     text: [*:0]const u8,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_MessageBoxButtonData) == @sizeOf(Button));
+        std.debug.assert(@offsetOf(C.SDL_MessageBoxButtonData, "flags") == @offsetOf(Button, "flags"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "flags")) == @sizeOf(@FieldType(Button, "flags")));
+        std.debug.assert(@offsetOf(C.SDL_MessageBoxButtonData, "buttonID") == @offsetOf(Button, "value"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "buttonID")) == @sizeOf(@FieldType(Button, "value")));
+        std.debug.assert(@offsetOf(C.SDL_MessageBoxButtonData, "text") == @offsetOf(Button, "text"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "text")) == @sizeOf(@FieldType(Button, "text")));
+    }
+
     /// Convert from an SDL value.
     pub fn fromSdl(data: C.SDL_MessageBoxButtonData) Button {
         return .{
@@ -122,6 +133,13 @@ pub const ButtonFlags = packed struct(u32) { // Need to be packed to fit into da
     mark_default_with_return_key: bool = false,
     mark_default_with_escape_key: bool = false,
     _: u30 = 0,
+
+    // Button flag tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_MessageBoxButtonFlags) == @sizeOf(ButtonFlags));
+        std.debug.assert(C.SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT == @as(C.SDL_MessageBoxButtonFlags, @bitCast(ButtonFlags{ .mark_default_with_return_key = true })));
+        std.debug.assert(C.SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT == @as(C.SDL_MessageBoxButtonFlags, @bitCast(ButtonFlags{ .mark_default_with_escape_key = true })));
+    }
 
     /// Convert from an SDL value.
     pub fn fromSdl(flags: C.SDL_MessageBoxButtonFlags) ButtonFlags {
@@ -281,19 +299,4 @@ pub fn showSimple(
         if (parent_window) |parent_window_val| parent_window_val.value else null,
     );
     return errors.wrapCallBool(ret);
-}
-
-// Message box testing.
-test "Message Box" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_MessageBoxButtonFlags), @sizeOf(ButtonFlags));
-    comptime try std.testing.expectEqual(C.SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, @as(C.SDL_MessageBoxButtonFlags, @bitCast(ButtonFlags{ .mark_default_with_return_key = true })));
-    comptime try std.testing.expectEqual(C.SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, @as(C.SDL_MessageBoxButtonFlags, @bitCast(ButtonFlags{ .mark_default_with_escape_key = true })));
-
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_MessageBoxButtonData), @sizeOf(Button));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_MessageBoxButtonData, "flags"), @offsetOf(Button, "flags"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "flags")), @sizeOf(@FieldType(Button, "flags")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_MessageBoxButtonData, "buttonID"), @offsetOf(Button, "value"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "buttonID")), @sizeOf(@FieldType(Button, "value")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_MessageBoxButtonData, "text"), @offsetOf(Button, "text"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_MessageBoxButtonData, "text")), @sizeOf(@FieldType(Button, "text")));
 }

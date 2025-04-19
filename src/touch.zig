@@ -33,6 +33,19 @@ pub const Finger = extern struct {
     y: f32,
     /// The quantity of pressure applied, normalized (0...1).
     pressure: f32,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_Finger) == @sizeOf(Finger));
+        std.debug.assert(@offsetOf(C.SDL_Finger, "id") == @offsetOf(Finger, "id"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_Finger, "id")) == @sizeOf(@FieldType(Finger, "id")));
+        std.debug.assert(@offsetOf(C.SDL_Finger, "x") == @offsetOf(Finger, "x"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_Finger, "x")) == @sizeOf(@FieldType(Finger, "x")));
+        std.debug.assert(@offsetOf(C.SDL_Finger, "y") == @offsetOf(Finger, "y"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_Finger, "y")) == @sizeOf(@FieldType(Finger, "y")));
+        std.debug.assert(@offsetOf(C.SDL_Finger, "pressure") == @offsetOf(Finger, "pressure"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_Finger, "pressure")) == @sizeOf(@FieldType(Finger, "pressure")));
+    }
 };
 
 /// A unique ID for a single finger on a touch device.
@@ -56,6 +69,11 @@ pub const FingerID = packed struct {
 /// This datatype is available since SDL 3.2.0.
 pub const ID = packed struct {
     value: C.SDL_TouchID,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_TouchID) == @sizeOf(ID));
+    }
 
     /// The touch ID for touch events simulated with mouse input.
     ///
@@ -147,16 +165,6 @@ pub fn getDevices() ![]ID {
 
 // Touching tests.
 test "Touch" {
-    comptime try std.testing.expectEqual(@sizeOf(C.SDL_Finger), @sizeOf(Finger));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Finger, "id"), @offsetOf(Finger, "id"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Finger, "id")), @sizeOf(@FieldType(Finger, "id")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Finger, "x"), @offsetOf(Finger, "x"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Finger, "x")), @sizeOf(@FieldType(Finger, "x")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Finger, "y"), @offsetOf(Finger, "y"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Finger, "y")), @sizeOf(@FieldType(Finger, "y")));
-    comptime try std.testing.expectEqual(@offsetOf(C.SDL_Finger, "pressure"), @offsetOf(Finger, "pressure"));
-    comptime try std.testing.expectEqual(@sizeOf(@FieldType(C.SDL_Finger, "pressure")), @sizeOf(@FieldType(Finger, "pressure")));
-
     const devices = try getDevices();
     defer stdinc.free(devices);
     for (devices) |device| {

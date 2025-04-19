@@ -19,6 +19,11 @@ pub const Callback = *const fn (user_data: ?*anyopaque, entry: ?*C.SDL_TrayEntry
 pub const Entry = struct {
     value: *C.SDL_TrayEntry,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(*C.SDL_TrayEntry) == @sizeOf(Entry));
+    }
+
     /// Simulate a click on a tray entry.
     ///
     /// ## Function Parameters
@@ -616,9 +621,4 @@ pub const Tray = struct {
 /// This function is available since SDL 3.2.0.
 pub fn update() void {
     C.SDL_UpdateTrays();
-}
-
-// Tray testing.
-test "Tray" {
-    try std.testing.expectEqual(@sizeOf(*C.SDL_TrayEntry), @sizeOf(Entry));
 }
