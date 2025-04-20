@@ -666,6 +666,26 @@ pub const Stream = packed struct {
         C.SDL_DestroyAudioStream(self.value);
     }
 
+    /// Tell the stream that you're done sending data, and anything being buffered should be converted/resampled and made available immediately.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to flush.
+    ///
+    /// ## Remarks
+    /// It is legal to add more data to a stream after flushing, but there may be audio gaps in the output.
+    /// Generally this is intended to signal the end of input, so the complete output becomes available.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn flush(
+        self: Stream,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_FlushAudioStream(self.value));
+    }
+
     /// Use this function to query if an audio device associated with a stream is paused.
     ///
     /// ## Function Parameters
