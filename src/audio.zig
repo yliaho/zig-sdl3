@@ -334,6 +334,96 @@ pub const Device = struct {
     /// A value used to request a default recording audio device.
     pub const default_recording = Device{ .value = C.SDL_AUDIO_DEVICE_DEFAULT_RECORDING };
 
+    /// Bind a single audio stream to an audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: An audio device to bind a stream to.
+    /// * `stream`: An audio stream to bind to a device.
+    ///
+    /// ## Remarks
+    /// This is a convenience function, equivalent to calling `audio.Device.bindStreams(devid, &.{stream})`.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindStream(
+        self: Device,
+        stream: Stream,
+    ) !void {
+        const ret = C.SDL_BindAudioStream(
+            self.value,
+            stream.value,
+        );
+        return errors.wrapCallBool(ret);
+    }
+
+    /// Bind a list of audio streams to an audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: An audio device to bind a stream to.
+    /// * `streams: A slice of audio streams to bind.
+    ///
+    /// ## Remarks
+    /// Audio data will flow through any bound streams.
+    /// For a playback device, data for all bound streams will be mixed together and fed to the device.
+    /// For a recording device, a copy of recorded data will be provided to each bound stream.
+    ///
+    /// Audio streams can only be bound to an open device.
+    /// This operation is atomic--all streams bound in the same call will start processing at the same time, so they can stay in sync.
+    /// Also: either all streams will be bound or none of them will be.
+    ///
+    /// It is an error to bind an already-bound stream; it must be explicitly unbound first.
+    ///
+    /// Binding a stream to a device will set its output format for playback devices, and its input format for recording devices,
+    /// so they match the device's settings.
+    /// The caller is welcome to change the other end of the stream's format at any time with `audio.Stream.setFormat()`.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindStreams(
+        self: Device,
+        streams: []Stream,
+    ) !void {
+        const ret = C.SDL_BindAudioStreams(
+            self.value,
+            @ptrCast(streams.ptr),
+            @intCast(streams.len),
+        );
+        return errors.wrapCallBool(ret);
+    }
+
+    /// Close a previously-opened audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: An audio device id previously returned by `audio.Device.open()`.
+    ///
+    /// ## Remarks
+    /// The application should close open audio devices once they are no longer needed.
+    ///
+    /// This function may block briefly while pending audio data is played by the hardware, so that applications don't drop the last buffer of data they supplied if terminating immediately afterwards.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    ///
+    /// ## Code Examples
+    /// TODO!!!
+    pub fn close(
+        self: Device,
+    ) void {
+        const ret = C.SDL_CloseAudioDevice(
+            self.value,
+        );
+        _ = ret;
+    }
+
     /// Use this function to query if an audio device is paused.
     ///
     /// ## Function Parameters
@@ -452,43 +542,6 @@ pub const Device = struct {
             return error.SdlError;
     }
 
-    /// Close a previously-opened audio device.
-    pub fn close(
-        self: Device,
-    ) void {
-        const ret = C.SDL_CloseAudioDevice(
-            self.value,
-        );
-        _ = ret;
-    }
-
-    /// Bind a list of audio streams to an audio device.
-    pub fn bindStreams(
-        self: Device,
-        streams: []*C.SDL_AudioStream,
-    ) !void {
-        const ret = C.SDL_BindAudioStreams(
-            self.value,
-            streams.ptr,
-            @intCast(streams.len),
-        );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Bind a single audio stream to an audio device.
-    pub fn bindStream(
-        self: Device,
-        stream: Stream,
-    ) !void {
-        const ret = C.SDL_BindAudioStream(
-            self.value,
-            stream.value,
-        );
-        if (!ret)
-            return error.SdlError;
-    }
-
     /// Get a list of audio playback devices. Result must be freed.
     pub fn getAllPlaybackDevices(
         allocator: std.mem.Allocator,
@@ -563,8 +616,102 @@ pub const Device = struct {
 ///
 /// ## Version
 /// This struct is available since SDL 3.2.0.
-pub const Stream = struct {
+pub const Stream = packed struct {
     value: *C.SDL_AudioStream,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(*C.SDL_AudioStream), @sizeOf(Stream));
+    }
+
+    /// Clear any pending data in the stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to clear.
+    ///
+    /// ## Remarks
+    /// This drops any queued data, so there will be nothing to read from the stream until more is added.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn clear(
+        self: Stream,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_ClearAudioStream(self.value));
+    }
+
+    /// Free an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to destroy.
+    ///
+    /// ## Remarks
+    /// This will release all allocated data, including any audio that is still queued.
+    /// You do not need to manually clear the stream first.
+    ///
+    /// If this stream was bound to an audio device, it is unbound during this call.
+    /// If this stream was created with `audio.Device.open()`, the audio device that was opened alongside this stream's creation will be closed, too.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinit(
+        self: Stream,
+    ) void {
+        C.SDL_DestroyAudioStream(self.value);
+    }
+
+    /// Use this function to query if an audio device associated with a stream is paused.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream associated with the audio device to query.
+    ///
+    /// ## Return Value
+    /// Returns true if device is valid and paused, false otherwise.
+    ///
+    /// ## Remarks
+    /// Unlike in SDL2, audio devices start in an *unpaused* state, since an app has to bind a stream before any audio will flow.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getDevicePaused(
+        self: Stream,
+    ) bool {
+        return C.SDL_AudioStreamDevicePaused(self.value);
+    }
+
+    /// Create a new audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `src_spec`: The format details of the input audio.
+    /// * `dst_spec`: The format details of the output audio.
+    ///
+    /// ## Return Value
+    /// Returns a new audio stream.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn init(
+        src_spec: Spec,
+        dst_spec: Spec,
+    ) !Stream {
+        const src_spec_sdl = src_spec.toSdl();
+        const dst_spec_sdl = dst_spec.toSdl();
+        return .{
+            .value = errors.wrapNull(*C.SDL_AudioStream, C.SDL_CreateAudioStream(&src_spec_sdl, &dst_spec_sdl)),
+        };
+    }
 };
 
 /// Format specifier for audio data.
@@ -595,6 +742,51 @@ pub const Spec = struct {
             .channels = @intCast(self.num_channels),
             .freq = @intCast(self.sample_rate),
         };
+    }
+
+    /// Convert some audio data of one format to another format.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The format details of the input audio.
+    /// * `src_data`: The audio data to be converted.
+    /// * `dst_spec`: The format details of the output audio.
+    ///
+    /// ## Return Value
+    /// Returns the converted audio samples.
+    /// This should be freed with `stdinc.free()`.
+    ///
+    /// ## Remarks
+    /// Please note that this function is for convenience, but should not be used to resample audio in blocks,
+    /// as it will introduce audio artifacts on the boundaries.
+    /// You should only use this function if you are converting audio data in its entirety in one call.
+    /// If you want to convert audio in smaller chunks, use an `audio.Stream`, which is designed for this situation.
+    ///
+    /// Internally, this function creates and destroys an `audio.Stream` on each use, so it's also less efficient than using one directly,
+    /// if you need to convert multiple times.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn convertSamples(
+        self: Spec,
+        src_data: []const u8,
+        dst_spec: Spec,
+    ) ![]u8 {
+        const src_spec_sdl = self.toSdl();
+        const dst_spec_sdl = dst_spec.toSdl();
+        var dst_data: *u8 = undefined;
+        var dst_len: c_int = undefined;
+        try errors.wrapCallBool(C.SDL_ConvertAudioSamples(
+            &src_spec_sdl,
+            src_data.ptr,
+            @intCast(src_data.len),
+            &dst_spec_sdl,
+            &dst_data,
+            &dst_len,
+        ));
+        return dst_data[0..@intCast(dst_len)];
     }
 
     /// Calculate the size of each audio frame (in bytes) from an audio spec.
