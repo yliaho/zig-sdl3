@@ -14,263 +14,262 @@ const std = @import("std");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const Keycode = struct {
-    value: C.SDL_Keycode,
-    pub const return_key = Keycode{ .value = C.SDLK_RETURN };
-    pub const escape = Keycode{ .value = C.SDLK_ESCAPE };
-    pub const backspace = Keycode{ .value = C.SDLK_BACKSPACE };
-    pub const tab = Keycode{ .value = C.SDLK_TAB };
-    pub const space = Keycode{ .value = C.SDLK_SPACE };
-    pub const exclaim = Keycode{ .value = C.SDLK_EXCLAIM };
-    pub const dblapostrophe = Keycode{ .value = C.SDLK_DBLAPOSTROPHE };
-    pub const hash = Keycode{ .value = C.SDLK_HASH };
-    pub const dollar = Keycode{ .value = C.SDLK_DOLLAR };
-    pub const percent = Keycode{ .value = C.SDLK_PERCENT };
-    pub const ampersand = Keycode{ .value = C.SDLK_AMPERSAND };
-    pub const apostrophe = Keycode{ .value = C.SDLK_APOSTROPHE };
-    pub const left_paren = Keycode{ .value = C.SDLK_LEFTPAREN };
-    pub const right_paren = Keycode{ .value = C.SDLK_RIGHTPAREN };
-    pub const asterisk = Keycode{ .value = C.SDLK_ASTERISK };
-    pub const plus = Keycode{ .value = C.SDLK_PLUS };
-    pub const comma = Keycode{ .value = C.SDLK_COMMA };
-    pub const minus = Keycode{ .value = C.SDLK_MINUS };
-    pub const period = Keycode{ .value = C.SDLK_PERIOD };
-    pub const slash = Keycode{ .value = C.SDLK_SLASH };
-    pub const zero = Keycode{ .value = C.SDLK_0 };
-    pub const one = Keycode{ .value = C.SDLK_1 };
-    pub const two = Keycode{ .value = C.SDLK_2 };
-    pub const three = Keycode{ .value = C.SDLK_3 };
-    pub const four = Keycode{ .value = C.SDLK_4 };
-    pub const five = Keycode{ .value = C.SDLK_5 };
-    pub const six = Keycode{ .value = C.SDLK_6 };
-    pub const seven = Keycode{ .value = C.SDLK_7 };
-    pub const eight = Keycode{ .value = C.SDLK_8 };
-    pub const nine = Keycode{ .value = C.SDLK_9 };
-    pub const colon = Keycode{ .value = C.SDLK_COLON };
-    pub const semicolon = Keycode{ .value = C.SDLK_SEMICOLON };
-    pub const less = Keycode{ .value = C.SDLK_LESS };
-    pub const equals = Keycode{ .value = C.SDLK_EQUALS };
-    pub const greater = Keycode{ .value = C.SDLK_GREATER };
-    pub const question = Keycode{ .value = C.SDLK_QUESTION };
-    pub const at = Keycode{ .value = C.SDLK_AT };
-    pub const left_bracket = Keycode{ .value = C.SDLK_LEFTBRACKET };
-    pub const backslash = Keycode{ .value = C.SDLK_BACKSLASH };
-    pub const right_bracket = Keycode{ .value = C.SDLK_RIGHTBRACKET };
-    pub const caret = Keycode{ .value = C.SDLK_CARET };
-    pub const underscore = Keycode{ .value = C.SDLK_UNDERSCORE };
-    pub const grave = Keycode{ .value = C.SDLK_GRAVE };
-    pub const a = Keycode{ .value = C.SDLK_A };
-    pub const b = Keycode{ .value = C.SDLK_B };
-    pub const c = Keycode{ .value = C.SDLK_C };
-    pub const d = Keycode{ .value = C.SDLK_D };
-    pub const e = Keycode{ .value = C.SDLK_E };
-    pub const f = Keycode{ .value = C.SDLK_F };
-    pub const g = Keycode{ .value = C.SDLK_G };
-    pub const h = Keycode{ .value = C.SDLK_H };
-    pub const i = Keycode{ .value = C.SDLK_I };
-    pub const j = Keycode{ .value = C.SDLK_J };
-    pub const k = Keycode{ .value = C.SDLK_K };
-    pub const l = Keycode{ .value = C.SDLK_L };
-    pub const m = Keycode{ .value = C.SDLK_M };
-    pub const n = Keycode{ .value = C.SDLK_N };
-    pub const o = Keycode{ .value = C.SDLK_O };
-    pub const p = Keycode{ .value = C.SDLK_P };
-    pub const q = Keycode{ .value = C.SDLK_Q };
-    pub const r = Keycode{ .value = C.SDLK_R };
-    pub const s = Keycode{ .value = C.SDLK_S };
-    pub const t = Keycode{ .value = C.SDLK_T };
-    pub const u = Keycode{ .value = C.SDLK_U };
-    pub const v = Keycode{ .value = C.SDLK_V };
-    pub const w = Keycode{ .value = C.SDLK_W };
-    pub const x = Keycode{ .value = C.SDLK_X };
-    pub const y = Keycode{ .value = C.SDLK_Y };
-    pub const z = Keycode{ .value = C.SDLK_Z };
-    pub const left_brace = Keycode{ .value = C.SDLK_LEFTBRACE };
-    pub const pipe = Keycode{ .value = C.SDLK_PIPE };
-    pub const right_brace = Keycode{ .value = C.SDLK_RIGHTBRACE };
-    pub const tilde = Keycode{ .value = C.SDLK_TILDE };
-    pub const delete = Keycode{ .value = C.SDLK_DELETE };
-    pub const plus_minus = Keycode{ .value = C.SDLK_PLUSMINUS };
-    pub const caps_lock = Keycode{ .value = C.SDLK_CAPSLOCK };
-    pub const func1 = Keycode{ .value = C.SDLK_F1 };
-    pub const func2 = Keycode{ .value = C.SDLK_F2 };
-    pub const func3 = Keycode{ .value = C.SDLK_F3 };
-    pub const func4 = Keycode{ .value = C.SDLK_F4 };
-    pub const func5 = Keycode{ .value = C.SDLK_F5 };
-    pub const func6 = Keycode{ .value = C.SDLK_F6 };
-    pub const func7 = Keycode{ .value = C.SDLK_F7 };
-    pub const func8 = Keycode{ .value = C.SDLK_F8 };
-    pub const func9 = Keycode{ .value = C.SDLK_F9 };
-    pub const func10 = Keycode{ .value = C.SDLK_F10 };
-    pub const func11 = Keycode{ .value = C.SDLK_F11 };
-    pub const func12 = Keycode{ .value = C.SDLK_F12 };
-    pub const print_screen = Keycode{ .value = C.SDLK_PRINTSCREEN };
-    pub const scroll_lock = Keycode{ .value = C.SDLK_SCROLLLOCK };
-    pub const pause = Keycode{ .value = C.SDLK_PAUSE };
-    pub const insert = Keycode{ .value = C.SDLK_INSERT };
-    pub const home = Keycode{ .value = C.SDLK_HOME };
-    pub const page_up = Keycode{ .value = C.SDLK_PAGEUP };
-    pub const end = Keycode{ .value = C.SDLK_END };
-    pub const page_down = Keycode{ .value = C.SDLK_PAGEDOWN };
-    pub const right = Keycode{ .value = C.SDLK_RIGHT };
-    pub const left = Keycode{ .value = C.SDLK_LEFT };
-    pub const down = Keycode{ .value = C.SDLK_DOWN };
-    pub const up = Keycode{ .value = C.SDLK_UP };
-    pub const num_lock_clear = Keycode{ .value = C.SDLK_NUMLOCKCLEAR };
-    pub const kp_divide = Keycode{ .value = C.SDLK_KP_DIVIDE };
-    pub const kp_multiply = Keycode{ .value = C.SDLK_KP_MULTIPLY };
-    pub const kp_minus = Keycode{ .value = C.SDLK_KP_MINUS };
-    pub const kp_plus = Keycode{ .value = C.SDLK_KP_PLUS };
-    pub const kp_enter = Keycode{ .value = C.SDLK_KP_ENTER };
-    pub const kp_1 = Keycode{ .value = C.SDLK_KP_1 };
-    pub const kp_2 = Keycode{ .value = C.SDLK_KP_2 };
-    pub const kp_3 = Keycode{ .value = C.SDLK_KP_3 };
-    pub const kp_4 = Keycode{ .value = C.SDLK_KP_4 };
-    pub const kp_5 = Keycode{ .value = C.SDLK_KP_5 };
-    pub const kp_6 = Keycode{ .value = C.SDLK_KP_6 };
-    pub const kp_7 = Keycode{ .value = C.SDLK_KP_7 };
-    pub const kp_8 = Keycode{ .value = C.SDLK_KP_8 };
-    pub const kp_9 = Keycode{ .value = C.SDLK_KP_9 };
-    pub const kp_0 = Keycode{ .value = C.SDLK_KP_0 };
-    pub const kp_period = Keycode{ .value = C.SDLK_KP_PERIOD };
-    pub const application = Keycode{ .value = C.SDLK_APPLICATION };
-    pub const power = Keycode{ .value = C.SDLK_POWER };
-    pub const kp_equals = Keycode{ .value = C.SDLK_KP_EQUALS };
-    pub const func13 = Keycode{ .value = C.SDLK_F13 };
-    pub const func14 = Keycode{ .value = C.SDLK_F14 };
-    pub const func15 = Keycode{ .value = C.SDLK_F15 };
-    pub const func16 = Keycode{ .value = C.SDLK_F16 };
-    pub const func17 = Keycode{ .value = C.SDLK_F17 };
-    pub const func18 = Keycode{ .value = C.SDLK_F18 };
-    pub const func19 = Keycode{ .value = C.SDLK_F19 };
-    pub const func20 = Keycode{ .value = C.SDLK_F20 };
-    pub const func21 = Keycode{ .value = C.SDLK_F21 };
-    pub const func22 = Keycode{ .value = C.SDLK_F22 };
-    pub const func23 = Keycode{ .value = C.SDLK_F23 };
-    pub const func24 = Keycode{ .value = C.SDLK_F24 };
-    pub const execute = Keycode{ .value = C.SDLK_EXECUTE };
-    pub const help = Keycode{ .value = C.SDLK_HELP };
-    pub const menu = Keycode{ .value = C.SDLK_MENU };
-    pub const select = Keycode{ .value = C.SDLK_SELECT };
-    pub const stop = Keycode{ .value = C.SDLK_STOP };
-    pub const again = Keycode{ .value = C.SDLK_AGAIN };
-    pub const undo = Keycode{ .value = C.SDLK_UNDO };
-    pub const cut = Keycode{ .value = C.SDLK_CUT };
-    pub const copy = Keycode{ .value = C.SDLK_COPY };
-    pub const paste = Keycode{ .value = C.SDLK_PASTE };
-    pub const find = Keycode{ .value = C.SDLK_FIND };
-    pub const mute = Keycode{ .value = C.SDLK_MUTE };
-    pub const volume_up = Keycode{ .value = C.SDLK_VOLUMEUP };
-    pub const volume_down = Keycode{ .value = C.SDLK_VOLUMEDOWN };
-    pub const kp_comma = Keycode{ .value = C.SDLK_KP_COMMA };
-    pub const kp_equals_as_400 = Keycode{ .value = C.SDLK_KP_EQUALSAS400 };
-    pub const alt_erase = Keycode{ .value = C.SDLK_ALTERASE };
-    pub const sysreq = Keycode{ .value = C.SDLK_SYSREQ };
-    pub const cancel = Keycode{ .value = C.SDLK_CANCEL };
-    pub const clear = Keycode{ .value = C.SDLK_CLEAR };
-    pub const prior = Keycode{ .value = C.SDLK_PRIOR };
-    pub const return_key2 = Keycode{ .value = C.SDLK_RETURN2 };
-    pub const separator = Keycode{ .value = C.SDLK_SEPARATOR };
-    pub const out = Keycode{ .value = C.SDLK_OUT };
-    pub const oper = Keycode{ .value = C.SDLK_OPER };
-    pub const clear_again = Keycode{ .value = C.SDLK_CLEARAGAIN };
-    pub const cr_sel = Keycode{ .value = C.SDLK_CRSEL };
-    pub const ex_sel = Keycode{ .value = C.SDLK_EXSEL };
-    pub const kp_00 = Keycode{ .value = C.SDLK_KP_00 };
-    pub const kp_000 = Keycode{ .value = C.SDLK_KP_000 };
-    pub const thousands_separator = Keycode{ .value = C.SDLK_THOUSANDSSEPARATOR };
-    pub const decimal_separator = Keycode{ .value = C.SDLK_DECIMALSEPARATOR };
-    pub const currency_unit = Keycode{ .value = C.SDLK_CURRENCYUNIT };
-    pub const currency_subunit = Keycode{ .value = C.SDLK_CURRENCYSUBUNIT };
-    pub const kp_left_paren = Keycode{ .value = C.SDLK_KP_LEFTPAREN };
-    pub const kp_right_paren = Keycode{ .value = C.SDLK_KP_RIGHTPAREN };
-    pub const kp_left_brace = Keycode{ .value = C.SDLK_KP_LEFTBRACE };
-    pub const kp_right_brace = Keycode{ .value = C.SDLK_KP_RIGHTBRACE };
-    pub const kp_tab = Keycode{ .value = C.SDLK_KP_TAB };
-    pub const kp_backspace = Keycode{ .value = C.SDLK_KP_BACKSPACE };
-    pub const kp_a = Keycode{ .value = C.SDLK_KP_A };
-    pub const kp_b = Keycode{ .value = C.SDLK_KP_B };
-    pub const kp_c = Keycode{ .value = C.SDLK_KP_C };
-    pub const kp_d = Keycode{ .value = C.SDLK_KP_D };
-    pub const kp_e = Keycode{ .value = C.SDLK_KP_E };
-    pub const kp_f = Keycode{ .value = C.SDLK_KP_F };
-    pub const kp_xor = Keycode{ .value = C.SDLK_KP_XOR };
-    pub const kp_power = Keycode{ .value = C.SDLK_KP_POWER };
-    pub const kp_percent = Keycode{ .value = C.SDLK_KP_PERCENT };
-    pub const kp_less = Keycode{ .value = C.SDLK_KP_LESS };
-    pub const kp_greater = Keycode{ .value = C.SDLK_KP_GREATER };
-    pub const kp_ampersand = Keycode{ .value = C.SDLK_KP_AMPERSAND };
-    pub const kp_dblampersand = Keycode{ .value = C.SDLK_KP_DBLAMPERSAND };
-    pub const kp_verticalbar = Keycode{ .value = C.SDLK_KP_VERTICALBAR };
-    pub const kp_dbl_vertical_bar = Keycode{ .value = C.SDLK_KP_DBLVERTICALBAR };
-    pub const kp_colon = Keycode{ .value = C.SDLK_KP_COLON };
-    pub const kp_hash = Keycode{ .value = C.SDLK_KP_HASH };
-    pub const kp_space = Keycode{ .value = C.SDLK_KP_SPACE };
-    pub const kp_at = Keycode{ .value = C.SDLK_KP_AT };
-    pub const kp_exclam = Keycode{ .value = C.SDLK_KP_EXCLAM };
-    pub const kp_mem_store = Keycode{ .value = C.SDLK_KP_MEMSTORE };
-    pub const kp_mem_recall = Keycode{ .value = C.SDLK_KP_MEMRECALL };
-    pub const kp_mem_clear = Keycode{ .value = C.SDLK_KP_MEMCLEAR };
-    pub const kp_mem_add = Keycode{ .value = C.SDLK_KP_MEMADD };
-    pub const kp_mem_subtract = Keycode{ .value = C.SDLK_KP_MEMSUBTRACT };
-    pub const kp_mem_multiply = Keycode{ .value = C.SDLK_KP_MEMMULTIPLY };
-    pub const kp_mem_divide = Keycode{ .value = C.SDLK_KP_MEMDIVIDE };
-    pub const kp_plus_minus = Keycode{ .value = C.SDLK_KP_PLUSMINUS };
-    pub const kp_clear = Keycode{ .value = C.SDLK_KP_CLEAR };
-    pub const kp_clear_entry = Keycode{ .value = C.SDLK_KP_CLEARENTRY };
-    pub const kp_binary = Keycode{ .value = C.SDLK_KP_BINARY };
-    pub const kp_octal = Keycode{ .value = C.SDLK_KP_OCTAL };
-    pub const kp_decimal = Keycode{ .value = C.SDLK_KP_DECIMAL };
-    pub const kp_hexadecimal = Keycode{ .value = C.SDLK_KP_HEXADECIMAL };
-    pub const left_ctrl = Keycode{ .value = C.SDLK_LCTRL };
-    pub const left_shift = Keycode{ .value = C.SDLK_LSHIFT };
-    pub const left_alt = Keycode{ .value = C.SDLK_LALT };
-    pub const left_gui = Keycode{ .value = C.SDLK_LGUI };
-    pub const right_ctrl = Keycode{ .value = C.SDLK_RCTRL };
-    pub const right_shift = Keycode{ .value = C.SDLK_RSHIFT };
-    pub const right_alt = Keycode{ .value = C.SDLK_RALT };
-    pub const right_gui = Keycode{ .value = C.SDLK_RGUI };
-    pub const mode = Keycode{ .value = C.SDLK_MODE };
-    pub const sleep = Keycode{ .value = C.SDLK_SLEEP };
-    pub const wake = Keycode{ .value = C.SDLK_WAKE };
-    pub const channel_increment = Keycode{ .value = C.SDLK_CHANNEL_INCREMENT };
-    pub const channel_decrement = Keycode{ .value = C.SDLK_CHANNEL_DECREMENT };
-    pub const media_play = Keycode{ .value = C.SDLK_MEDIA_PLAY };
-    pub const media_pause = Keycode{ .value = C.SDLK_MEDIA_PAUSE };
-    pub const media_record = Keycode{ .value = C.SDLK_MEDIA_RECORD };
-    pub const media_fast_forward = Keycode{ .value = C.SDLK_MEDIA_FAST_FORWARD };
-    pub const media_rewind = Keycode{ .value = C.SDLK_MEDIA_REWIND };
-    pub const media_next_track = Keycode{ .value = C.SDLK_MEDIA_NEXT_TRACK };
-    pub const media_previous_track = Keycode{ .value = C.SDLK_MEDIA_PREVIOUS_TRACK };
-    pub const media_stop = Keycode{ .value = C.SDLK_MEDIA_STOP };
-    pub const media_eject = Keycode{ .value = C.SDLK_MEDIA_EJECT };
-    pub const media_play_pause = Keycode{ .value = C.SDLK_MEDIA_PLAY_PAUSE };
-    pub const media_select = Keycode{ .value = C.SDLK_MEDIA_SELECT };
-    pub const ac_new = Keycode{ .value = C.SDLK_AC_NEW };
-    pub const ac_open = Keycode{ .value = C.SDLK_AC_OPEN };
-    pub const ac_close = Keycode{ .value = C.SDLK_AC_CLOSE };
-    pub const ac_exit = Keycode{ .value = C.SDLK_AC_EXIT };
-    pub const ac_save = Keycode{ .value = C.SDLK_AC_SAVE };
-    pub const ac_print = Keycode{ .value = C.SDLK_AC_PRINT };
-    pub const ac_properties = Keycode{ .value = C.SDLK_AC_PROPERTIES };
-    pub const ac_search = Keycode{ .value = C.SDLK_AC_SEARCH };
-    pub const ac_home = Keycode{ .value = C.SDLK_AC_HOME };
-    pub const ac_back = Keycode{ .value = C.SDLK_AC_BACK };
-    pub const ac_forward = Keycode{ .value = C.SDLK_AC_FORWARD };
-    pub const ac_stop = Keycode{ .value = C.SDLK_AC_STOP };
-    pub const ac_refresh = Keycode{ .value = C.SDLK_AC_REFRESH };
-    pub const ac_bookmarks = Keycode{ .value = C.SDLK_AC_BOOKMARKS };
-    pub const soft_left = Keycode{ .value = C.SDLK_SOFTLEFT };
-    pub const soft_right = Keycode{ .value = C.SDLK_SOFTRIGHT };
-    pub const call = Keycode{ .value = C.SDLK_CALL };
-    pub const end_call = Keycode{ .value = C.SDLK_ENDCALL };
-    pub const left_tab = Keycode{ .value = C.SDLK_LEFT_TAB };
-    pub const level5_shift = Keycode{ .value = C.SDLK_LEVEL5_SHIFT };
-    pub const multi_key_compose = Keycode{ .value = C.SDLK_MULTI_KEY_COMPOSE };
-    pub const left_meta = Keycode{ .value = C.SDLK_LMETA };
-    pub const right_meta = Keycode{ .value = C.SDLK_RMETA };
-    pub const left_hyper = Keycode{ .value = C.SDLK_LHYPER };
-    pub const right_hyper = Keycode{ .value = C.SDLK_RHYPER };
+pub const Keycode = enum(C.SDL_Keycode) {
+    return_key = C.SDLK_RETURN,
+    escape = C.SDLK_ESCAPE,
+    backspace = C.SDLK_BACKSPACE,
+    tab = C.SDLK_TAB,
+    space = C.SDLK_SPACE,
+    exclaim = C.SDLK_EXCLAIM,
+    dblapostrophe = C.SDLK_DBLAPOSTROPHE,
+    hash = C.SDLK_HASH,
+    dollar = C.SDLK_DOLLAR,
+    percent = C.SDLK_PERCENT,
+    ampersand = C.SDLK_AMPERSAND,
+    apostrophe = C.SDLK_APOSTROPHE,
+    left_paren = C.SDLK_LEFTPAREN,
+    right_paren = C.SDLK_RIGHTPAREN,
+    asterisk = C.SDLK_ASTERISK,
+    plus = C.SDLK_PLUS,
+    comma = C.SDLK_COMMA,
+    minus = C.SDLK_MINUS,
+    period = C.SDLK_PERIOD,
+    slash = C.SDLK_SLASH,
+    zero = C.SDLK_0,
+    one = C.SDLK_1,
+    two = C.SDLK_2,
+    three = C.SDLK_3,
+    four = C.SDLK_4,
+    five = C.SDLK_5,
+    six = C.SDLK_6,
+    seven = C.SDLK_7,
+    eight = C.SDLK_8,
+    nine = C.SDLK_9,
+    colon = C.SDLK_COLON,
+    semicolon = C.SDLK_SEMICOLON,
+    less = C.SDLK_LESS,
+    equals = C.SDLK_EQUALS,
+    greater = C.SDLK_GREATER,
+    question = C.SDLK_QUESTION,
+    at = C.SDLK_AT,
+    left_bracket = C.SDLK_LEFTBRACKET,
+    backslash = C.SDLK_BACKSLASH,
+    right_bracket = C.SDLK_RIGHTBRACKET,
+    caret = C.SDLK_CARET,
+    underscore = C.SDLK_UNDERSCORE,
+    grave = C.SDLK_GRAVE,
+    a = C.SDLK_A,
+    b = C.SDLK_B,
+    c = C.SDLK_C,
+    d = C.SDLK_D,
+    e = C.SDLK_E,
+    f = C.SDLK_F,
+    g = C.SDLK_G,
+    h = C.SDLK_H,
+    i = C.SDLK_I,
+    j = C.SDLK_J,
+    k = C.SDLK_K,
+    l = C.SDLK_L,
+    m = C.SDLK_M,
+    n = C.SDLK_N,
+    o = C.SDLK_O,
+    p = C.SDLK_P,
+    q = C.SDLK_Q,
+    r = C.SDLK_R,
+    s = C.SDLK_S,
+    t = C.SDLK_T,
+    u = C.SDLK_U,
+    v = C.SDLK_V,
+    w = C.SDLK_W,
+    x = C.SDLK_X,
+    y = C.SDLK_Y,
+    z = C.SDLK_Z,
+    left_brace = C.SDLK_LEFTBRACE,
+    pipe = C.SDLK_PIPE,
+    right_brace = C.SDLK_RIGHTBRACE,
+    tilde = C.SDLK_TILDE,
+    delete = C.SDLK_DELETE,
+    plus_minus = C.SDLK_PLUSMINUS,
+    caps_lock = C.SDLK_CAPSLOCK,
+    func1 = C.SDLK_F1,
+    func2 = C.SDLK_F2,
+    func3 = C.SDLK_F3,
+    func4 = C.SDLK_F4,
+    func5 = C.SDLK_F5,
+    func6 = C.SDLK_F6,
+    func7 = C.SDLK_F7,
+    func8 = C.SDLK_F8,
+    func9 = C.SDLK_F9,
+    func10 = C.SDLK_F10,
+    func11 = C.SDLK_F11,
+    func12 = C.SDLK_F12,
+    print_screen = C.SDLK_PRINTSCREEN,
+    scroll_lock = C.SDLK_SCROLLLOCK,
+    pause = C.SDLK_PAUSE,
+    insert = C.SDLK_INSERT,
+    home = C.SDLK_HOME,
+    page_up = C.SDLK_PAGEUP,
+    end = C.SDLK_END,
+    page_down = C.SDLK_PAGEDOWN,
+    right = C.SDLK_RIGHT,
+    left = C.SDLK_LEFT,
+    down = C.SDLK_DOWN,
+    up = C.SDLK_UP,
+    num_lock_clear = C.SDLK_NUMLOCKCLEAR,
+    kp_divide = C.SDLK_KP_DIVIDE,
+    kp_multiply = C.SDLK_KP_MULTIPLY,
+    kp_minus = C.SDLK_KP_MINUS,
+    kp_plus = C.SDLK_KP_PLUS,
+    kp_enter = C.SDLK_KP_ENTER,
+    kp_1 = C.SDLK_KP_1,
+    kp_2 = C.SDLK_KP_2,
+    kp_3 = C.SDLK_KP_3,
+    kp_4 = C.SDLK_KP_4,
+    kp_5 = C.SDLK_KP_5,
+    kp_6 = C.SDLK_KP_6,
+    kp_7 = C.SDLK_KP_7,
+    kp_8 = C.SDLK_KP_8,
+    kp_9 = C.SDLK_KP_9,
+    kp_0 = C.SDLK_KP_0,
+    kp_period = C.SDLK_KP_PERIOD,
+    application = C.SDLK_APPLICATION,
+    power = C.SDLK_POWER,
+    kp_equals = C.SDLK_KP_EQUALS,
+    func13 = C.SDLK_F13,
+    func14 = C.SDLK_F14,
+    func15 = C.SDLK_F15,
+    func16 = C.SDLK_F16,
+    func17 = C.SDLK_F17,
+    func18 = C.SDLK_F18,
+    func19 = C.SDLK_F19,
+    func20 = C.SDLK_F20,
+    func21 = C.SDLK_F21,
+    func22 = C.SDLK_F22,
+    func23 = C.SDLK_F23,
+    func24 = C.SDLK_F24,
+    execute = C.SDLK_EXECUTE,
+    help = C.SDLK_HELP,
+    menu = C.SDLK_MENU,
+    select = C.SDLK_SELECT,
+    stop = C.SDLK_STOP,
+    again = C.SDLK_AGAIN,
+    undo = C.SDLK_UNDO,
+    cut = C.SDLK_CUT,
+    copy = C.SDLK_COPY,
+    paste = C.SDLK_PASTE,
+    find = C.SDLK_FIND,
+    mute = C.SDLK_MUTE,
+    volume_up = C.SDLK_VOLUMEUP,
+    volume_down = C.SDLK_VOLUMEDOWN,
+    kp_comma = C.SDLK_KP_COMMA,
+    kp_equals_as_400 = C.SDLK_KP_EQUALSAS400,
+    alt_erase = C.SDLK_ALTERASE,
+    sysreq = C.SDLK_SYSREQ,
+    cancel = C.SDLK_CANCEL,
+    clear = C.SDLK_CLEAR,
+    prior = C.SDLK_PRIOR,
+    return_key2 = C.SDLK_RETURN2,
+    separator = C.SDLK_SEPARATOR,
+    out = C.SDLK_OUT,
+    oper = C.SDLK_OPER,
+    clear_again = C.SDLK_CLEARAGAIN,
+    cr_sel = C.SDLK_CRSEL,
+    ex_sel = C.SDLK_EXSEL,
+    kp_00 = C.SDLK_KP_00,
+    kp_000 = C.SDLK_KP_000,
+    thousands_separator = C.SDLK_THOUSANDSSEPARATOR,
+    decimal_separator = C.SDLK_DECIMALSEPARATOR,
+    currency_unit = C.SDLK_CURRENCYUNIT,
+    currency_subunit = C.SDLK_CURRENCYSUBUNIT,
+    kp_left_paren = C.SDLK_KP_LEFTPAREN,
+    kp_right_paren = C.SDLK_KP_RIGHTPAREN,
+    kp_left_brace = C.SDLK_KP_LEFTBRACE,
+    kp_right_brace = C.SDLK_KP_RIGHTBRACE,
+    kp_tab = C.SDLK_KP_TAB,
+    kp_backspace = C.SDLK_KP_BACKSPACE,
+    kp_a = C.SDLK_KP_A,
+    kp_b = C.SDLK_KP_B,
+    kp_c = C.SDLK_KP_C,
+    kp_d = C.SDLK_KP_D,
+    kp_e = C.SDLK_KP_E,
+    kp_f = C.SDLK_KP_F,
+    kp_xor = C.SDLK_KP_XOR,
+    kp_power = C.SDLK_KP_POWER,
+    kp_percent = C.SDLK_KP_PERCENT,
+    kp_less = C.SDLK_KP_LESS,
+    kp_greater = C.SDLK_KP_GREATER,
+    kp_ampersand = C.SDLK_KP_AMPERSAND,
+    kp_dblampersand = C.SDLK_KP_DBLAMPERSAND,
+    kp_verticalbar = C.SDLK_KP_VERTICALBAR,
+    kp_dbl_vertical_bar = C.SDLK_KP_DBLVERTICALBAR,
+    kp_colon = C.SDLK_KP_COLON,
+    kp_hash = C.SDLK_KP_HASH,
+    kp_space = C.SDLK_KP_SPACE,
+    kp_at = C.SDLK_KP_AT,
+    kp_exclam = C.SDLK_KP_EXCLAM,
+    kp_mem_store = C.SDLK_KP_MEMSTORE,
+    kp_mem_recall = C.SDLK_KP_MEMRECALL,
+    kp_mem_clear = C.SDLK_KP_MEMCLEAR,
+    kp_mem_add = C.SDLK_KP_MEMADD,
+    kp_mem_subtract = C.SDLK_KP_MEMSUBTRACT,
+    kp_mem_multiply = C.SDLK_KP_MEMMULTIPLY,
+    kp_mem_divide = C.SDLK_KP_MEMDIVIDE,
+    kp_plus_minus = C.SDLK_KP_PLUSMINUS,
+    kp_clear = C.SDLK_KP_CLEAR,
+    kp_clear_entry = C.SDLK_KP_CLEARENTRY,
+    kp_binary = C.SDLK_KP_BINARY,
+    kp_octal = C.SDLK_KP_OCTAL,
+    kp_decimal = C.SDLK_KP_DECIMAL,
+    kp_hexadecimal = C.SDLK_KP_HEXADECIMAL,
+    left_ctrl = C.SDLK_LCTRL,
+    left_shift = C.SDLK_LSHIFT,
+    left_alt = C.SDLK_LALT,
+    left_gui = C.SDLK_LGUI,
+    right_ctrl = C.SDLK_RCTRL,
+    right_shift = C.SDLK_RSHIFT,
+    right_alt = C.SDLK_RALT,
+    right_gui = C.SDLK_RGUI,
+    mode = C.SDLK_MODE,
+    sleep = C.SDLK_SLEEP,
+    wake = C.SDLK_WAKE,
+    channel_increment = C.SDLK_CHANNEL_INCREMENT,
+    channel_decrement = C.SDLK_CHANNEL_DECREMENT,
+    media_play = C.SDLK_MEDIA_PLAY,
+    media_pause = C.SDLK_MEDIA_PAUSE,
+    media_record = C.SDLK_MEDIA_RECORD,
+    media_fast_forward = C.SDLK_MEDIA_FAST_FORWARD,
+    media_rewind = C.SDLK_MEDIA_REWIND,
+    media_next_track = C.SDLK_MEDIA_NEXT_TRACK,
+    media_previous_track = C.SDLK_MEDIA_PREVIOUS_TRACK,
+    media_stop = C.SDLK_MEDIA_STOP,
+    media_eject = C.SDLK_MEDIA_EJECT,
+    media_play_pause = C.SDLK_MEDIA_PLAY_PAUSE,
+    media_select = C.SDLK_MEDIA_SELECT,
+    ac_new = C.SDLK_AC_NEW,
+    ac_open = C.SDLK_AC_OPEN,
+    ac_close = C.SDLK_AC_CLOSE,
+    ac_exit = C.SDLK_AC_EXIT,
+    ac_save = C.SDLK_AC_SAVE,
+    ac_print = C.SDLK_AC_PRINT,
+    ac_properties = C.SDLK_AC_PROPERTIES,
+    ac_search = C.SDLK_AC_SEARCH,
+    ac_home = C.SDLK_AC_HOME,
+    ac_back = C.SDLK_AC_BACK,
+    ac_forward = C.SDLK_AC_FORWARD,
+    ac_stop = C.SDLK_AC_STOP,
+    ac_refresh = C.SDLK_AC_REFRESH,
+    ac_bookmarks = C.SDLK_AC_BOOKMARKS,
+    soft_left = C.SDLK_SOFTLEFT,
+    soft_right = C.SDLK_SOFTRIGHT,
+    call = C.SDLK_CALL,
+    end_call = C.SDLK_ENDCALL,
+    left_tab = C.SDLK_LEFT_TAB,
+    level5_shift = C.SDLK_LEVEL5_SHIFT,
+    multi_key_compose = C.SDLK_MULTI_KEY_COMPOSE,
+    left_meta = C.SDLK_LMETA,
+    right_meta = C.SDLK_RMETA,
+    left_hyper = C.SDLK_LHYPER,
+    right_hyper = C.SDLK_RHYPER,
 
     /// Create a keycode from a scancode.
     ///
@@ -282,13 +281,12 @@ pub const Keycode = struct {
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
+    /// CAUSES AN ERROR IN NEW IMPLEMENTATION (could not find a solution).
     pub fn fromScancode(
         code: scancode.Scancode,
     ) Keycode {
-        const ret = C.SDL_SCANCODE_TO_KEYCODE(
-            code.value,
-        );
-        return Keycode{ .value = ret };
+        const ret = C.SDL_SCANCODE_TO_KEYCODE(code.toSdl());
+        return Keycode.fromSdl(ret);
     }
 
     /// Returns if this keycode is extended.
@@ -304,7 +302,7 @@ pub const Keycode = struct {
     pub fn isExtended(
         self: Keycode,
     ) bool {
-        return C.SDLK_EXTENDED_MASK & self.value > 0;
+        return C.SDLK_EXTENDED_MASK & @intFromEnum(self) > 0;
     }
 
     /// Returns if this keycode maps to a scancode.
@@ -320,7 +318,14 @@ pub const Keycode = struct {
     pub fn isScancode(
         self: Keycode,
     ) bool {
-        return C.SDLK_SCANCODE_MASK & self.value > 0;
+        return C.SDLK_SCANCODE_MASK & @intFromEnum(self) > 0;
+    }
+
+    pub inline fn toSdl(self: Keycode) C.SDL_Keycode {
+        return @intFromEnum(self);
+    }
+    pub inline fn fromSdl(key_code: C.SDL_Keycode) Keycode {
+        return @enumFromInt(key_code);
     }
 };
 

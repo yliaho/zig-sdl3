@@ -254,8 +254,6 @@ pub const Type = enum(C.SDL_EventType) {
     // WindowLeaveFullscreen,
     // WindowDestroyed,
     // WindowHdrStateChanged,
-    // KeyDown,
-    // KeyUp,
     // TextEditing,
     // TextInput,
     // KeymapChanged,
@@ -326,6 +324,8 @@ pub const Type = enum(C.SDL_EventType) {
     user,
     /// An unknown event type.
     unknown = C.SDL_EVENT_FIRST,
+    KeyDown = C.SDL_EVENT_KEY_DOWN,
+    KeyUp = C.SDL_EVENT_KEY_UP,
     /// For padding out the union.
     padding = C.SDL_EVENT_ENUM_PADDING,
     // _,
@@ -389,6 +389,19 @@ pub const User = struct {
     /// User defined pointer 2.
     data2: ?*anyopaque = null,
 };
+pub const Key = struct {
+    type: Type,
+    reserved: u32,
+    timestamp: u64,
+    window_id: ?video.WindowID = null,
+    which: ?@import("keyboard.zig").ID,
+    scancode: @import("scancode.zig").Scancode,
+    key: @import("keycode.zig").Keycode,
+    mod: @import("keycode.zig").KeyModifier,
+    raw: u16,
+    down: bool,
+    repeat: bool,
+};
 
 /// The "quit requested" event.
 pub const Quit = struct {
@@ -418,6 +431,9 @@ pub const Event = union(Type) {
     user: User,
     /// An unknown event.
     unknown: Unknown,
+    /// A keyboard event.
+    KeyDown: Key,
+    KeyUp: Key,
     // Padding to make union the same size of a `C.SDL_Event`.
     padding: [@sizeOf(C.SDL_Event) - @sizeOf(DummyUnion)]u8,
 
@@ -453,6 +469,40 @@ pub const Event = union(Type) {
                 .data1 = event.user.data1,
                 .data2 = event.user.data2,
             } },
+            C.SDL_EVENT_KEY_UP => .{
+                .KeyUp = .{
+                    .type = .KeyUp,
+                    .reserved = event.key.reserved,
+                    .timestamp = event.key.timestamp,
+                    .window_id = if (event.user.windowID == 0) null else event.key.windowID,
+                    .which = .{
+                        .value = event.key.which,
+                    },
+                    .scancode = @enumFromInt(event.key.scancode),
+                    .key = @enumFromInt(event.key.key),
+                    .mod = @import("keycode.zig").KeyModifier.fromSdl(event.key.mod),
+                    .raw = event.key.raw,
+                    .down = event.key.down,
+                    .repeat = event.key.repeat,
+                },
+            },
+            C.SDL_EVENT_KEY_DOWN => .{
+                .KeyDown = .{
+                    .type = .KeyDown,
+                    .reserved = event.key.reserved,
+                    .timestamp = event.key.timestamp,
+                    .window_id = if (event.user.windowID == 0) null else event.key.windowID,
+                    .which = .{
+                        .value = event.key.which,
+                    },
+                    .scancode = @enumFromInt(event.key.scancode),
+                    .key = @enumFromInt(event.key.key),
+                    .mod = @import("keycode.zig").KeyModifier.fromSdl(event.key.mod),
+                    .raw = event.key.raw,
+                    .down = event.key.down,
+                    .repeat = event.key.repeat,
+                },
+            },
             C.SDL_EVENT_ENUM_PADDING => .{
                 .padding = @splat(0),
             },
@@ -544,6 +594,12 @@ pub const Event = union(Type) {
             } },
             .padding => .{
                 .type = C.SDL_EVENT_ENUM_PADDING,
+            },
+            .KeyUp => .{
+                .type = C.SDL_EVENT_KEY_UP,
+            },
+            .KeyDown => .{
+                .type = C.SDL_EVENT_KEY_DOWN,
             },
         };
     }
