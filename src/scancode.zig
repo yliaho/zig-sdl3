@@ -413,10 +413,38 @@ pub const Scancode = enum(C.SDL_Scancode) {
     pub fn matches(self: Scancode, other: Scancode) bool {
         return self == other;
     }
-    pub inline fn toSdl(self: Scancode) C.SDL_Scancode {
+
+    /// Create an unmanaged scancode from a scancode enum.
+    ///
+    /// ## Function Parameters
+    /// * `self`: scancode enum to make unmanaged.
+    ///
+    /// ## Return Value
+    /// Returns an unmanaged SDL scancode.
+    ///
+    /// ## Remarks
+    /// This makes a copy of the scancode provided.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn toSdl(self: Scancode) C.SDL_Scancode {
         return @intFromEnum(self);
     }
-    pub inline fn fromSdl(key_code: C.SDL_Scancode) Scancode {
+
+    /// Create a scancode enum from an SDL scancode.
+    ///
+    /// ## Function Parameters
+    /// * `event`: SDL scancode to manage.
+    ///
+    /// ## Return Value
+    /// A managed scancode enum.
+    ///
+    /// ## Remarks
+    /// This makes a copy of the scancode provided.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn fromSdl(key_code: C.SDL_Scancode) Scancode {
         return @enumFromInt(key_code);
     }
 };

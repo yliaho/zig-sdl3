@@ -302,7 +302,7 @@ pub const Keycode = enum(C.SDL_Keycode) {
     pub fn isExtended(
         self: Keycode,
     ) bool {
-        return C.SDLK_EXTENDED_MASK & @intFromEnum(self) > 0;
+        return C.SDLK_EXTENDED_MASK & @intFromEnum(self) != 0;
     }
 
     /// Returns if this keycode maps to a scancode.
@@ -318,13 +318,40 @@ pub const Keycode = enum(C.SDL_Keycode) {
     pub fn isScancode(
         self: Keycode,
     ) bool {
-        return C.SDLK_SCANCODE_MASK & @intFromEnum(self) > 0;
+        return C.SDLK_SCANCODE_MASK & @intFromEnum(self) != 0;
     }
 
-    pub inline fn toSdl(self: Keycode) C.SDL_Keycode {
+    /// Create an unmanaged keycode from a keycode enum.
+    ///
+    /// ## Function Parameters
+    /// * `self`: keycode enum to make unmanaged.
+    ///
+    /// ## Return Value
+    /// Returns an unmanaged SDL keycode.
+    ///
+    /// ## Remarks
+    /// This makes a copy of the keycode provided.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn toSdl(self: Keycode) C.SDL_Keycode {
         return @intFromEnum(self);
     }
-    pub inline fn fromSdl(key_code: C.SDL_Keycode) Keycode {
+
+    /// Create a keycode enum from an SDL keycode.
+    ///
+    /// ## Function Parameters
+    /// * `event`: SDL keycode to manage.
+    ///
+    /// ## Return Value
+    /// A managed keycode enum.
+    ///
+    /// ## Remarks
+    /// This makes a copy of the keycode provided.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn fromSdl(key_code: C.SDL_Keycode) Keycode {
         return @enumFromInt(key_code);
     }
 };
