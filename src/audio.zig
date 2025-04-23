@@ -801,7 +801,9 @@ pub const Stream = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getAvailable(
         self: Stream,
-    ) usize {}
+    ) usize {
+        return @intCast(C.SDL_GetAudioStreamAvailable(self.value));
+    }
 
     /// Use this function to query if an audio device associated with a stream is paused.
     ///
