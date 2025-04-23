@@ -172,6 +172,28 @@ pub const Format = struct {
         return @intCast(ret);
     }
 
+    /// Get the human readable name of an audio format.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio format to query.
+    ///
+    /// ## Return Value
+    /// Returns the human readable name of the specified audio format or `null` if the format is not recognized.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getName(
+        self: Format,
+    ) ?[:0]const u8 {
+        const ret: [:0]const u8 = std.mem.span(C.SDL_GetAudioFormatName(self.value));
+        if (std.mem.eql(u8, ret, "SDL_AUDIO_UNKNOWN"))
+            return null;
+        return ret;
+    }
+
     /// If the format is big endian.
     ///
     /// ## Function Parameters
@@ -327,12 +349,17 @@ pub const Format = struct {
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const Device = struct {
+pub const Device = packed struct {
     value: C.SDL_AudioDeviceID,
     /// A value used to request a default playback audio device.
     pub const default_playback = Device{ .value = C.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK };
     /// A value used to request a default recording audio device.
     pub const default_recording = Device{ .value = C.SDL_AUDIO_DEVICE_DEFAULT_RECORDING };
+
+    // Test sizes.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_AudioDeviceID) == @sizeOf(Device));
+    }
 
     /// Bind a single audio stream to an audio device.
     ///
@@ -424,6 +451,132 @@ pub const Device = struct {
         _ = ret;
     }
 
+    /// Get the current audio format of a specific audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The device instance to query.
+    ///
+    /// ## Return Value
+    /// Returns the audio specification of the device as long as the buffer size in sample frames.
+    ///
+    /// ## Remarks
+    /// For an opened device, this will report the format the device is currently using.
+    /// If the device isn't yet opened, this will report the device's preferred format (or a reasonable default if this can't be determined).
+    ///
+    /// You may also specify `audio.Device.default_playback` or `audio.Device.default_recording` here,
+    /// which is useful for getting a reasonable recommendation before opening the system-recommended default device.
+    ///
+    /// You can also use this to request the current device buffer size.
+    /// This is specified in sample frames and represents the amount of data SDL will feed to the physical hardware in each chunk.
+    /// This can be converted to milliseconds of audio with the following equation:
+    /// `const ms = val.buffer_size_frames * 1000 / val.spec.sample_rate`.
+    ///
+    /// Buffer size is only important if you need low-level control over the audio playback timing.
+    /// Most apps do not need this.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFormat(
+        self: Device,
+    ) !struct { spec: Spec, buffer_size_frames: usize } {
+        var spec: C.SDL_AudioSpec = undefined;
+        var buffer_size_frames: c_int = undefined;
+        const ret = C.SDL_GetAudioDeviceFormat(
+            self.value,
+            &spec,
+            &buffer_size_frames,
+        );
+        try errors.wrapCallBool(ret);
+        return .{ .spec = Spec.fromSdl(spec), .device_sample_frames = @intCast(buffer_size_frames) };
+    }
+
+    /// Get the current channel map of an audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The device instant to query.
+    ///
+    /// ## Return Value
+    /// Returns a slice of the current channel mapping, with as many elements as the current output spec's channels, or `null` if default/no remapping.
+    /// This should be freed with `stdinc.free()` when it is no longer needed.
+    ///
+    /// ## Remarks
+    /// Channel maps are optional; most things do not need them, instead passing data in the order that SDL expects.
+    ///
+    /// Audio devices usually have no remapping applied.
+    /// This is represented by returning `null`.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getChannelMap(
+        self: Device,
+    ) ?[]c_int {
+        var count: c_int = undefined;
+        const ret = C.SDL_GetAudioDeviceChannelMap(
+            self.value,
+            &count,
+        );
+        if (ret == null)
+            return null;
+        return ret[0..@intCast(count)];
+    }
+
+    /// Get the gain of an audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio device to query.
+    ///
+    /// ## Return Value
+    /// Returns the gain of the device.
+    ///
+    /// ## Remarks
+    /// The gain of a device is its volume; a larger gain means a louder output, with a gain of zero being silence.
+    ///
+    /// Audio devices default to a gain of 1 (no change in output).
+    ///
+    /// Physical devices may not have their gain changed, only logical devices, physical devices will always return an error.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getGain(
+        self: Device,
+    ) !f32 {
+        const ret = C.SDL_GetAudioDeviceGain(
+            self.value,
+        );
+        return @floatCast(try errors.wrapCall(f32, ret, -1));
+    }
+
+    /// Get the human-readable name of a specific audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The instance of the device to query.
+    ///
+    /// ## Return Value
+    /// Returns the name of the audio device.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getName(
+        self: Device,
+    ) ![:0]const u8 {
+        const ret = C.SDL_GetAudioDeviceName(
+            self.value,
+        );
+        return errors.wrapCallCString(ret);
+    }
+
     /// Use this function to query if an audio device is paused.
     ///
     /// ## Function Parameters
@@ -450,34 +603,6 @@ pub const Device = struct {
             self.value,
         );
         return ret;
-    }
-
-    /// Get the human-readable name of a specific audio device.
-    pub fn getName(
-        self: Device,
-    ) ![:0]const u8 {
-        const ret = C.SDL_GetAudioDeviceName(
-            self.value,
-        );
-        if (ret == null)
-            return error.SdlError;
-        return std.mem.span(ret);
-    }
-
-    /// For an opened device, this will report the format the device is currently using. If the device isn't yet opened, this will report the device's preferred format (or a reasonable default if this can't be determined).
-    pub fn getFormat(
-        self: Device,
-    ) !struct { spec: Spec, device_sample_frames: usize } {
-        var spec: C.SDL_AudioSpec = undefined;
-        var device_sample_frames: c_int = undefined;
-        const ret = C.SDL_GetAudioDeviceFormat(
-            self.value,
-            &spec,
-            &device_sample_frames,
-        );
-        if (!ret)
-            return error.SdlError;
-        return .{ .spec = Spec.fromSdl(spec), .device_sample_frames = @intCast(device_sample_frames) };
     }
 
     /// Open a specific audio device.
@@ -515,18 +640,6 @@ pub const Device = struct {
         );
         if (!ret)
             return error.SdlError;
-    }
-
-    /// Get the gain of an audio device.
-    pub fn getGain(
-        self: Device,
-    ) !f32 {
-        const ret = C.SDL_GetAudioDeviceGain(
-            self.value,
-        );
-        if (ret == -1)
-            return error.SdlError;
-        return @floatCast(ret);
     }
 
     /// Change the gain of an audio device.
@@ -574,26 +687,6 @@ pub const Device = struct {
         var converted_ret = try allocator.alloc(Device, @intCast(count));
         for (0..count) |ind| {
             converted_ret[ind].value = ret[ind];
-        }
-        return converted_ret;
-    }
-
-    /// Get the current channel map of an audio device if needed. Result must be freed.
-    pub fn getChannelMap(
-        self: Device,
-        allocator: std.mem.Allocator,
-    ) ![]usize {
-        var count: c_int = undefined;
-        const ret = C.SDL_GetAudioDeviceChannelMap(
-            self.value,
-            &count,
-        );
-        if (ret == null)
-            return error.SdlError;
-        defer C.SDL_free(ret);
-        var converted_ret = try allocator.alloc(usize, @intCast(count));
-        for (0..count) |ind| {
-            converted_ret[ind] = @intCast(ret[ind]);
         }
         return converted_ret;
     }
@@ -686,6 +779,30 @@ pub const Stream = packed struct {
         return errors.wrapCallBool(C.SDL_FlushAudioStream(self.value));
     }
 
+    /// Get the number of converted/resampled bytes available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to query.
+    ///
+    /// ## Return Value
+    /// Returns the number of converted/resampled bytes available.
+    ///
+    /// ## Remarks
+    /// The stream may be buffering data behind the scenes until it has enough to resample correctly, so this number might be lower than what you expect, or even be zero.
+    /// Add more data or flush the stream if you need the data now.
+    ///
+    /// If the stream has so much data that it would overflow, the return value is clamped to a maximum value, but no queued data is lost; if there are gigabytes of data queued,
+    /// the app might need to read some of it with `audio.Stream.getData()` before this function's return value is no longer clamped.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getAvailable(
+        self: Stream,
+    ) usize {}
+
     /// Use this function to query if an audio device associated with a stream is paused.
     ///
     /// ## Function Parameters
@@ -731,6 +848,51 @@ pub const Stream = packed struct {
         return .{
             .value = errors.wrapNull(*C.SDL_AudioStream, C.SDL_CreateAudioStream(&src_spec_sdl, &dst_spec_sdl)),
         };
+    }
+
+    /// Lock an audio stream for serialized access.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to lock.
+    ///
+    /// ## Remarks
+    /// Each `audio.Stream` has an internal mutex it uses to protect its data structures from threading conflicts.
+    /// This function allows an app to lock that mutex, which could be useful if registering callbacks on this stream.
+    ///
+    /// One does not need to lock a stream to use in it most cases, as the stream manages this lock internally.
+    /// However, this lock is held during callbacks, which may run from arbitrary threads at any time,
+    /// so if an app needs to protect shared data during those callbacks, locking the stream guarantees that the callback is not running while the lock is held.
+    ///
+    /// As this is just a wrapper over `mutex.Lock` for an internal lock; it has all the same attributes (recursive locks are allowed, etc).
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn lock(
+        self: Stream,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_LockAudioStream(self.value));
+    }
+
+    /// Unlock an audio stream for serialized access.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to unlock.
+    ///
+    /// ## Remarks
+    /// This unlocks an audio stream after a call to `audio.Stream.lock()`.
+    ///
+    /// ## Thread Safety
+    /// You should only call this from the same thread that previously called `audio.Stream.lock()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn unlock(
+        self: Stream,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_UnlockAudioStream(self.value));
     }
 };
 
@@ -809,6 +971,35 @@ pub const Spec = struct {
         return dst_data[0..@intCast(dst_len)];
     }
 
+    /// Get converted/resampled data from the stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream the audio is being requested from.
+    /// * `buf`: The buffer to fill with audio data.
+    ///
+    /// ## Return Value
+    /// Returns the data actually filled.
+    /// Note that the returned `ret` reuses `data.ptr`, just that `ret.len <= data.len`.
+    ///
+    /// ## Remarks
+    /// The input/output data format/channels/samplerate is specified when creating the stream, and can be changed after creation by calling `audio.Stream.setFormat()`
+    ///
+    /// Note that any conversion and resampling necessary is done during this call, and `audio.Stream.putData()` simply queues unconverted data for later.
+    /// This is different than SDL2, where that work was done while inputting new data to the stream and requesting the output just copied the converted data.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, but if the stream has a callback set, the caller might need to manage extra locking.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getData(
+        self: Stream,
+        data: []u8,
+    ) ![]u8 {
+        const ret = errors.wrapCall(c_int, C.SDL_GetAudioStreamData(self.value, data.ptr, @intCast(data.len)), -1);
+        return data.ptr[0..@intCast(ret)];
+    }
+
     /// Calculate the size of each audio frame (in bytes) from an audio spec.
     ///
     /// ## Function Parameters
@@ -835,13 +1026,47 @@ pub const Spec = struct {
     }
 };
 
-/// Use this function to get the number of built-in audio drivers.
-pub fn getNumDrivers() usize {
-    const ret = C.SDL_GetNumAudioDrivers();
-    return @intCast(ret);
+/// Get the name of the current audio driver.
+///
+/// ## Return Value
+/// Returns the name of the current audio driver or `null` if no driver has been initialized.
+///
+/// ## Remarks
+/// The names of drivers are all simple, low-ASCII identifiers, like "alsa", "coreaudio" or "wasapi".
+/// These never have Unicode characters, and are not meant to be proper names.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getCurrentDriverName() ?[:0]const u8 {
+    const ret = C.SDL_GetCurrentAudioDriver();
+    if (ret == null)
+        return null;
+    return std.mem.span(ret);
 }
 
 /// Use this function to get the name of a built in audio driver.
+///
+/// ## Function Parameters
+/// * `index`: The index of the audio driver; the value ranges from 0 to `audio.getNumDrivers() - 1`.
+///
+/// ## Return Value
+/// Returns the name of the audio driver at the requested index, or `null` if an invalid index was specified.
+///
+/// ## Remarks
+/// The list of audio drivers is given in the order that they are normally initialized by default;
+/// the drivers that seem more reasonable to choose first (as far as the SDL developers believe) are earlier in the list.
+///
+/// The names of drivers are all simple, low-ASCII identifiers, like "alsa", "coreaudio" or "wasapi".
+/// These never have Unicode characters, and are not meant to be proper names.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
 pub fn getDriverName(
     index: usize,
 ) ?[:0]const u8 {
@@ -853,10 +1078,71 @@ pub fn getDriverName(
     return std.mem.span(ret);
 }
 
-/// Get the name of the current audio driver.
-pub fn getCurrentDriverName() ?[:0]const u8 {
-    const ret = C.SDL_GetCurrentAudioDriver();
-    if (ret == null)
-        return null;
-    return std.mem.span(ret);
+/// Use this function to get the number of built-in audio drivers.
+///
+/// ## Return Value
+/// Returns the number of built-in audio drivers.
+///
+/// ## Remarks
+/// This function returns a hardcoded number.
+/// If there are no drivers compiled into this build of SDL, this function returns zero.
+/// The presence of a driver in this list does not mean it will function, it just means SDL is capable of interacting with that interface.
+/// For example, a build of SDL might have esound support, but if there's no esound server available, SDL's esound driver would fail if used.
+///
+/// By default, SDL tries all drivers, in its preferred order, until one is found to be usable.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getNumDrivers() usize {
+    const ret = C.SDL_GetNumAudioDrivers();
+    return @intCast(ret);
+}
+
+/// Get a list of currently-connected audio playback devices.
+///
+/// ## Return Value
+/// Returns a slice of device instances.
+/// This should be freed with `stdinc.free()`.
+///
+/// ## Remarks
+/// This returns of list of available devices that play sound, perhaps to speakers or headphones ("playback" devices).
+/// If you want devices that record audio, like a microphone ("recording" devices), use `audio.getRecordingDevices()` instead.
+///
+/// This only returns a list of physical devices; it will not have any device IDs returned by `audio.Device.open()`.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getPlaybackDevices() ![]Device {
+    var count: c_int = undefined;
+    const ret = try errors.wrapCallCPtr(C.SDL_AudioDeviceID, C.SDL_GetAudioPlaybackDevices(&count));
+    return ret[0..@intCast(count)];
+}
+
+/// Get a list of currently-connected audio recording devices.
+///
+/// ## Return Value
+/// Returns a slice of device instances.
+/// This should be freed with `stdinc.free()`.
+///
+/// ## Remarks
+/// This returns of list of available devices that record audio, like a microphone ("recording" devices).
+/// If you want devices that play sound, perhaps to speakers or headphones ("playback" devices), use `audio.Device.getPlaybackDevices()` instead.
+///
+/// This only returns a list of physical devices; it will not have any device IDs returned by `audio.Device.open()`.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getRecordingDevices() ![]Device {
+    var count: c_int = undefined;
+    const ret = try errors.wrapCallCPtr(C.SDL_AudioDeviceID, C.SDL_GetAudioRecordingDevices(&count));
+    return ret[0..@intCast(count)];
 }

@@ -1,6 +1,5 @@
-// This file was generated using `zig build bindings`. Do not manually edit!
-
 const C = @import("c.zig").C;
+const errors = @import("errors.zig");
 const std = @import("std");
 
 /// Pixel type.
@@ -244,6 +243,32 @@ pub const Format = struct {
     pub const array_bgrx_32 = Format{ .value = C.SDL_PIXELFORMAT_BGRX32 };
     pub const array_xbgr_32 = Format{ .value = C.SDL_PIXELFORMAT_XBGR32 };
 
+    /// Create a `pixels.FormatDetails` structure corresponding to a pixel format.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A pixel format value.
+    ///
+    /// ## Return Value
+    /// Returns a format details structure.
+    ///
+    /// ## Remarks
+    /// Returned structure may come from a shared global cache (i.e. not newly allocated), and hence should not be modified, especially the palette.
+    /// Weird errors such as `Blit combination not supported` may occur.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getDetails(
+        self: Format,
+    ) !FormatDetails {
+        const ret = try errors.wrapNull(*const C.SDL_PixelFormatDetails, C.SDL_GetPixelFormatDetails(
+            self.value,
+        ));
+        return FormatDetails.fromSdl(ret.*);
+    }
+
     /// Define a format using 4 characters (Ex: YV12).
     pub fn define4CC(
         a: u8,
@@ -473,18 +498,6 @@ pub const Format = struct {
         if (ret == C.SDL_PIXELFORMAT_UNKNOWN)
             return null;
         return Format{ .value = ret };
-    }
-
-    /// Create an SDL_PixelFormatDetails structure corresponding to a pixel format.
-    pub fn getDetails(
-        self: Format,
-    ) !FormatDetails {
-        const ret = C.SDL_GetPixelFormatDetails(
-            self.value,
-        );
-        if (ret == null)
-            return null;
-        return FormatDetails.fromSdl(ret.*);
     }
 };
 
