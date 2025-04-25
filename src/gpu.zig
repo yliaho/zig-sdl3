@@ -1490,7 +1490,7 @@ pub const Device = packed struct {
     ) !ComputePipeline {
         const create_info_sdl = create_info.toSdl();
         return .{
-            .value = errors.wrapNull(*C.SDL_GPUComputePipeline, C.SDL_CreateGPUComputePipeline(self.value, &create_info_sdl)),
+            .value = try errors.wrapNull(*C.SDL_GPUComputePipeline, C.SDL_CreateGPUComputePipeline(self.value, &create_info_sdl)),
         };
     }
 
@@ -1516,7 +1516,7 @@ pub const Device = packed struct {
         create_info: GraphicsPipelineCreateInfo,
     ) !GraphicsPipeline {
         return .{
-            .value = errors.wrapNull(*C.SDL_GPUGraphicsPipeline, C.SDL_CreateGPUGraphicsPipeline(
+            .value = try errors.wrapNull(*C.SDL_GPUGraphicsPipeline, C.SDL_CreateGPUGraphicsPipeline(
                 self.value,
                 create_info.toSdl(),
             )),
@@ -1657,7 +1657,7 @@ pub const Device = packed struct {
         name: ?[:0]const u8,
     ) !Device {
         return .{
-            .value = errors.wrapNull(*C.SDL_GPUDevice, C.SDL_CreateGPUDevice(
+            .value = try errors.wrapNull(*C.SDL_GPUDevice, C.SDL_CreateGPUDevice(
                 ShaderFormatFlags.toSdl(shader_format),
                 debug_mode,
                 if (name) |val| val.ptr else null,
