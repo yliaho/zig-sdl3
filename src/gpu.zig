@@ -1523,6 +1523,100 @@ pub const Device = packed struct {
         };
     }
 
+    /// Creates a sampler object to be used when binding textures in a graphics workflow.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context.
+    /// * `create_info`: A struct describing the state of the sampler to create.
+    ///
+    /// ## Return Value
+    /// Returns a sampler object.
+    ///
+    /// ## Remarks
+    /// There are optional properties that can be provided through `props`.
+    /// These are the supported properties:
+    /// * `SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING`: a name that can be displayed in debugging tools.
+    /// TODO: PROPER PROPERTY WRAPPING?
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createSampler(
+        self: Device,
+        create_info: SamplerCreateInfo,
+    ) !Sampler {
+        const create_info_sdl = create_info.toSdl();
+        return .{
+            .value = try errors.wrapNull(*C.SDL_GPUSampler, C.SDL_CreateGPUSampler(
+                self.value,
+                &create_info_sdl,
+            )),
+        };
+    }
+
+    /// Creates a shader to be used when creating a graphics pipeline.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context.
+    /// * `create_info`: A struct describing the state of the shader to create.
+    ///
+    /// ## Return Value
+    /// Returns a shader object.
+    ///
+    /// ## Remarks
+    /// Shader resource bindings must be authored to follow a particular order depending on the shader format.
+    ///
+    /// For SPIR-V shaders, use the following resource sets:
+    ///
+    /// For vertex shaders:
+    /// * `0`: Sampled textures, followed by storage textures, followed by storage buffers.
+    /// * `1`: Uniform buffers.
+    ///
+    /// For fragment shaders:
+    /// * `2`: Sampled textures, followed by storage textures, followed by storage buffers.
+    /// * `3`: Uniform buffers.
+    ///
+    /// For DXBC and DXIL shaders, use the following register order:
+    ///
+    /// For vertex shaders:
+    /// * `(t[n], space0)`: Sampled textures, followed by storage textures, followed by storage buffers.
+    /// * `(s[n], space0)`: Samplers with indices corresponding to the sampled textures.
+    /// * `(b[n], space1)`: Uniform buffers.
+    ///
+    /// For pixel shaders:
+    /// * `(t[n], space2)`: Sampled textures, followed by storage textures, followed by storage buffers.
+    /// * `(s[n], space2)`: Samplers with indices corresponding to the sampled textures.
+    /// * `(b[n], space3)`: Uniform buffers.
+    ///
+    /// For MSL/metallib, use the following order:
+    /// * `[[texture]]`: Sampled textures, followed by storage textures.
+    /// * `[[sampler]]`: Samplers with indices corresponding to the sampled textures.
+    /// * `[[buffer]]`: Uniform buffers, followed by storage buffers.
+    /// Vertex buffer `0` is bound at `[[buffer(14)]]`, vertex buffer `1` at `[[buffer(15)]]`, and so on.
+    /// Rather than manually authoring vertex buffer indices, use the `[[stage_in]]` attribute which will automatically use the vertex input information from the `gpu.GraphicsPipeline`.
+    /// Shader semantics other than system-value semantics do not matter in D3D12 and for ease of use the SDL implementation assumes that
+    /// non system-value semantics will all be `TEXCOORD`.
+    /// If you are using HLSL as the shader source language, your vertex semantics should start at `TEXCOORD0` and increment like so: `TEXCOORD1`, `TEXCOORD2`, etc.
+    /// If you wish to change the semantic prefix to something other than `TEXCOORD` you can use `gpu.Device.Properties.d3d12_semantic_name_string` with `gpu.Device.initWithProperties()`.
+    ///
+    /// There are optional properties that can be provided through props. These are the supported properties:
+    /// * `SDL_PROP_GPU_SHADER_CREATE_NAME_STRING`: a name that can be displayed in debugging tools.
+    /// TODO: PROPER PROPERTY WRAPPING?
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createShader(
+        self: Device,
+        create_info: ShaderCreateInfo,
+    ) !ShaderCreateInfo {
+        const create_info_sdl = create_info.toSdl();
+        return .{
+            .value = try errors.wrapNull(*C.SDL_GPUShader, C.SDL_CreateGPUSampler(
+                self.value,
+                &create_info_sdl,
+            )),
+        };
+    }
+
     /// Destroys a GPU context previously returned by `gpu.Device.init().
     ///
     /// ## Function Parameters
@@ -1610,6 +1704,48 @@ pub const Device = packed struct {
         C.SDL_ReleaseGPUGraphicsPipeline(
             self.value,
             graphics_pipeline.value,
+        );
+    }
+
+    /// Frees the given sampler as soon as it is safe to do so.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `sampler`: A sampler to be destroyed.
+    ///
+    /// ## Remarks
+    /// You must not reference the sampler after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseSampler(
+        self: Device,
+        sampler: Sampler,
+    ) void {
+        C.SDL_ReleaseGPUSampler(
+            self.value,
+            sampler.value,
+        );
+    }
+
+    /// Frees the given shader as soon as it is safe to do so.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `shader`: A shader to be destroyed.
+    ///
+    /// ## Remarks
+    /// You must not reference the shader after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseShader(
+        self: Device,
+        shader: Shader,
+    ) void {
+        C.SDL_ReleaseGPUShader(
+            self.value,
+            shader.value,
         );
     }
 };
@@ -2222,6 +2358,79 @@ pub const SamplerAddressMode = enum(c_uint) {
     clamp_to_edge = C.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 };
 
+/// A structure specifying the parameters of a sampler.
+///
+/// ## Remarks
+/// Note that `mip_lod_bias` is a no-op for the Metal driver.
+/// For Metal, LOD bias must be applied via shader instead.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub const SamplerCreateInfo = struct {
+    /// The minification filter to apply to lookups.
+    min_filter: Filter,
+    /// The magnification filter to apply to lookups.
+    max_filter: Filter,
+    /// The mipmap filter to apply to lookups.
+    mipmap_mode: SamplerMipmapMode,
+    /// The addressing mode for U coordinates outside [0, 1).
+    address_mode_u: SamplerAddressMode,
+    /// The addressing mode for V coordinates outside [0, 1).
+    address_mode_v: SamplerAddressMode,
+    /// The addressing mode for W coordinates outside [0, 1).
+    address_mode_w: SamplerAddressMode,
+    /// The bias to be added to mipmap LOD calculation.
+    mip_lod_bias: f32,
+    /// The anisotropy value clamp used by the sampler.
+    max_anisotropy: ?f32,
+    /// The comparison operator to apply to fetched data before filtering.
+    compare: ?CompareOperation,
+    /// Clamps the minimum of the computed LOD value.
+    min_lod: f32,
+    /// Clamps the maximum of the computed LOD value.
+    max_lod: f32,
+    /// Properties for extensions.
+    props: ?properties.Group,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUSamplerCreateInfo) SamplerCreateInfo {
+        return .{
+            .min_filter = @enumFromInt(value.min_filter),
+            .max_filter = @enumFromInt(value.max_filter),
+            .mipmap_mode = @enumFromInt(value.mipmap_mode),
+            .address_mode_u = @enumFromInt(value.address_mode_u),
+            .address_mode_v = @enumFromInt(value.address_mode_v),
+            .address_mode_w = @enumFromInt(value.address_mode_w),
+            .mip_lod_bias = value.mip_lod_bias,
+            .max_anisotrophy = if (value.enable_anisotropy) value.max_anisotropy else null,
+            .compare = if (value.enable_compare) @enumFromInt(value.compare_op) else null,
+            .min_lod = value.min_lod,
+            .max_lod = value.max_lod,
+            .props = if (value.props != 0) .{ .value = value.props } else null,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: SamplerCreateInfo) C.SDL_GPUSamplerCreateInfo {
+        return .{
+            .min_filter = @intFromEnum(self.min_filter),
+            .max_filter = @intFromEnum(self.max_filter),
+            .mipmap_mode = @intFromEnum(self.mipmap_mode),
+            .address_mode_u = @intFromEnum(self.address_mode_u),
+            .address_mode_v = @intFromEnum(self.address_mode_v),
+            .address_mode_w = @intFromEnum(self.address_mode_w),
+            .mip_lod_bias = self.mip_lod_bias,
+            .enable_anisotrophy = self.max_anisotrophy != null,
+            .max_anisotrophy = if (self.max_anisotropy) |val| val else 0,
+            .enable_compare = self.compare != null,
+            .compare_op = if (self.enable_compare) @intFromEnum(self.compare) else null,
+            .min_lod = self.min_lod,
+            .max_lod = self.max_lod,
+            .props = if (self.props) |val| val.value else 0,
+        };
+    }
+};
+
 /// Specifies a mipmap mode used by a sampler.
 ///
 /// ## Version
@@ -2239,6 +2448,62 @@ pub const SamplerMipmapMode = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const Shader = packed struct {
     value: *C.SDL_GPUShader,
+};
+
+/// A structure specifying code and metadata for creating a shader object.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const ShaderCreateInfo = struct {
+    /// Shader code.
+    code: []const u8,
+    /// UTF-8 string specifying entry point name.
+    entry_point: [:0]const u8,
+    /// The format of the shader code.
+    format: ShaderFormatFlags,
+    /// The stage the shader program corresponds to.
+    stage: ShaderStage,
+    /// The number of samplers defined in the shader.
+    num_samplers: u32,
+    /// The number of storage textures defined in the shader.
+    num_storage_textures: u32,
+    /// The number of storage buffers defined in the shader.
+    num_storage_buffers: u32,
+    /// The number of uniform buffers defined in the shader.
+    num_uniform_buffers: u32,
+    /// Properties for extensions.
+    props: ?properties.Group,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUShaderCreateInfo) ShaderCreateInfo {
+        return .{
+            .code = value.code[0..value.code_size],
+            .entry_point = std.mem.span(value.entrypoint),
+            .format = ShaderFormatFlags.fromSdl(value.format),
+            .stage = @enumFromInt(value.stage),
+            .num_samplers = value.num_samplers,
+            .num_storage_textures = value.num_storage_textures,
+            .num_storage_buffers = value.num_storage_buffers,
+            .num_uniform_buffers = value.num_uniform_buffers,
+            .props = if (value.props == 0) null else .{ .value = value.props },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: ShaderCreateInfo) C.SDL_GPUShaderCreateInfo {
+        return .{
+            .code = self.code.ptr,
+            .code_size = self.code.len,
+            .entrypoint = self.entry_point.ptr,
+            .format = self.format.toSdl(),
+            .stage = @intFromEnum(self.stage),
+            .num_samplers = self.num_samplers,
+            .num_storage_textures = self.num_storage_textures,
+            .num_storage_buffers = self.num_storage_buffers,
+            .num_uniform_buffers = self.num_uniform_buffers,
+            .props = if (self.props) |val| val.value else 0,
+        };
+    }
 };
 
 /// Specifies the format of shader code.
