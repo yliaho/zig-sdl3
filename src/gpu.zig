@@ -5,6 +5,7 @@ const properties = @import("properties.zig");
 const rect = @import("rect.zig");
 const std = @import("std");
 const surface = @import("surface.zig");
+const video = @import("video.zig");
 
 /// Specifies a blending factor to be used when pixels in a render target are blended with existing pixels in the texture.
 ///
@@ -469,34 +470,77 @@ pub const ColorTargetDescription = extern struct {
 /// A structure specifying the parameters of a color target used by a render pass.
 ///
 /// ## Remarks
-/// The load_op field determines what is done with the texture at the beginning of the render pass.
+/// The `load` field determines what is done with the texture at the beginning of the render pass:
+/// * `gpu.LoadOperation.load`: Loads the data currently in the texture. Not recommended for multisample textures as it requires significant memory bandwidth.
+/// * `gpu.LoadOperation.clear`: Clears the texture to a single color.
+/// * `gpu.LoadOperation.do_not_care`: The driver will do whatever it wants with the texture memory. This is a good option if you know that every single pixel will be touched in the render pass.
 ///
-/// LOAD: Loads the data currently in the texture. Not recommended for multisample textures as it requires significant memory bandwidth.
-/// CLEAR: Clears the texture to a single color.
-/// DONT_CARE: The driver will do whatever it wants with the texture memory. This is a good option if you know that every single pixel will be touched in the render pass.
-/// The store_op field determines what is done with the color results of the render pass.
-///
-/// STORE: Stores the results of the render pass in the texture. Not recommended for multisample textures as it requires significant memory bandwidth.
-/// DONT_CARE: The driver will do whatever it wants with the texture memory. This is often a good option for depth/stencil textures.
-/// RESOLVE: Resolves a multisample texture into resolve_texture, which must have a sample count of 1. Then the driver may discard the multisample texture memory. This is the most performant method of resolving a multisample target.
-/// RESOLVE_AND_STORE: Resolves a multisample texture into the resolve_texture, which must have a sample count of 1. Then the driver stores the multisample texture's contents. Not recommended as it requires significant memory bandwidth.
+/// The store_op field determines what is done with the color results of the render pass:
+/// * `gpu.StoreOperation.store`: Stores the results of the render pass in the texture. Not recommended for multisample textures as it requires significant memory bandwidth.
+/// * `gpu.StoreOperation.do_not_care`: The driver will do whatever it wants with the texture memory. This is often a good option for depth/stencil textures.
+/// * `gpu.StoreOperation.resolve`: Resolves a multisample texture into `resolve_texture`, which must have a sample count of 1. Then the driver may discard the multisample texture memory. This is the most performant method of resolving a multisample target.
+/// * `gpu.StoreOperation.resolve_and_store`: Resolves a multisample texture into the `resolve_texture`, which must have a sample count of 1. Then the driver stores the multisample texture's contents. Not recommended as it requires significant memory bandwidth.
 ///
 /// ## Version
 /// This struct is available since SDL 3.2.0.
 pub const ColorTargetInfo = extern struct {
+    /// The texture that will be used as a color target by a render pass.
     texture: Texture,
+    /// The mip level to use as a color target.
     mip_level: u32,
+    /// The layer index or depth plane to use as a color target.
+    /// This value is treated as a layer index on 2D array and cube textures, and as a depth plane on 3D textures.
     layer_or_depth_plane: u32,
-    clear_color: pixels.FColor, // TODO: FIX DOCS ABOVE, GIVE THESE COMMENTS, WRITE TESTS!!!
+    /// The color to clear the color target to at the start of the render pass.
+    /// Ignored if `gpu.LoadOperation.clear` for `load` is not used.
+    clear_color: pixels.FColor,
+    /// What is done with the contents of the color target at the beginning of the render pass.
     load: LoadOperation,
+    /// What is done with the results of the render pass.
     store: StoreOperation,
+    /// The texture that will receive the results of a multisample resolve operation.
+    /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
     resolve_texture: Texture,
+    /// The mip level of the resolve texture to use for the resolve operation.
+    /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
     resolve_mip_level: u32,
+    /// The layer index of the resolve texture to use for the resolve operation.
+    /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
     resolve_layer: u32,
+    /// If `true` cycles the texture if the texture is bound and `load` is not `gpu.LoadOperation.load`.
     cycle: bool,
+    /// If `true` cycles the resolve texture if the resolve texture is bound.
+    /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
     cycle_resolve_texture: bool,
     _1: u8 = 0,
     _2: u8 = 0,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUColorTargetInfo) == @sizeOf(ColorTargetInfo));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "texture")) == @sizeOf(@FieldType(ColorTargetInfo, "texture")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "texture") == @offsetOf(ColorTargetInfo, "texture"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "mip_level")) == @sizeOf(@FieldType(ColorTargetInfo, "mip_level")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "mip_level") == @offsetOf(ColorTargetInfo, "mip_level"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "layer_or_depth_plane")) == @sizeOf(@FieldType(ColorTargetInfo, "layer_or_depth_plane")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "layer_or_depth_plane") == @offsetOf(ColorTargetInfo, "layer_or_depth_plane"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "clear_color")) == @sizeOf(@FieldType(ColorTargetInfo, "clear_color")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "clear_color") == @offsetOf(ColorTargetInfo, "clear_color"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "load_op")) == @sizeOf(@FieldType(ColorTargetInfo, "load")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "load_op") == @offsetOf(ColorTargetInfo, "load"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "store_op")) == @sizeOf(@FieldType(ColorTargetInfo, "store")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "store_op") == @offsetOf(ColorTargetInfo, "store"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "resolve_texture")) == @sizeOf(@FieldType(ColorTargetInfo, "resolve_texture")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "resolve_texture") == @offsetOf(ColorTargetInfo, "resolve_texture"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "resolve_mip_level")) == @sizeOf(@FieldType(ColorTargetInfo, "resolve_mip_level")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "resolve_mip_level") == @offsetOf(ColorTargetInfo, "resolve_mip_level"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "resolve_layer")) == @sizeOf(@FieldType(ColorTargetInfo, "resolve_layer")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "resolve_layer") == @offsetOf(ColorTargetInfo, "resolve_layer"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "cycle")) == @sizeOf(@FieldType(ColorTargetInfo, "cycle")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "cycle") == @offsetOf(ColorTargetInfo, "cycle"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUColorTargetInfo, "cycle_resolve_texture")) == @sizeOf(@FieldType(ColorTargetInfo, "cycle_resolve_texture")));
+        std.debug.assert(@offsetOf(C.SDL_GPUColorTargetInfo, "cycle_resolve_texture") == @offsetOf(ColorTargetInfo, "cycle_resolve_texture"));
+    }
 };
 
 /// An opaque handle representing a command buffer.
@@ -517,6 +561,201 @@ pub const ColorTargetInfo = extern struct {
 /// This struct is available since SDL 3.2.0.
 pub const CommandBuffer = packed struct {
     value: *C.SDL_GPUCommandBuffer,
+
+    /// Acquire a texture to use in presentation.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `window`: A window that has been claimed.
+    ///
+    /// ## Return Value
+    /// Returns the swapchain texture along with its width and height.
+    ///
+    /// ## Remarks
+    /// When a swapchain texture is acquired on a command buffer, it will automatically be submitted for presentation when the command buffer is submitted.
+    /// The swapchain texture should only be referenced by the command buffer used to acquire it.
+    ///
+    /// This function will fill the swapchain texture handle with `null` if too many frames are in flight.
+    /// This is not an error.
+    ///
+    /// If you use this function, it is possible to create a situation where many command buffers are allocated while the rendering context waits for the GPU to catch up,
+    /// which will cause memory usage to grow.
+    /// You should use `gpu.CommandBuffer.waitAndAcquireSwapchainTexture()` unless you know what you are doing with timing.
+    ///
+    /// The swapchain texture is managed by the implementation and must not be freed by the user.
+    /// You MUST NOT call this function from any thread other than the one that created the window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called from the thread that created the window.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn acquireSwapchainTexture(
+        self: CommandBuffer,
+        window: video.Window,
+    ) !struct { texture: ?Texture, width: u32, height: u32 } {
+        var width: u32 = undefined;
+        var height: u32 = undefined;
+        var texture: ?*C.SDL_GPUTexture = undefined;
+        try errors.wrapCallBool(C.SDL_AcquireGPUSwapchainTexture(self.value, window.value, &texture, &width, &height));
+        return .{
+            .texture = texture,
+            .width = width,
+            .height = height,
+        };
+    }
+
+    /// Begins a compute pass on a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `storage_texture_bindings`: Writeable storage texture binding structs.
+    /// * `storage_buffer_bindings`: Writeable storage buffer binding structs.
+    ///
+    /// ## Return Value
+    /// Returns a compute pass handle.
+    ///
+    /// ## Remarks
+    /// A compute pass is defined by a set of texture subresources and buffers that may be written to by compute pipelines.
+    /// These textures and buffers must have been created with the `compute_storage_write` bit or the `compute_storage_simultaneous_read_write` bit.
+    /// If you do not create a texture with `compute_storage_simultaneous_read_write`, you must not read from the texture in the compute pass.
+    /// All operations related to compute pipelines must take place inside of a compute pass.
+    /// You must not begin another compute pass, or a render pass or copy pass before ending the compute pass.
+    ///
+    /// A VERY IMPORTANT NOTE - Reads and writes in compute passes are NOT implicitly synchronized.
+    /// This means you may cause data races by both reading and writing a resource region in a compute pass, or by writing multiple times to a resource region.
+    /// If your compute work depends on reading the completed output from a previous dispatch,
+    /// you MUST end the current compute pass and begin a new one before you can safely access the data.
+    /// Otherwise you will receive unexpected results.
+    /// Reading and writing a texture in the same compute pass is only supported by specific texture formats.
+    /// Make sure you check the format support!
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn beginComputePass(
+        self: CommandBuffer,
+        storage_texture_bindings: []const StorageTextureReadWriteBinding,
+        storage_buffer_bindings: []const StorageBufferReadWriteBinding,
+    ) ComputePass {
+        return .{
+            .value = C.SDL_BeginGPUComputePass(
+                self.value,
+                @ptrCast(storage_texture_bindings.ptr),
+                @intCast(storage_texture_bindings.len),
+                @ptrCast(storage_buffer_bindings.ptr),
+                @intCast(storage_buffer_bindings.len),
+            ).?,
+        };
+    }
+
+    /// Begins a copy pass on a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    ///
+    /// ## Return Value
+    /// Returns a copy pass handle.
+    ///
+    /// ## Remarks
+    /// All operations related to copying to or from buffers or textures take place inside a copy pass.
+    /// You must not begin another copy pass, or a render pass or compute pass before ending the copy pass.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn beginCopyPass(
+        self: CommandBuffer,
+    ) CopyPass {
+        return .{
+            .value = C.SDL_BeginGPUCopyPass(self.value).?,
+        };
+    }
+
+    /// Begins a render pass on a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `color_target_infos`: Texture subresources with corresponding clear values and load/store ops.
+    /// * `depth_stencil_target_info`: Texture subresource with corresponding clear value and load/store ops.
+    ///
+    /// ## Return Value
+    /// Returns a render pass handle.
+    ///
+    /// ## Remarks
+    /// A render pass consists of a set of texture subresources (or depth slices in the 3D texture case) which will be rendered to during the render pass,
+    /// along with corresponding clear values and load/store operations.
+    /// All operations related to graphics pipelines must take place inside of a render pass.
+    /// A default viewport and scissor state are automatically set when this is called.
+    /// You cannot begin another render pass, or begin a compute pass or copy pass until you have ended the render pass.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    ///
+    /// ## D3D12 Warnings
+    /// See: https://wiki.libsdl.org/SDL3/SDL_BeginGPURenderPass
+    /// TODO!!! Port this documentation here.
+    pub fn beginRenderPass(
+        self: CommandBuffer,
+        color_target_infos: []const ColorTargetInfo,
+        depth_stencil_target_info: ?DepthStencilTargetInfo,
+    ) RenderPass {
+        const depth_stencil = if (depth_stencil_target_info) |val| val.toSdl() else undefined;
+        return .{
+            .value = C.SDL_BeginGPURenderPass(
+                self.value,
+                @ptrCast(color_target_infos.ptr),
+                @intCast(color_target_infos.len),
+                if (depth_stencil_target_info == null) null else &depth_stencil,
+            ),
+        };
+    }
+
+    /// Pushes data to a uniform slot on the command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `slot_index: The uniform slot to push data to.
+    /// * `data`: Client data to write.
+    ///
+    /// ## Remarks
+    /// Subsequent draw calls will use this uniform data.
+    ///
+    /// The data being pushed must respect std140 layout conventions.
+    /// In practical terms this means you must ensure that vec3 and vec4 fields are 16-byte aligned.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn pushComputeUniformData(
+        self: CommandBuffer,
+        slot_index: u32,
+        data: []const u8,
+    ) void {
+        C.SDL_PushGPUComputeUniformData(
+            self.value,
+            slot_index,
+            data.ptr,
+            @intCast(data.len),
+        );
+    }
+
+    /// Submits a command buffer so its commands can be processed on the GPU.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    ///
+    /// ## Remarks
+    /// It is invalid to use the command buffer after this is called.
+    ///
+    /// This must be called from the thread the command buffer was acquired on.
+    ///
+    /// All commands in the submission are guaranteed to begin executing before any command in a subsequent submission begins executing.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn submit(
+        self: CommandBuffer,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_SubmitGPUCommandBuffer(self.value));
+    }
 };
 
 /// Specifies a comparison operator for depth, stencil and sampler operations.
@@ -567,6 +806,179 @@ pub const CompareOperation = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const ComputePass = packed struct {
     value: *C.SDL_GPUComputePass,
+
+    /// Binds a compute pipeline on a command buffer for use in compute dispatch.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A compute pass handle.
+    /// * `compute_pipeline`: A compute pipeline to bind.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindPipeline(
+        self: ComputePass,
+        compute_pipeline: ComputePipeline,
+    ) void {
+        C.SDL_BindGPUComputePipeline(self.value, compute_pipeline.value);
+    }
+
+    /// Binds texture-sampler pairs for use on the compute shader.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A compute pass handle.
+    /// * `first_slot`: The compute sampler slot to begin binding from.
+    /// * `texture_sampler_bindings`: Texture-sampler binding structs.
+    ///
+    /// ## Remarks
+    /// The textures must have been created with `gpu.TextureUsageFlags.sampler`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindSamplers(
+        self: ComputePass,
+        first_slot: u32,
+        texture_sampler_bindings: []const TextureSamplerBinding,
+    ) void {
+        C.SDL_BindGPUComputeSamplers(
+            self.value,
+            first_slot,
+            @ptrCast(texture_sampler_bindings.ptr),
+            @intCast(texture_sampler_bindings.len),
+        );
+    }
+
+    /// Binds storage buffers as readonly for use on the compute pipeline.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A compute pass handle.
+    /// * `first_slot`: The compute storage buffer slot to begin binding from.
+    /// * `storage_buffers`: Storage buffer binding structs.
+    ///
+    /// ## Remarks
+    /// These buffers must have been created with `gpu.BufferStorageFlags.compute_storage_read`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindStorageBuffers(
+        self: ComputePass,
+        first_slot: u32,
+        storage_buffers: []const Buffer,
+    ) void {
+        C.SDL_BindGPUComputeStorageBuffers(
+            self.value,
+            first_slot,
+            @ptrCast(storage_buffers.ptr),
+            @intCast(storage_buffers.len),
+        );
+    }
+
+    /// Binds storage textures as readonly for use on the compute pipeline.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A compute pass handle.
+    /// * `first_slot`: The compute storage texture slot to begin binding from.
+    /// * `storage_textures`: Storage textures.
+    ///
+    /// ## Remarks
+    /// These textures must have been created with `gpu.TextureStorageFlags.compute_storage_read`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindStorageTextures(
+        self: ComputePass,
+        first_slot: u32,
+        storage_textures: []const Texture,
+    ) void {
+        C.SDL_BindGPUComputeStorageTextures(
+            self.value,
+            first_slot,
+            @ptrCast(storage_textures.ptr),
+            @intCast(storage_textures.len),
+        );
+    }
+
+    /// Dispatches compute work.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A compute pass handle.
+    /// * `group_count_x`: Number of local workgroups to dispatch in the X dimension.
+    /// * `group_count_y`: Number of local workgroups to dispatch in the Y dimension.
+    /// * `group_count_z`: Number of local workgroups to dispatch in the Z dimension.
+    ///
+    /// ## Remarks
+    /// You must not call this function before binding a compute pipeline.
+    ///
+    /// A VERY IMPORTANT NOTE If you dispatch multiple times in a compute pass, and the dispatches write to the same resource region as each other,
+    /// there is no guarantee of which order the writes will occur.
+    /// If the write order matters, you MUST end the compute pass and begin another one.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn dispatch(
+        self: ComputePass,
+        group_count_x: u32,
+        group_count_y: u32,
+        group_count_z: u32,
+    ) void {
+        C.SDL_DispatchGPUCompute(
+            self.value,
+            group_count_x,
+            group_count_y,
+            group_count_z,
+        );
+    }
+
+    /// Dispatches compute work with parameters set from a buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A compute pass handle.
+    /// * `buffer`: A buffer containing dispatch parameters.
+    /// * `offset`: The offset to start reading from the dispatch buffer.
+    ///
+    /// ## Remarks
+    /// The buffer layout should match the layout of `gpu.IndirectDispatchCommand`.
+    /// You must not call this function before binding a compute pipeline.
+    ///
+    /// A VERY IMPORTANT NOTE If you dispatch multiple times in a compute pass, and the dispatches write to the same resource region as each other,
+    /// there is no guarantee of which order the writes will occur.
+    /// If the write order matters, you MUST end the compute pass and begin another one.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn dispatchIndirect(
+        self: ComputePass,
+        buffer: Buffer,
+        offset: u32,
+    ) void {
+        C.SDL_DispatchGPUComputeIndirect(
+            self.value,
+            buffer.value,
+            offset,
+        );
+    }
+
+    /// Ends the current compute pass.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A compute pass handle.
+    ///
+    /// ## Remarks
+    /// All bound compute state on the command buffer is unset.
+    /// The compute pass handle is now invalid.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn end(
+        self: ComputePass,
+    ) void {
+        C.SDL_EndGPUComputePass(self.value);
+    }
 };
 
 /// An opaque handle representing a compute pipeline.
@@ -578,6 +990,81 @@ pub const ComputePass = packed struct {
 /// This struct is available since SDL 3.2.0.
 pub const ComputePipeline = packed struct {
     value: *C.SDL_GPUComputePipeline,
+};
+
+/// A structure specifying the parameters of a compute pipeline state.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const ComputePipelineCreateInfo = struct {
+    /// Compute shader code.
+    code: []const u8,
+    /// A UTF-8 string specifying the entry point function name for the shader.
+    entry_point: [:0]const u8,
+    /// The format of the compute shader code.
+    format: ?ShaderFormat,
+    /// The number of samplers defined in the shader.
+    num_samplers: u32,
+    /// The number of readonly storage textures defined in the shader.
+    num_readonly_storage_textures: u32,
+    /// The number of readonly storage buffers defined in the shader.
+    num_readonly_storage_buffers: u32,
+    /// The number of read-write storage textures defined in the shader.
+    num_readwrite_storage_textures: u32,
+    /// The number of read-write storage buffers defined in the shader.
+    num_readwrite_storage_buffers: u32,
+    /// The number of uniform buffers defined in the shader.
+    num_uniform_buffers: u32,
+    /// The number of threads in the X dimension.
+    /// This should match the value in the shader.
+    thread_count_x: u32,
+    /// The number of threads in the Y dimension.
+    /// This should match the value in the shader.
+    thread_count_y: u32,
+    /// The number of threads in the Z dimension.
+    /// This should match the value in the shader.
+    thread_count_z: u32,
+    /// A properties group for extensions.
+    /// Should be `null` if no extensions are needed.
+    props: ?properties.Group,
+
+    /// From an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUComputePipelineCreateInfo) ComputePipelineCreateInfo {
+        return .{
+            .code = value.code[0..value.code_size],
+            .entry_point = std.mem.span(value.entrypoint),
+            .format = ShaderFormat.fromSdl(value.format),
+            .num_samplers = value.num_samplers,
+            .num_readonly_storage_textures = value.num_readonly_storage_textures,
+            .num_readonly_storage_buffers = value.num_readonly_storage_buffers,
+            .num_readwrite_storage_textures = value.num_readwrite_storage_textures,
+            .num_readwrite_storage_buffers = value.num_readwrite_storage_buffers,
+            .num_uniform_buffers = value.num_uniform_buffers,
+            .thread_count_x = value.threadcount_x,
+            .thread_count_y = value.threadcount_y,
+            .thread_count_z = value.threadcount_z,
+            .props = if (value.props == 0) null else .{ .value = value.props },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: ComputePipelineCreateInfo) C.SDL_GPUComputePipelineCreateInfo {
+        return .{
+            .code = self.code.ptr,
+            .code_size = self.code.len,
+            .format = ShaderFormat.toSdl(self.format),
+            .num_samplers = self.num_samplers,
+            .num_readonly_storage_textures = self.num_readonly_storage_textures,
+            .num_readonly_storage_buffers = self.num_readonly_storage_buffers,
+            .num_readwrite_storage_textures = self.num_readwrite_storage_textures,
+            .num_readwrite_storage_buffers = self.num_readwrite_storage_buffers,
+            .num_uniform_buffers = self.num_uniform_buffers,
+            .threadcount_x = self.thread_count_x,
+            .threadcount_y = self.thread_count_y,
+            .threadcount_z = self.thread_count_z,
+            .props = if (self.props) |val| val.value else 0,
+        };
+    }
 };
 
 /// An opaque handle representing a copy pass.
@@ -620,12 +1107,186 @@ pub const CullMode = enum(c_uint) {
     back = C.SDL_GPU_CULLMODE_BACK,
 };
 
+/// A structure specifying the parameters of the graphics pipeline depth stencil state. TODO!!!
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const DepthStencilState = struct {
+    compare: CompareOperation,
+    // back_stencil_state: StencilOperation
+};
+
+/// A structure specifying the parameters of a depth-stencil target used by a render pass.
+///
+/// ## Remarks
+/// The `load` field determines what is done with the depth contents of the texture at the beginning of the render pass:
+/// * `gpu.LoadOperation.load`: Loads the depth values currently in the texture.
+/// * `gpu.LoadOperation.clear`: Clears the texture to a single depth.
+/// * `gpu.LoadOperation.do_not_care`: The driver will do whatever it wants with the memory. This is a good option if you know that every single pixel will be touched in the render pass.
+///
+/// The `store` field determines what is done with the depth results of the render pass:
+/// * `gpu.StoreOperation.store`: Stores the depth results in the texture.
+/// * `gpu.StoreOperation.do_not_care`: The driver will do whatever it wants with the depth results. This is often a good option for depth/stencil textures that don't need to be reused again.
+///
+/// The `stencil_load` field determines what is done with the stencil contents of the texture at the beginning of the render pass:
+/// * `gpu.LoadOperation.load`: Loads the stencil values currently in the texture.
+/// * `gpu.LoadOperation.clear`: Clears the stencil values to a single value.
+/// * `gpu.LoadOperation.do_not_care`: The driver will do whatever it wants with the memory. This is a good option if you know that every single pixel will be touched in the render pass.
+///
+/// The `stencil_store` field determines what is done with the stencil results of the render pass:
+/// * `gpu.StoreOperation.store`: Stores the stencil results in the texture.
+/// * `gpu.StoreOperation.do_not_care`: The driver will do whatever it wants with the stencil results. This is often a good option for depth/stencil textures that don't need to be reused again.
+///
+/// Note that depth/stencil targets do not support multisample resolves.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const DepthStencilTargetInfo = struct {
+    /// The texture that will be used as the depth stencil target by the render pass.
+    texture: Texture,
+    /// The value to clear the depth component to at the beginning of the render pass.
+    /// Ignored if `gpu.LoadOperation.clear` is not used.
+    clear_depth: f32,
+    /// What is done with the depth contents at the beginning of the render pass.
+    load: LoadOperation,
+    /// What is done with the depth results of the render pass.
+    store: StoreOperation,
+    /// What is done with the stencil contents at the beginning of the render pass.
+    stencil_load: LoadOperation,
+    /// What is done with the stencil results of the render pass.
+    stencil_store: StoreOperation,
+    /// True cycles the texture if the texture is bound and any load ops are not `gpu.LoadOperation.load`.
+    cycle: bool,
+    /// The value to clear the stencil component to at the beginning of the render pass.
+    /// Ignored if `gpu.LoadOperation.clear` is not used.
+    clear_stencil: u8,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUDepthStencilTargetInfo) DepthStencilTargetInfo {
+        return .{
+            .texture = .{ .value = value.texture.? },
+            .clear_depth = value.clear_depth,
+            .load = @enumFromInt(value.load_op),
+            .store = @enumFromInt(value.store_op),
+            .stencil_load = @enumFromInt(value.stencil_load_op),
+            .stencil_store = @enumFromInt(value.stencil_store_op),
+            .cycle = value.cycle,
+            .clear_stencil = value.clear_stencil,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: DepthStencilTargetInfo) C.SDL_GPUDepthStencilTargetInfo {
+        return .{
+            .texture = self.texture.value,
+            .clear_depth = self.clear_depth,
+            .load_op = @intFromEnum(self.load),
+            .store_op = @intFromEnum(self.store),
+            .stencil_load_op = @intFromEnum(self.stencil_load),
+            .stencil_store_op = @intFromEnum(self.stencil_store),
+            .cycle = self.cycle,
+            .clear_stencil = self.clear_stencil,
+        };
+    }
+};
+
 /// An opaque handle representing the SDL_GPU context.
 ///
 /// ## Version
 /// This struct is available since SDL 3.2.0.
 pub const Device = packed struct {
     value: *C.SDL_GPUDevice,
+
+    /// Acquire a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    ///
+    /// ## Return Value
+    /// Returns a command buffer.
+    ///
+    /// ## Remarks
+    /// This command buffer is managed by the implementation and should not be freed by the user.
+    /// The command buffer may only be used on the thread it was acquired on.
+    /// The command buffer should be submitted on the thread it was acquired on.
+    ///
+    /// It is valid to acquire multiple command buffers on the same thread at once.
+    /// In fact a common design pattern is to acquire two command buffers per frame where one is dedicated to render and compute passes
+    /// and the other is dedicated to copy passes and other preparatory work such as generating mipmaps.
+    /// Interleaving commands between the two command buffers reduces the total amount of passes overall which improves rendering performance.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn aquireCommandBuffer(
+        self: Device,
+    ) !CommandBuffer {
+        return .{
+            .value = try errors.wrapNull(*C.SDL_GPUCommandBuffer, C.SDL_AcquireGPUCommandBuffer(self.value)),
+        };
+    }
+
+    /// Creates a pipeline object to be used in a compute workflow.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context.
+    /// * `create_info`: A struct describing the state of the compute pipeline to create.
+    ///
+    /// ## Return Value
+    /// Returns a compute pipeline object.
+    ///
+    /// ## Remarks
+    /// Shader resource bindings must be authored to follow a particular order depending on the shader format.
+    ///
+    /// For SPIR-V shaders, use the following resource sets:
+    /// * `0`: Sampled textures, followed by read-only storage textures, followed by read-only storage buffers.
+    /// * `1`: Read-write storage textures, followed by read-write storage buffers.
+    /// * `2`: Uniform buffers.
+    ///
+    /// For DXBC and DXIL shaders, use the following register order:
+    /// * `(t[n], space0)`: Sampled textures, followed by read-only storage textures, followed by read-only storage buffers.
+    /// * `(u[n], space1)`: Read-write storage textures, followed by read-write storage buffers.
+    /// * `(b[n], space2)`: Uniform buffers.
+    ///
+    /// For MSL/metallib, use the following order:
+    /// * `[[buffer]]`: Uniform buffers, followed by read-only storage buffers, followed by read-write storage buffers.
+    /// * `[[texture]]`: Sampled textures, followed by read-only storage textures, followed by read-write storage textures.
+    ///
+    /// There are optional properties that can be provided through `props`.
+    /// These are the supported properties:
+    /// * `SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING`: a name that can be displayed in debugging tools.
+    /// TODO: PROPER PROPERTY WRAPPING?
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createComputePipeline(
+        self: Device,
+        create_info: ComputePipelineCreateInfo,
+    ) !ComputePipeline {
+        const create_info_sdl = create_info.toSdl();
+        return .{
+            .value = errors.wrapNull(*C.SDL_GPUComputePipeline, C.SDL_CreateGPUComputePipeline(self.value, &create_info_sdl)),
+        };
+    }
+
+    /// Frees the given compute pipeline as soon as it is safe to do so.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `compute_pipeline`: A compute pipeline to be destroyed.
+    ///
+    /// ## Remarks
+    /// You must not reference the compute pipeline after calling this function.
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseComputePipeline(
+        self: Device,
+        compute_pipeline: ComputePipeline,
+    ) void {
+        C.SDL_ReleaseGPUComputePipeline(
+            self.value,
+            compute_pipeline.value,
+        );
+    }
 };
 
 /// An opaque handle representing a fence.
@@ -689,6 +1350,30 @@ pub const IndexElementSize = enum(c_uint) {
     indices_16bit = C.SDL_GPU_INDEXELEMENTSIZE_16BIT,
     /// The index elements are 32-bit.
     indices_32bit = C.SDL_GPU_INDEXELEMENTSIZE_32BIT,
+};
+
+/// A structure specifying the parameters of an indexed dispatch command.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const IndirectDispatchCommand = extern struct {
+    /// The number of local workgroups to dispatch in the X dimension.
+    group_count_x: u32,
+    /// The number of local workgroups to dispatch in the Y dimension.
+    group_count_y: u32,
+    /// The number of local workgroups to dispatch in the Z dimension.
+    group_count_z: u32,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUIndirectDispatchCommand) == @sizeOf(IndirectDispatchCommand));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDispatchCommand, "groupcount_x")) == @sizeOf(@FieldType(IndirectDispatchCommand, "group_count_x")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDispatchCommand, "groupcount_x") == @offsetOf(IndirectDispatchCommand, "group_count_x"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDispatchCommand, "groupcount_y")) == @sizeOf(@FieldType(IndirectDispatchCommand, "group_count_y")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDispatchCommand, "groupcount_y") == @offsetOf(IndirectDispatchCommand, "group_count_y"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDispatchCommand, "groupcount_z")) == @sizeOf(@FieldType(IndirectDispatchCommand, "group_count_z")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDispatchCommand, "groupcount_z") == @offsetOf(IndirectDispatchCommand, "group_count_z"));
+    }
 };
 
 /// Specifies how the contents of a texture attached to a render pass are treated at the beginning of the render pass.
@@ -908,6 +1593,61 @@ pub const StencilOperation = enum(c_uint) {
             return @intFromEnum(tmp);
         }
         return C.SDL_GPU_STENCILOP_INVALID;
+    }
+};
+
+/// A structure specifying parameters related to binding buffers in a compute pass.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const StorageBufferReadWriteBinding = extern struct {
+    /// The buffer to bind.
+    /// Must have been created with `gpu.BufferUsageFlags.compute_storage_write`.
+    buffer: Buffer,
+    /// If true, cycles the buffer if it is already bound.
+    cycle: bool,
+    _1: u8 = 0,
+    _2: u8 = 0,
+    _3: u8 = 0,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUStorageBufferReadWriteBinding) == @sizeOf(StorageBufferReadWriteBinding));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUStorageBufferReadWriteBinding, "buffer")) == @sizeOf(@FieldType(StorageBufferReadWriteBinding, "buffer")));
+        std.debug.assert(@offsetOf(C.SDL_GPUStorageBufferReadWriteBinding, "buffer") == @offsetOf(StorageBufferReadWriteBinding, "buffer"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUStorageBufferReadWriteBinding, "cycle")) == @sizeOf(@FieldType(StorageBufferReadWriteBinding, "cycle")));
+        std.debug.assert(@offsetOf(C.SDL_GPUStorageBufferReadWriteBinding, "cycle") == @offsetOf(StorageBufferReadWriteBinding, "cycle"));
+    }
+};
+
+/// A structure specifying parameters related to binding textures in a compute pass.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const StorageTextureReadWriteBinding = extern struct {
+    /// The texture to bind. Must have been created with `gpu.TextureUsageFlags.compute_storage_write` or `gpu.TextureUsageFlags.compute_storage_simultaneous_read_write`.
+    texture: Texture,
+    /// The mip level index to bind.
+    mip_level: u32,
+    /// The layer index to bind.
+    layer: u32,
+    /// If true, cycles the buffer if it is already bound.
+    cycle: bool,
+    _1: u8 = 0,
+    _2: u8 = 0,
+    _3: u8 = 0,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUStorageTextureReadWriteBinding) == @sizeOf(StorageTextureReadWriteBinding));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUStorageTextureReadWriteBinding, "texture")) == @sizeOf(@FieldType(StorageTextureReadWriteBinding, "texture")));
+        std.debug.assert(@offsetOf(C.SDL_GPUStorageTextureReadWriteBinding, "texture") == @offsetOf(StorageTextureReadWriteBinding, "texture"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUStorageTextureReadWriteBinding, "mip_level")) == @sizeOf(@FieldType(StorageTextureReadWriteBinding, "mip_level")));
+        std.debug.assert(@offsetOf(C.SDL_GPUStorageTextureReadWriteBinding, "mip_level") == @offsetOf(StorageTextureReadWriteBinding, "mip_level"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUStorageTextureReadWriteBinding, "layer")) == @sizeOf(@FieldType(StorageTextureReadWriteBinding, "layer")));
+        std.debug.assert(@offsetOf(C.SDL_GPUStorageTextureReadWriteBinding, "layer") == @offsetOf(StorageTextureReadWriteBinding, "layer"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUStorageTextureReadWriteBinding, "cycle")) == @sizeOf(@FieldType(StorageTextureReadWriteBinding, "cycle")));
+        std.debug.assert(@offsetOf(C.SDL_GPUStorageTextureReadWriteBinding, "cycle") == @offsetOf(StorageTextureReadWriteBinding, "cycle"));
     }
 };
 
@@ -1139,6 +1879,27 @@ pub const TextureFormat = enum(c_uint) {
     astc_12x12_float_compressed = C.SDL_GPU_TEXTUREFORMAT_ASTC_12x12_FLOAT,
 };
 
+/// A structure specifying parameters in a sampler binding call.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const TextureSamplerBinding = extern struct {
+    /// The texture to bind.
+    /// Must have been created with `gpu.TextureUsageFlags.sampler`.
+    texture: Texture,
+    /// The sampler to bind.
+    sampler: Sampler,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUTextureSamplerBinding) == @sizeOf(TextureSamplerBinding));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUTextureSamplerBinding, "texture")) == @sizeOf(@FieldType(TextureSamplerBinding, "texture")));
+        std.debug.assert(@offsetOf(C.SDL_GPUTextureSamplerBinding, "texture") == @offsetOf(TextureSamplerBinding, "texture"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUTextureSamplerBinding, "sampler")) == @sizeOf(@FieldType(TextureSamplerBinding, "sampler")));
+        std.debug.assert(@offsetOf(C.SDL_GPUTextureSamplerBinding, "sampler") == @offsetOf(TextureSamplerBinding, "sampler"));
+    }
+};
+
 /// Specifies the type of a texture.
 ///
 /// ## Version
@@ -1312,4 +2073,57 @@ pub const VertexInputRate = enum(c_uint) {
 };
 
 // Test the GPU.
-test "Gpu" {}
+test "Gpu" {
+    _ = BufferBinding{
+        .buffer = undefined,
+        .offset = undefined,
+    };
+    _ = ColorComponentFlags{};
+    _ = ColorTargetBlendState{
+        .alpha_blend = undefined,
+        .color_blend = undefined,
+        .color_write_mask = undefined,
+        .destination_alpha = undefined,
+        .destination_color = undefined,
+        .enable_blend = undefined,
+        .enable_color_write_mask = undefined,
+        .source_alpha = undefined,
+        .source_color = undefined,
+    };
+    _ = ColorTargetDescription{
+        .blend_state = undefined,
+        .format = undefined,
+    };
+    _ = ColorTargetInfo{
+        .clear_color = undefined,
+        .cycle = undefined,
+        .cycle_resolve_texture = undefined,
+        .layer_or_depth_plane = undefined,
+        .load = undefined,
+        .mip_level = undefined,
+        .resolve_layer = undefined,
+        .resolve_mip_level = undefined,
+        .texture = undefined,
+        .store = undefined,
+        .resolve_texture = undefined,
+    };
+    _ = IndirectDispatchCommand{
+        .group_count_x = undefined,
+        .group_count_y = undefined,
+        .group_count_z = undefined,
+    };
+    _ = StorageBufferReadWriteBinding{
+        .cycle = undefined,
+        .buffer = undefined,
+    };
+    _ = StorageTextureReadWriteBinding{
+        .texture = undefined,
+        .mip_level = undefined,
+        .layer = undefined,
+        .cycle = undefined,
+    };
+    _ = TextureSamplerBinding{
+        .texture = undefined,
+        .sampler = undefined,
+    };
+}
