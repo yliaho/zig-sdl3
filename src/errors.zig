@@ -16,6 +16,22 @@ pub const Error = error{
     SdlError,
 };
 
+/// Call the thread-local user-provided error callback function.
+///
+/// ## Remarks
+/// You probably want to set `error_callback` for this to do anything.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This is provided by zig-sdl3.
+pub fn callErrorCallback() void {
+    if (@This().error_callback) |cb| {
+        cb(get());
+    }
+}
+
 /// Clear any previous error message for this thread.
 ///
 /// ## Thread Safety
@@ -160,9 +176,7 @@ pub fn wrapCall(
 ) !Result {
     if (result != error_condition)
         return result;
-    if (@This().error_callback) |cb| {
-        cb(get());
-    }
+    callErrorCallback();
     return error.SdlError;
 }
 
@@ -205,9 +219,7 @@ pub fn wrapCallCPtr(
 ) ![*]Result {
     if (result) |val|
         return val;
-    if (@This().error_callback) |cb| {
-        cb(get());
-    }
+    callErrorCallback();
     return error.SdlError;
 }
 
@@ -231,9 +243,7 @@ pub fn wrapCallCPtrConst(
 ) ![*]const Result {
     if (result) |val|
         return val;
-    if (@This().error_callback) |cb| {
-        cb(get());
-    }
+    callErrorCallback();
     return error.SdlError;
 }
 
@@ -255,6 +265,7 @@ pub fn wrapCallCString(
 ) ![:0]const u8 {
     if (result != null)
         return std.mem.span(result);
+    callErrorCallback();
     return error.SdlError;
 }
 
@@ -278,15 +289,14 @@ pub fn wrapNull(
 ) !Result {
     if (result) |val|
         return val;
-    if (@This().error_callback) |cb| {
-        cb(get());
-    }
+    callErrorCallback();
     return error.SdlError;
 }
 
 // Make sure error getting and setting works properly.
 test "Error" {
     clear();
+    callErrorCallback();
     try std.testing.expectEqual(null, get());
     try std.testing.expectError(error.SdlError, invalidParamError("Hello world"));
     try std.testing.expectEqualStrings("Parameter 'Hello world' is invalid", get().?);

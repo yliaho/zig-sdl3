@@ -709,6 +709,50 @@ pub const CommandBuffer = packed struct {
         };
     }
 
+    /// Blits from a source texture region to a destination texture region.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `info`: The blit info struct containing the blit parameters.
+    ///
+    /// ## Remarks
+    /// This function must not be called inside of any pass.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn blitTexture(
+        self: CommandBuffer,
+        blit_info: BlitInfo,
+    ) void {
+        const blit_info_sdl = blit_info.toSdl();
+        C.SDL_BlitGPUTexture(
+            self.value,
+            &blit_info_sdl,
+        );
+    }
+
+    /// Cancels a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    ///
+    /// ## Remarks
+    /// None of the enqueued commands are executed.
+    ///
+    /// It is an error to call this function after a swapchain texture has been acquired.
+    ///
+    /// This must be called from the thread the command buffer was acquired on.
+    ///
+    /// You must not reference the command buffer after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn cancel(
+        self: CommandBuffer,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_CancelGPUCommandBuffer(self.value));
+    }
+
     /// Pushes data to a uniform slot on the command buffer.
     ///
     /// ## Function Parameters
@@ -1002,7 +1046,7 @@ pub const ComputePipelineCreateInfo = struct {
     /// A UTF-8 string specifying the entry point function name for the shader.
     entry_point: [:0]const u8,
     /// The format of the compute shader code.
-    format: ?ShaderFormat,
+    format: ?ShaderFormatFlags,
     /// The number of samplers defined in the shader.
     num_samplers: u32,
     /// The number of readonly storage textures defined in the shader.
@@ -1033,7 +1077,7 @@ pub const ComputePipelineCreateInfo = struct {
         return .{
             .code = value.code[0..value.code_size],
             .entry_point = std.mem.span(value.entrypoint),
-            .format = ShaderFormat.fromSdl(value.format),
+            .format = ShaderFormatFlags.fromSdl(value.format),
             .num_samplers = value.num_samplers,
             .num_readonly_storage_textures = value.num_readonly_storage_textures,
             .num_readonly_storage_buffers = value.num_readonly_storage_buffers,
@@ -1052,7 +1096,7 @@ pub const ComputePipelineCreateInfo = struct {
         return .{
             .code = self.code.ptr,
             .code_size = self.code.len,
-            .format = ShaderFormat.toSdl(self.format),
+            .format = ShaderFormatFlags.toSdl(self.format),
             .num_samplers = self.num_samplers,
             .num_readonly_storage_textures = self.num_readonly_storage_textures,
             .num_readonly_storage_buffers = self.num_readonly_storage_buffers,
@@ -1076,6 +1120,78 @@ pub const ComputePipelineCreateInfo = struct {
 /// This struct is available since SDL 3.2.0.
 pub const CopyPass = packed struct {
     value: *C.SDL_GPUCopyPass,
+
+    /// Performs a buffer-to-buffer copy.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A copy pass handle.
+    /// * `source`: The buffer and offset to copy from.
+    /// * `destination`: The buffer and offset to copy to.
+    /// * `size`: The length of the buffer to copy.
+    /// * `cycle`: If true, cycles the destination buffer if it is already bound, otherwise overwrites the data.
+    ///
+    /// ## Remarks
+    /// This copy occurs on the GPU timeline.
+    /// You may assume the copy has finished in subsequent commands.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bufferToBuffer(
+        self: CopyPass,
+        source: BufferLocation,
+        destination: BufferLocation,
+        size: u32,
+        cycle: bool,
+    ) void {
+        const source_sdl = source.toSdl();
+        const destination_sdl = destination.toSdl();
+        C.SDL_CopyGPUBufferToBuffer(
+            self.value,
+            &source_sdl,
+            &destination_sdl,
+            size,
+            cycle,
+        );
+    }
+
+    /// Performs a buffer-to-buffer copy.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A copy pass handle.
+    /// * `source`: A source texture region.
+    /// * `destination`: A destination texture region.
+    /// * `width`: The width of the region to copy.
+    /// * `height`: The height of the region to copy.
+    /// * `depth`: The depth of the region to copy.
+    /// * `cycle`: If true, cycles the destination buffer if it is already bound, otherwise overwrites the data.
+    ///
+    /// ## Remarks
+    /// This copy occurs on the GPU timeline.
+    /// You may assume the copy has finished in subsequent commands.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn textureToTexture(
+        self: CopyPass,
+        source: TextureLocation,
+        destination: TextureLocation,
+        width: u32,
+        height: u32,
+        depth: u32,
+        cycle: bool,
+    ) void {
+        const source_sdl = source.toSdl();
+        const destination_sdl = destination.toSdl();
+        C.SDL_CopyGPUTextureToTexture(
+            self.value,
+            &source_sdl,
+            &destination_sdl,
+            width,
+            height,
+            depth,
+            cycle,
+        );
+    }
 };
 
 /// Specifies the face of a cube map.
@@ -1112,8 +1228,50 @@ pub const CullMode = enum(c_uint) {
 /// ## Version
 /// This struct is available since SDL 3.2.0.
 pub const DepthStencilState = struct {
+    /// The comparison operator used for depth testing.
     compare: CompareOperation,
-    // back_stencil_state: StencilOperation
+    /// The stencil op state for back-facing triangles.
+    back_stencil_state: StencilOperationState,
+    /// The stencil op state for front-facing triangles.
+    front_stencil_state: StencilOperationState,
+    /// Selects the bits of the stencil values participating in the stencil test.
+    compare_mask: u8,
+    /// Selects the bits of the stencil values updated by the stencil test.
+    write_mask: u8,
+    /// True enables the depth test.
+    enable_depth_test: bool,
+    /// True enables depth writes. Depth writes are always disabled when `enable_depth_test` is false.
+    enable_depth_write: bool,
+    /// True enables the stencil test.
+    enable_stencil_test: bool,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUDepthStencilState) DepthStencilState {
+        return .{
+            .compare = @enumFromInt(value.compare_op),
+            .back_stencil_state = StencilOperationState.fromSdl(value.back_stencil_state),
+            .front_stencil_state = StencilOperationState.fromSdl(value.front_stencil_state),
+            .compare_mask = value.compare_mask,
+            .write_mask = value.write_mask,
+            .enable_depth_test = value.enable_depth_test,
+            .enable_depth_write = value.enable_depth_write,
+            .enable_stencil_test = value.enable_stencil_test,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: DepthStencilState) C.SDL_GPUDepthStencilState {
+        return .{
+            .compare_op = @intFromEnum(self.compare),
+            .back_stencil_state = self.back_stencil_state.toSdl(),
+            .front_stencil_state = self.front_stencil_state.toSdl(),
+            .compare_mask = self.compare_mask,
+            .write_mask = self.write_mask,
+            .enable_depth_test = self.enable_depth_test,
+            .enable_depth_write = self.enable_depth_write,
+            .enable_stencil_test = self.enable_stencil_test,
+        };
+    }
 };
 
 /// A structure specifying the parameters of a depth-stencil target used by a render pass.
@@ -1225,6 +1383,74 @@ pub const Device = packed struct {
         };
     }
 
+    /// Claims a window, creating a swapchain structure for it.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `window`: An SDL window.
+    ///
+    /// ## Remarks
+    /// This must be called before `gpu.CommandBuffer.aquireSwapchainTexture()` is called using the window.
+    /// You should only call this function from the thread that created the window.
+    ///
+    /// The swapchain will be created with `gpu.SwapChainComposition.sdr` and `gpu.PresentMode.vsync`.
+    /// If you want to have different swapchain parameters, you must call `gpu.Device.setSwapchainParameters()` after claiming the window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called from the thread that created the window.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn claimWindow(
+        self: Device,
+        window: video.Window,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_ClaimWindowForGPUDevice(
+            self.value,
+            window.value,
+        ));
+    }
+
+    /// Creates a buffer object to be used in graphics or compute workflows.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context.
+    /// * `create_info`: Struct describing the state of the buffer to create.
+    ///
+    /// ## Return Value
+    /// Creates a buffer object.
+    ///
+    /// ## Remarks
+    /// The contents of this buffer are undefined until data is written to the buffer.
+    ///
+    /// Note that certain combinations of usage flags are invalid.
+    /// For example, a buffer cannot have both the `gpu.BufferUsageFlags.vertex` and `gpu.BufferUsageFlags.index` flags.
+    ///
+    /// If you use a `gpu.BufferUsageFlags.storage` flag, the data in the buffer must respect std140 layout conventions.
+    /// In practical terms this means you must ensure that `vec3` and `vec4` fields are 16-byte aligned.
+    ///
+    /// For better understanding of underlying concepts and memory management with SDL GPU API, you may refer [this blog post](https://moonside.games/posts/sdl-gpu-concepts-cycling/).
+    ///
+    /// There are optional properties that can be provided through props.
+    /// These are the supported properties:
+    /// * `SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING`: a name that can be displayed in debugging tools.
+    /// TODO: Dedicated creation properties?
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createBuffer(
+        self: Device,
+        create_info: BufferCreateInfo,
+    ) !Buffer {
+        const create_info_sdl = create_info.toSdl();
+        return .{
+            .value = try errors.wrapNull(
+                *C.SDL_GPUBuffer,
+                C.SDL_CreateGPUBuffer(self.value, &create_info_sdl),
+            ),
+        };
+    }
+
     /// Creates a pipeline object to be used in a compute workflow.
     ///
     /// ## Function Parameters
@@ -1268,6 +1494,83 @@ pub const Device = packed struct {
         };
     }
 
+    /// Creates a pipeline object to be used in a graphics workflow.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context.
+    /// * `create_info`: A struct describing the state of the graphics pipeline to create.
+    ///
+    /// ## Return Value
+    /// Returns a graphics pipeline object.
+    ///
+    /// ## Remarks
+    /// There are optional properties that can be provided through `props`.
+    /// These are the supported properties:
+    /// * `SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING`: A name that can be displayed in debugging tools.
+    /// TODO: PROPER PROPERTY WRAPPING?
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createGraphicsPipeline(
+        self: Device,
+        create_info: GraphicsPipelineCreateInfo,
+    ) !GraphicsPipeline {
+        return .{
+            .value = errors.wrapNull(*C.SDL_GPUGraphicsPipeline, C.SDL_CreateGPUGraphicsPipeline(
+                self.value,
+                create_info.toSdl(),
+            )),
+        };
+    }
+
+    /// Destroys a GPU context previously returned by `gpu.Device.init().
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context to destroy.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinit(
+        self: Device,
+    ) void {
+        return C.SDL_DestroyGPUDevice(
+            self.value,
+        );
+    }
+
+    /// Creates a GPU context.
+    ///
+    /// ## Function Parameters
+    /// * `shader_format`: A bitflag indicating which shader formats the app is able to provide.
+    /// * `debug_mode`: Enable debug mode properties and validations.
+    /// * `name`: The preferred GPU driver, or `null` to let SDL pick the optimal driver.
+    ///
+    /// ## Return Value
+    /// Returns a GPU context.
+    ///
+    /// ## Remarks
+    /// The GPU driver name can be one of the following:
+    /// * `"vulkan"`: [Vulkan](https://wiki.libsdl.org/SDL3/CategoryGPU#vulkan).
+    /// * `"direct3d12"`: [D3D12](https://wiki.libsdl.org/SDL3/CategoryGPU#d3d12).
+    /// * `"metal"`: [Metal](https://wiki.libsdl.org/SDL3/CategoryGPU#metal).
+    /// * `null`: Let SDL pick the optimal driver.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn init(
+        shader_format: ShaderFormatFlags,
+        debug_mode: bool,
+        name: ?[:0]const u8,
+    ) !Device {
+        return .{
+            .value = errors.wrapNull(*C.SDL_GPUDevice, C.SDL_CreateGPUDevice(
+                ShaderFormatFlags.toSdl(shader_format),
+                debug_mode,
+                if (name) |val| val.ptr else null,
+            )),
+        };
+    }
+
     /// Frees the given compute pipeline as soon as it is safe to do so.
     ///
     /// ## Function Parameters
@@ -1276,6 +1579,7 @@ pub const Device = packed struct {
     ///
     /// ## Remarks
     /// You must not reference the compute pipeline after calling this function.
+    ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn releaseComputePipeline(
@@ -1285,6 +1589,27 @@ pub const Device = packed struct {
         C.SDL_ReleaseGPUComputePipeline(
             self.value,
             compute_pipeline.value,
+        );
+    }
+
+    /// Frees the given graphics pipeline as soon as it is safe to do so.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `graphics_pipeline`: A graphics pipeline to be destroyed.
+    ///
+    /// ## Remarks
+    /// You must not reference the graphics pipeline after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseGraphicsPipeline(
+        self: Device,
+        graphics_pipeline: GraphicsPipeline,
+    ) void {
+        C.SDL_ReleaseGPUGraphicsPipeline(
+            self.value,
+            graphics_pipeline.value,
         );
     }
 };
@@ -1341,6 +1666,90 @@ pub const GraphicsPipeline = packed struct {
     value: *C.SDL_GPUGraphicsPipeline,
 };
 
+/// A structure specifying the parameters of a graphics pipeline state.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const GraphicsPipelineCreateInfo = struct {
+    /// The vertex shader used by the graphics pipeline.
+    vertex_shader: Shader,
+    /// The fragment shader used by the graphics pipeline.
+    fragment_shader: Shader,
+    /// The vertex layout of the graphics pipeline.
+    vertex_input_state: VertexInputState,
+    /// The primitive topology of the graphics pipeline.
+    primitive_type: PrimitiveType,
+    /// The rasterizer state of the graphics pipeline.
+    rasterizer_state: RasterizerState,
+    /// The multisample state of the graphics pipeline.
+    multisample_state: MultisampleState,
+    /// The depth-stencil state of the graphics pipeline.
+    depth_stencil_state: DepthStencilState,
+    /// Formats and blend modes for the render targets of the graphics pipeline.
+    target_info: GraphicsPipelineTargetInfo,
+    /// Extra properties for extensions.
+    props: ?properties.Group,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUGraphicsPipelineCreateInfo) GraphicsPipelineCreateInfo {
+        return .{
+            .vertex_shader = .{ .value = value.vertex_shader.? },
+            .fragment_shader = .{ .value = value.fragment_shader.? },
+            .vertex_input_state = VertexInputState.fromSdl(value.vertex_input_state),
+            .primitive_type = @enumFromInt(value.primitive_type),
+            .rasterizer_state = RasterizerState.fromSdl(value.rasterizer_state),
+            .multisample_state = MultisampleState.fromSdl(value.multisample_state),
+            .depth_stencil_state = DepthStencilState.fromSdl(value.depth_stencil_state),
+            .target_info = GraphicsPipelineTargetInfo.fromSdl(value.target_info),
+            .props = if (value.props == 0) null else .{ .value = value.props },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: GraphicsPipelineCreateInfo) C.SDL_GPUGraphicsPipelineCreateInfo {
+        return .{
+            .vertex_shader = self.vertex_shader.value,
+            .fragment_shader = self.fragment_shader.value,
+            .vertex_input_state = self.vertex_input_state.toSdl(),
+            .primitive_type = @intFromEnum(self.primitive_type),
+            .rasterizer_state = self.rasterizer_state.toSdl(),
+            .multisample_state = self.multisample_state.toSdl(),
+            .depth_stencil_state = self.depth_stencil_state.toSdl(),
+            .target_info = self.target_info.toSdl(),
+            .props = if (self.props) |val| val.value else 0,
+        };
+    }
+};
+
+/// A structure specifying the descriptions of render targets used in a graphics pipeline.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const GraphicsPipelineTargetInfo = struct {
+    /// Color target descriptions.
+    color_target_descriptions: []const ColorTargetDescription,
+    /// The pixel format of the depth-stencil target if used.
+    depth_stencil_format: ?TextureFormat,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUGraphicsPipelineTargetInfo) GraphicsPipelineTargetInfo {
+        return .{
+            .color_target_descriptions = @as([*]const ColorTargetDescription, @ptrCast(value.color_target_descriptions))[0..@intCast(value.num_color_targets)],
+            .depth_stencil_format = if (value.has_depth_stencil_target) @enumFromInt(value.depth_stencil_format) else null,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: GraphicsPipelineTargetInfo) C.SDL_GPUGraphicsPipelineTargetInfo {
+        return .{
+            .color_target_descriptions = @ptrCast(self.color_target_descriptions.ptr),
+            .num_color_targets = @intCast(self.color_target_descriptions.len),
+            .has_depth_stencil_target = self.depth_stencil_format != null,
+            .depth_stencil_format = if (self.depth_stencil_format) |val| @intFromEnum(val) else 0,
+        };
+    }
+};
+
 /// Specifies the size of elements in an index buffer.
 ///
 /// ## Version
@@ -1388,6 +1797,43 @@ pub const LoadOperation = enum(c_uint) {
     /// The previous contents of the texture need not be preserved.
     /// The contents will be undefined.
     do_not_care = C.SDL_GPU_LOADOP_DONT_CARE,
+};
+
+/// A structure specifying the parameters of the graphics pipeline multisample state.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const MultisampleState = struct {
+    /// The number of samples to be used in rasterization.
+    sample_count: SampleCount,
+    /// Reserved for future use.
+    /// Must be set to 0.
+    sample_mask: u32 = 0,
+    /// Reserved for future use.
+    /// Must be set to false.
+    enable_mask: bool = false,
+    // /// True enables the alpha-to-coverage feature.
+    // enable_alpha_to_coverage: bool,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUMultisampleState) MultisampleState {
+        return .{
+            .sample_count = @enumFromInt(value.sample_count),
+            .sample_mask = value.sample_mask,
+            .enable_mask = value.enable_mask,
+            // .enable_alpha_to_coverage = value.enable_alpha_to_coverage,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: MultisampleState) C.SDL_GPUMultisampleState {
+        return .{
+            .sample_count = @intFromEnum(self.sample_count),
+            .sample_mask = self.sample_mask,
+            .enable_mask = self.enable_mask,
+            // .enable_alpha_to_coverage = self.enable_alpha_to_coverage,
+        };
+    }
 };
 
 /// Specifies the timing that will be used to present swapchain textures to the OS.
@@ -1445,6 +1891,64 @@ pub const PrimitiveType = enum(c_uint) {
     point_list = C.SDL_GPU_PRIMITIVETYPE_POINTLIST,
 };
 
+/// A structure specifying the parameters of the graphics pipeline rasterizer state.
+///
+/// ## Remarks
+/// Note that `gpu.FillMode.line` is not supported on many Android devices.
+/// For those devices, the fill mode will automatically fall back to `gpu.FillMode.fill`.
+///
+/// Also note that the D3D12 driver will enable depth clamping even if `enable_depth_clip` is true.
+/// If you need this clamp + clip behavior, consider enabling depth clip and then manually clamping depth in your fragment shaders on Metal and Vulkan.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const RasterizerState = struct {
+    /// Whether polygons will be filled in or drawn as lines.
+    fill_mode: FillMode,
+    /// The facing direction in which triangles will be culled.
+    cull_mode: CullMode,
+    /// The vertex winding that will cause a triangle to be determined as front-facing.
+    front_face: FrontFace,
+    /// A scalar factor controlling the depth value added to each fragment.
+    depth_bias_constant_factor: f32,
+    /// The maximum depth bias of a fragment.
+    depth_bias_clamp: f32,
+    /// A scalar factor applied to a fragment's slope in depth calculations.
+    depth_bias_slope_factor: f32,
+    /// True to bias fragment depth values.
+    enable_depth_bias: bool,
+    /// True to enable depth clip, false to enable depth clamp.
+    enable_depth_clip: bool,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPURasterizerState) RasterizerState {
+        return .{
+            .fill_mode = @enumFromInt(value.fill_mode),
+            .cull_mode = @enumFromInt(value.cull_mode),
+            .front_face = @enumFromInt(value.front_face),
+            .depth_bias_constant_factor = value.depth_bias_constant_factor,
+            .depth_bias_clamp = value.depth_bias_clamp,
+            .depth_bias_slope_factor = value.depth_bias_slope_factor,
+            .enable_depth_bias = value.enable_depth_bias,
+            .enable_depth_clip = value.enable_depth_clip,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: RasterizerState) C.SDL_GPURasterizerState {
+        return .{
+            .fill_mode = @intFromEnum(self.fill_mode),
+            .cull_mode = @intFromEnum(self.cull_mode),
+            .front_face = @intFromEnum(self.front_face),
+            .depth_bias_constant_factor = self.depth_bias_constant_factor,
+            .depth_bias_clamp = self.depth_bias_clamp,
+            .depth_bias_slope_factor = self.depth_bias_slope_factor,
+            .enable_depth_bias = self.enable_depth_bias,
+            .enable_depth_clip = self.enable_depth_clip,
+        };
+    }
+};
+
 /// An opaque handle representing a render pass.
 ///
 /// ## Remarks
@@ -1454,6 +1958,232 @@ pub const PrimitiveType = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const RenderPass = packed struct {
     value: *C.SDL_GPURenderPass,
+
+    /// Binds texture-sampler pairs for use on the fragment shader.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `first_slot`: The fragment sampler slot to begin binding from.
+    /// * `texture_sampler_bindings`: Texture-sampler binding structs.
+    ///
+    /// ## Remarks
+    /// The textures must have been created with `gpu.TextureUsageFlags.sampler`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindFragmentSamplers(
+        self: RenderPass,
+        first_slot: u32,
+        texture_sampler_bindings: []const TextureSamplerBinding,
+    ) void {
+        C.SDL_BindGPUFragmentSamplers(
+            self.value,
+            first_slot,
+            @ptrCast(texture_sampler_bindings.ptr),
+            @intCast(texture_sampler_bindings.len),
+        );
+    }
+
+    /// Binds storage buffers for use on the fragment shader.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `first_slot`: The fragment storage buffer slot to begin binding from.
+    /// * `storage_buffers`: Storage buffers.
+    ///
+    /// ## Remarks
+    /// These textures must have been created with `gpu.BufferUsageFlags.graphics_storage_read`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindFragmentStorageBuffers(
+        self: RenderPass,
+        first_slot: u32,
+        storage_buffers: []const Buffer,
+    ) void {
+        C.SDL_BindGPUFragmentStorageBuffers(
+            self.value,
+            first_slot,
+            @ptrCast(storage_buffers.ptr),
+            @intCast(storage_buffers.len),
+        );
+    }
+
+    /// Binds storage textures for use on the fragment shader.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `first_slot`: The fragment storage texture slot to begin binding from.
+    /// * `storage_textures`: Storage textures.
+    ///
+    /// ## Remarks
+    /// These textures must have been created with `gpu.TextureUsageFlags.graphics_storage_read`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindFragmentStorageTextures(
+        self: RenderPass,
+        first_slot: u32,
+        storage_textures: []const Texture,
+    ) void {
+        C.SDL_BindGPUFragmentStorageTextures(
+            self.value,
+            first_slot,
+            @ptrCast(storage_textures.ptr),
+            @intCast(storage_textures.len),
+        );
+    }
+
+    /// Binds a graphics pipeline on a render pass to be used in rendering.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `graphics_pipeline`: The graphics pipeline to bind.
+    ///
+    /// ## Remarks
+    /// A graphics pipeline must be bound before making any draw calls.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindGraphicsPipeline(
+        self: RenderPass,
+        graphics_pipeline: GraphicsPipeline,
+    ) void {
+        C.SDL_BindGPUGraphicsPipeline(
+            self.value,
+            graphics_pipeline.value,
+        );
+    }
+
+    /// Binds an index buffer on a command buffer for use with subsequent draw calls.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `binding`: Struct containing an index buffer and offset.
+    /// * `index_element_size`: Whether the index values in the buffer are 16-bit or 32-bit.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindIndexBuffer(
+        self: RenderPass,
+        binding: BufferBinding,
+        index_element_size: IndexElementSize,
+    ) void {
+        C.SDL_BindGPUIndexBuffer(
+            self.value,
+            @ptrCast(&binding),
+            @intFromEnum(index_element_size),
+        );
+    }
+
+    /// Binds vertex buffers on a command buffer for use with subsequent draw calls.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `first_slot`: The vertex buffer slot to begin binding from.
+    /// * `bindings`: Structs containing vertex buffers and offset values.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindVertexBuffers(
+        self: RenderPass,
+        first_slot: u32,
+        bindings: []const BufferBinding,
+    ) void {
+        C.SDL_BindGPUVertexBuffers(
+            self.value,
+            first_slot,
+            @ptrCast(bindings.ptr),
+            @intCast(bindings.len),
+        );
+    }
+
+    /// Binds texture-sampler pairs for use on the vertex shader.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `first_slot`: The vertex sampler slot to begin binding from.
+    /// * `texture_sampler_bindings`: Texture-sampler binding structs.
+    ///
+    /// ## Remarks
+    /// The textures must have been created with `gpu.TextureUsageFlags.sampler`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindVertexSamplers(
+        self: RenderPass,
+        first_slot: u32,
+        texture_sampler_bindings: []const TextureSamplerBinding,
+    ) void {
+        C.SDL_BindGPUVertexSamplers(
+            self.value,
+            first_slot,
+            @ptrCast(texture_sampler_bindings.ptr),
+            @intCast(texture_sampler_bindings.len),
+        );
+    }
+
+    /// Binds storage buffers for use on the vertex shader.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `first_slot`: The vertex storage buffer slot to begin binding from.
+    /// * `storage_buffers`: Buffers.
+    ///
+    /// ## Remarks
+    /// These buffers must have been created with `gpu.BufferUsageFlags.graphics_storage_read`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindVertexStorageBuffers(
+        self: RenderPass,
+        first_slot: u32,
+        storage_buffers: []const Buffer,
+    ) void {
+        C.SDL_BindGPUVertexStorageBuffers(
+            self.value,
+            first_slot,
+            @ptrCast(storage_buffers.ptr),
+            @intCast(storage_buffers.len),
+        );
+    }
+
+    /// Binds storage textures for use on the vertex shader.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `first_slot`: The vertex storage texture slot to begin binding from.
+    /// * `storage_textures`: Storage textures.
+    ///
+    /// ## Remarks
+    /// These textures must have been created with `gpu.TextureUsageFlags.graphics_storage_read`.
+    ///
+    /// Be sure your shader is set up according to the requirements documented in `gpu.Device.createShader()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn bindVertexStorageTextures(
+        self: RenderPass,
+        first_slot: u32,
+        storage_textures: []const Texture,
+    ) void {
+        C.SDL_BindGPUVertexStorageTextures(
+            self.value,
+            first_slot,
+            @ptrCast(storage_textures.ptr),
+            @intCast(storage_textures.len),
+        );
+    }
 };
 
 /// Specifies the sample count of a texture.
@@ -1518,31 +2248,51 @@ pub const Shader = packed struct {
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const ShaderFormat = enum(c_uint) {
+pub const ShaderFormatFlags = struct {
     /// Shaders for NDA'd platforms.
-    private = C.SDL_GPU_SHADERFORMAT_PRIVATE,
+    private: bool,
     /// SPIR-V shaders for Vulkan.
-    spirv = C.SDL_GPU_SHADERFORMAT_SPIRV,
+    spirv: bool,
     /// DXBC SM5_1 shaders for D3D12.
-    dxbc = C.SDL_GPU_SHADERFORMAT_DXBC,
+    dxbc: bool,
     /// DXIL SM6_0 shaders for D3D12.
-    dxil = C.SDL_GPU_SHADERFORMAT_DXIL,
+    dxil: bool,
     /// MSL shaders for Metal.
-    msl = C.SDL_GPU_SHADERFORMAT_MSL,
+    msl: bool,
     /// Precompiled metallib shaders for Metal.
-    metal_lib = C.SDL_GPU_SHADERFORMAT_METALLIB,
+    metal_lib: bool,
 
     /// Convert from an SDL value.
-    pub fn fromSdl(value: C.SDL_GPUShaderFormat) ?ShaderFormat {
+    pub fn fromSdl(value: C.SDL_GPUShaderFormat) ?ShaderFormatFlags {
         if (value == C.SDL_GPU_SHADERFORMAT_INVALID)
             return null;
-        return @enumFromInt(value);
+        return .{
+            .private = value & C.SDL_GPU_SHADERFORMAT_PRIVATE > 0,
+            .spirv = value & C.SDL_GPU_SHADERFORMAT_SPIRV > 0,
+            .dxbc = value & C.SDL_GPU_SHADERFORMAT_DXBC > 0,
+            .dxil = value & C.SDL_GPU_SHADERFORMAT_DXIL > 0,
+            .msl = value & C.SDL_GPU_SHADERFORMAT_MSL > 0,
+            .metal_lib = value & C.SDL_GPU_SHADERFORMAT_METALLIB > 0,
+        };
     }
 
     /// Convert to an SDL value.
-    pub fn toSdl(self: ?ShaderFormat) C.SDL_GPUShaderFormat {
+    pub fn toSdl(self: ?ShaderFormatFlags) C.SDL_GPUShaderFormat {
         if (self) |val| {
-            return @intFromEnum(val);
+            var ret = 0;
+            if (val.private)
+                ret |= C.SDL_GPU_SHADERFORMAT_PRIVATE;
+            if (val.spirv)
+                ret |= C.SDL_GPU_SHADERFORMAT_SPIRV;
+            if (val.dxbc)
+                ret |= C.SDL_GPU_SHADERFORMAT_DXBC;
+            if (val.dxil)
+                ret |= C.SDL_GPU_SHADERFORMAT_DXIL;
+            if (val.msl)
+                ret |= C.SDL_GPU_SHADERFORMAT_MSL;
+            if (val.metal_lib)
+                ret |= C.SDL_GPU_SHADERFORMAT_METALLIB;
+            return ret;
         }
         return C.SDL_GPU_SHADERFORMAT_INVALID;
     }
@@ -1593,6 +2343,41 @@ pub const StencilOperation = enum(c_uint) {
             return @intFromEnum(tmp);
         }
         return C.SDL_GPU_STENCILOP_INVALID;
+    }
+};
+
+/// A structure specifying the stencil operation state of a graphics pipeline.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const StencilOperationState = struct {
+    /// The action performed on samples that fail the stencil test.
+    fail: StencilOperation,
+    /// The action performed on samples that pass the depth and stencil tests.
+    pass: StencilOperation,
+    /// The action performed on samples that pass the stencil test and fail the depth test.
+    depth_fail: StencilOperation,
+    /// The comparison operator used in the stencil test.
+    compare: CompareOperation,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUStencilOpState) StencilOperationState {
+        return .{
+            .fail = StencilOperation.fromSdl(value.fail_op).?,
+            .pass = StencilOperation.fromSdl(value.pass_op).?,
+            .depth_fail = StencilOperation.fromSdl(value.depth_fail_op).?,
+            .compare = CompareOperation.fromSdl(value.compare_op).?,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: StencilOperationState) C.SDL_GPUStencilOpState {
+        return .{
+            .fail = StencilOperation.toSdl(self.fail),
+            .pass = StencilOperation.toSdl(self.pass),
+            .depth_fail = StencilOperation.toSdl(self.depth_fail),
+            .compare = CompareOperation.toSdl(self.compare),
+        };
     }
 };
 
@@ -1877,6 +2662,83 @@ pub const TextureFormat = enum(c_uint) {
     astc_10x10_float_compressed = C.SDL_GPU_TEXTUREFORMAT_ASTC_10x10_FLOAT,
     astc_12x10_float_compressed = C.SDL_GPU_TEXTUREFORMAT_ASTC_12x10_FLOAT,
     astc_12x12_float_compressed = C.SDL_GPU_TEXTUREFORMAT_ASTC_12x12_FLOAT,
+
+    /// Calculate the size in bytes of a texture format with dimensions.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A texture format.
+    /// * `width`: Width in pixels.
+    /// * `height`: Height in pixels.
+    /// * `depth_or_layer_count`: Depth for 3D textures or layer count otherwise.
+    ///
+    /// ## Return Value
+    /// Returns the size of a texture with this format and dimensions.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn calculateSize(
+        self: TextureFormat,
+        width: u32,
+        height: u32,
+        depth_or_layer_count: u32,
+    ) u32 {
+        return C.SDL_CalculateGPUTextureFormatSize(
+            @intFromEnum(self),
+            width,
+            height,
+            depth_or_layer_count,
+        );
+    }
+};
+
+/// A structure specifying a location in a texture.
+///
+/// ## Remarks
+/// Used when copying data from one texture to another.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const TextureLocation = struct {
+    /// The texture used in the copy operation.
+    texture: Texture,
+    /// The mip level index of the location.
+    mip_level: u32,
+    /// The layer index of the location.
+    layer: u32,
+    /// The left offset of the location.
+    x: u32,
+    /// The top offset of the location.
+    y: u32,
+    /// The front offset of the location.
+    z: u32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(
+        value: C.SDL_GPUTextureLocation,
+    ) TextureLocation {
+        return .{
+            .texture = .{ .value = value.texture.? },
+            .mip_level = value.mip_level,
+            .layer = value.layer,
+            .x = value.x,
+            .y = value.y,
+            .z = value.z,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(
+        self: TextureLocation,
+    ) C.SDL_GPUTextureLocation {
+        return .{
+            .texture = self.texture.value,
+            .mip_level = self.mip_level,
+            .layer = self.layer,
+            .x = self.x,
+            .y = self.y,
+            .z = self.z,
+        };
+    }
 };
 
 /// A structure specifying parameters in a sampler binding call.
@@ -2005,6 +2867,73 @@ pub const TransferBufferUsage = enum(c_uint) {
     download = C.SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
 };
 
+/// A structure specifying a vertex attribute.
+///
+/// ## Remarks
+/// All vertex attribute locations provided to a `gpu.VertexInputState` must be unique.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const VertexAttribute = extern struct {
+    /// The shader input location index.
+    location: u32,
+    /// The binding slot of the associated vertex buffer.
+    buffer_slot: u32,
+    /// The size and type of the attribute data.
+    format: VertexElementFormat,
+    /// The byte offset of this attribute relative to the start of the vertex element.
+    offset: u32,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUVertexAttribute) == @sizeOf(VertexAttribute));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexAttribute, "location")) == @sizeOf(@FieldType(VertexAttribute, "location")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexAttribute, "location") == @offsetOf(VertexAttribute, "location"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexAttribute, "buffer_slot")) == @sizeOf(@FieldType(VertexAttribute, "buffer_slot")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexAttribute, "buffer_slot") == @offsetOf(VertexAttribute, "buffer_slot"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexAttribute, "format")) == @sizeOf(@FieldType(VertexAttribute, "format")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexAttribute, "format") == @offsetOf(VertexAttribute, "format"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexAttribute, "offset")) == @sizeOf(@FieldType(VertexAttribute, "offset")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexAttribute, "offset") == @offsetOf(VertexAttribute, "offset"));
+    }
+};
+
+/// A structure specifying the parameters of vertex buffers used in a graphics pipeline.
+///
+/// ## Remarks
+/// When you call `gpu.RenderPass.bindVertexBuffers()`, you specify the binding slots of the vertex buffers.
+/// For example if you called `gpu.RenderPass.bindVertexBuffers()` with a `first_slot` of `2` and length of `3`,
+/// the binding slots `2`, `3`, `4` would be used by the vertex buffers you pass in.
+///
+/// Vertex attributes are linked to buffers via the `buffer_slot` field of `gpu.VertexAttribute`.
+/// For example, if an attribute has a `buffer_slot` of `0`, then that attribute belongs to the vertex buffer bound at slot `0`.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const VertexBufferDescription = extern struct {
+    /// The binding slot of the vertex buffer.
+    slot: u32,
+    /// The byte pitch between consecutive elements of the vertex buffer.
+    pitch: u32,
+    /// Whether attribute addressing is a function of the vertex index or instance index.
+    input_rate: VertexInputRate,
+    /// Reserved for future use. Must be set to 0.
+    instance_step_rate: u32 = 0,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUVertexBufferDescription) == @sizeOf(VertexBufferDescription));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexBufferDescription, "slot")) == @sizeOf(@FieldType(VertexBufferDescription, "slot")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexBufferDescription, "slot") == @offsetOf(VertexBufferDescription, "slot"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexBufferDescription, "pitch")) == @sizeOf(@FieldType(VertexBufferDescription, "pitch")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexBufferDescription, "pitch") == @offsetOf(VertexBufferDescription, "pitch"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexBufferDescription, "input_rate")) == @sizeOf(@FieldType(VertexBufferDescription, "input_rate")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexBufferDescription, "input_rate") == @offsetOf(VertexBufferDescription, "input_rate"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUVertexBufferDescription, "instance_step_rate")) == @sizeOf(@FieldType(VertexBufferDescription, "instance_step_rate")));
+        std.debug.assert(@offsetOf(C.SDL_GPUVertexBufferDescription, "instance_step_rate") == @offsetOf(VertexBufferDescription, "instance_step_rate"));
+    }
+};
+
 /// Specifies the format of a vertex attribute.
 ///
 /// ## Remarks
@@ -2072,6 +3001,35 @@ pub const VertexInputRate = enum(c_uint) {
     instance = C.SDL_GPU_VERTEXINPUTRATE_INSTANCE,
 };
 
+/// A structure specifying the parameters of a graphics pipeline vertex input state.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const VertexInputState = struct {
+    /// Vertex buffer descriptions.
+    vertex_buffer_descriptions: []const VertexBufferDescription,
+    /// Vertex attribute descriptions.
+    vertex_attributes: []const VertexAttribute,
+
+    /// From an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUVertexInputState) VertexInputState {
+        return .{
+            .vertex_buffer_descriptions = @as([*]const VertexBufferDescription, @ptrCast(value.vertex_buffer_descriptions))[0..@intCast(value.num_vertex_buffers)],
+            .vertex_attributes = @as([*]const VertexAttribute, @ptrCast(value.vertex_attributes))[0..@intCast(value.num_vertex_attributes)],
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: VertexInputState) C.SDL_GPUVertexInputState {
+        return .{
+            .vertex_buffer_descriptions = @ptrCast(self.vertex_buffer_descriptions.ptr),
+            .num_vertex_buffers = @intCast(self.vertex_buffer_descriptions.len),
+            .vertex_attributes = @ptrCast(self.vertex_attributes.ptr),
+            .num_vertex_attributes = @intCast(self.vertex_attributes.len),
+        };
+    }
+};
+
 // Test the GPU.
 test "Gpu" {
     _ = BufferBinding{
@@ -2125,5 +3083,17 @@ test "Gpu" {
     _ = TextureSamplerBinding{
         .texture = undefined,
         .sampler = undefined,
+    };
+    _ = VertexAttribute{
+        .buffer_slot = undefined,
+        .format = undefined,
+        .location = undefined,
+        .offset = undefined,
+    };
+    _ = VertexBufferDescription{
+        .input_rate = undefined,
+        .instance_step_rate = undefined,
+        .pitch = undefined,
+        .slot = undefined,
     };
 }
