@@ -2945,7 +2945,7 @@ pub const IndirectDrawCommand = extern struct {
     /// The number of instances to draw.
     num_instances: u32,
     /// The index of the first vertex to draw.
-    first_virtex: u32,
+    first_vertex: u32,
     /// The ID of the first instance to draw.
     first_instance: u32,
 
@@ -2956,8 +2956,8 @@ pub const IndirectDrawCommand = extern struct {
         std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "num_vertices") == @offsetOf(IndirectDrawCommand, "num_vertices"));
         std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "num_instances")) == @sizeOf(@FieldType(IndirectDrawCommand, "num_instances")));
         std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "num_instances") == @offsetOf(IndirectDrawCommand, "num_instances"));
-        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "first_virtex")) == @sizeOf(@FieldType(IndirectDrawCommand, "first_virtex")));
-        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "first_virtex") == @offsetOf(IndirectDrawCommand, "first_virtex"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "first_vertex")) == @sizeOf(@FieldType(IndirectDrawCommand, "first_vertex")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "first_vertex") == @offsetOf(IndirectDrawCommand, "first_vertex"));
         std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "first_instance")) == @sizeOf(@FieldType(IndirectDrawCommand, "first_instance")));
         std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "first_instance") == @offsetOf(IndirectDrawCommand, "first_instance"));
     }
@@ -3434,7 +3434,7 @@ pub const RenderPass = packed struct {
     /// * `self`: A render pass handle.
     /// * `num_vertices`: The number of vertices to draw.
     /// * `num_instances`: The number of instances that will be drawn.
-    /// * `first_virtex`: The index of the first vertex to draw.
+    /// * `first_vertex`: The index of the first vertex to draw.
     /// * `first_instance`: The ID of the first instance to draw.
     ///
     /// ## Remarks
@@ -3450,14 +3450,14 @@ pub const RenderPass = packed struct {
         self: RenderPass,
         num_vertices: u32,
         num_instances: u32,
-        first_virtex: u32,
+        first_vertex: u32,
         first_instance: u32,
     ) void {
         C.SDL_DrawGPUPrimitives(
             self.value,
             num_vertices,
             num_instances,
-            first_virtex,
+            first_vertex,
             first_instance,
         );
     }
@@ -4958,7 +4958,7 @@ test "Gpu" {
     };
     _ = IndirectDrawCommand{
         .first_instance = undefined,
-        .first_virtex = undefined,
+        .first_vertex = undefined,
         .num_instances = undefined,
         .num_vertices = undefined,
     };
