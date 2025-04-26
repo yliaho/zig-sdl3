@@ -599,7 +599,7 @@ pub const CommandBuffer = packed struct {
         var texture: ?*C.SDL_GPUTexture = undefined;
         try errors.wrapCallBool(C.SDL_AcquireGPUSwapchainTexture(self.value, window.value, &texture, &width, &height));
         return .{
-            .texture = texture,
+            .texture = if (texture) |val| .{ .value = val } else null,
             .width = width,
             .height = height,
         };
@@ -799,6 +799,71 @@ pub const CommandBuffer = packed struct {
         self: CommandBuffer,
     ) !void {
         return errors.wrapCallBool(C.SDL_SubmitGPUCommandBuffer(self.value));
+    }
+
+    /// Submits a command buffer so its commands can be processed on the GPU, and acquires a fence associated with the command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    ///
+    /// ## Return Value
+    /// Returns a fence associated with the command buffer.
+    ///
+    /// ## Remarks
+    /// You must release this fence when it is no longer needed or it will cause a leak.
+    /// It is invalid to use the command buffer after this is called.
+    ///
+    /// This must be called from the thread the command buffer was acquired on.
+    ///
+    /// All commands in the submission are guaranteed to begin executing before any command in a subsequent submission begins executing.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn submitAndAcquireFence(
+        self: CommandBuffer,
+    ) !Fence {
+        return .{ .value = try errors.wrapNull(*C.SDL_GPUFence, C.SDL_SubmitGPUCommandBufferAndAcquireFence(self.value)) };
+    }
+
+    /// Blocks the thread until a swapchain texture is available to be acquired, and then acquires it.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    ///
+    /// ## Return Value
+    /// Returns the swapchain texture along with its width and height.
+    ///
+    /// ## Remarks
+    /// When a swapchain texture is acquired on a command buffer, it will automatically be submitted for presentation when the command buffer is submitted.
+    /// The swapchain texture should only be referenced by the command buffer used to acquire it.
+    /// It is an error to call `gpu.CommandBuffer.cancel()` after a swapchain texture is acquired.
+    ///
+    /// This function can fill the swapchain texture handle with `null` in certain cases, for example if the window is minimized.
+    /// This is not an error.
+    ///
+    /// The swapchain texture is managed by the implementation and must not be freed by the user.
+    /// You MUST NOT call this function from any thread other than the one that created the window.
+    ///
+    /// The swapchain texture is write-only and cannot be used as a sampler or for another reading operation.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called from the thread that created the window.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn waitAndAquireSwapchainTexture(
+        self: CommandBuffer,
+        window: video.Window,
+    ) !struct { texture: ?Texture, width: u32, height: u32 } {
+        var width: u32 = undefined;
+        var height: u32 = undefined;
+        var texture: ?*C.SDL_GPUTexture = undefined;
+        try errors.wrapCallBool(C.SDL_WaitAndAcquireGPUSwapchainTexture(self.value, window.value, &texture, &width, &height));
+        return .{
+            .texture = if (texture) |val| .{ .value = val } else null,
+            .width = width,
+            .height = height,
+        };
     }
 };
 
@@ -1189,6 +1254,68 @@ pub const CopyPass = packed struct {
             width,
             height,
             depth,
+            cycle,
+        );
+    }
+
+    /// Uploads data from a transfer buffer to a buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A copy pass handle.
+    /// * `source`: The source transfer buffer with offset.
+    /// * `destination`: The destination buffer with offset and size.
+    /// * `cycle`: If true, cycles the buffer if it is already bound, otherwise overwrites the data.
+    ///
+    /// ## Remarks
+    /// The upload occurs on the GPU timeline.
+    /// You may assume that the upload has finished in subsequent commands.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn uploadToBuffer(
+        self: CopyPass,
+        source: TransferBufferLocation,
+        destination: BufferRegion,
+        cycle: bool,
+    ) void {
+        const source_sdl = source.toSdl();
+        const destination_sdl = destination.toSdl();
+        C.SDL_UploadToGPUBuffer(
+            self.value,
+            &source_sdl,
+            &destination_sdl,
+            cycle,
+        );
+    }
+
+    /// Uploads data from a transfer buffer to a texture.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A copy pass handle.
+    /// * `source`: The source transfer buffer with image layout information.
+    /// * `destination`: The destination texture region.
+    /// * `cycle`: If true, cycles the texture if the texture is bound, otherwise overwrites the data.
+    ///
+    /// ## Remarks
+    /// The upload occurs on the GPU timeline.
+    /// You may assume that the upload has finished in subsequent commands.
+    ///
+    /// You must align the data in the transfer buffer to a multiple of the texel size of the texture format.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn uploadToTexture(
+        self: CopyPass,
+        source: TextureTransferInfo,
+        destination: TextureRegion,
+        cycle: bool,
+    ) void {
+        const source_sdl = source.toSdl();
+        const destination_sdl = destination.toSdl();
+        C.SDL_UploadToGPUTexture(
+            self.value,
+            &source_sdl,
+            &destination_sdl,
             cycle,
         );
     }
@@ -1746,6 +1873,193 @@ pub const Device = packed struct {
         C.SDL_ReleaseGPUShader(
             self.value,
             shader.value,
+        );
+    }
+
+    /// Changes the swapchain parameters for the given claimed window.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `window`: An SDL_Window that has been claimed.
+    /// * `swapchain_composition`: The desired composition of the swapchain.
+    /// * `present_mode`: The desired present mode for the swapchain.
+    ///
+    /// ## Remarks
+    /// This function will fail if the requested present mode or swapchain composition are unsupported by the device.
+    /// Check if the parameters are supported via `gou.Device.windowSupportsPresentMode()` / `gpu.Device.windowSupportsSwapchainComposition()` prior to calling this function.
+    ///
+    /// `gpu.PresentMode.vsync` with `gpu.SwapchainComposition.sdr` are always supported.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setSwapchainParameters(
+        self: Device,
+        window: video.Window,
+        swapchain_composition: SwapchainComposition,
+        present_mode: PresentMode,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_SetGPUSwapchainParameters(
+            self.value,
+            window.value,
+            @intFromEnum(swapchain_composition),
+            @intFromEnum(present_mode),
+        ));
+    }
+
+    /// Sets an arbitrary string constant to label a texture.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `texture`: A texture to attach the name to.
+    /// * `text`: A UTF-8 string constant to mark as the name of the texture.
+    ///
+    /// ## Remarks
+    /// You should use `SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING` with `gpu.Device.createTexture()` instead of this function to avoid thread safety issues.
+    ///
+    /// ## Thread Safety
+    /// This function is not thread safe, you must make sure the texture is not simultaneously used by any other thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setTextureName(
+        self: Device,
+        texture: Texture,
+        text: [:0]const u8,
+    ) void {
+        C.SDL_SetGPUTextureName(
+            self.value,
+            texture.value,
+            text.ptr,
+        );
+    }
+
+    /// Unmaps a previously mapped transfer buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `transfer_buffer`: A previously mapped transfer buffer.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn unmapTransferBuffer(
+        self: Device,
+        transfer_buffer: TransferBuffer,
+    ) void {
+        C.SDL_UnmapGPUTransferBuffer(
+            self.value,
+            transfer_buffer.value,
+        );
+    }
+
+    /// Blocks the thread until the given fences are signaled.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `wait_all`: If false, wait for any fence to be signaled, if true, wait for all fences to be signaled.
+    /// * `fences`: The fences to wait on.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn waitForFences(
+        self: Device,
+        wait_all: bool,
+        fences: []const Fence,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_WaitForGPUFences(
+            self.value,
+            wait_all,
+            @ptrCast(fences.ptr),
+            @intCast(fences.len),
+        ));
+    }
+
+    /// Blocks the thread until the GPU is completely idle.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn waitForIdle(
+        self: Device,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_WaitForGPUIdle(
+            self.value,
+        ));
+    }
+
+    /// Blocks the thread until a swapchain texture is available to be acquired.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `window`: A window that has been claimed.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called from the thread that created the window.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn waitForSwapchain(
+        self: Device,
+        window: video.Window,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_WaitForGPUSwapchain(
+            self.value,
+            window.value,
+        ));
+    }
+
+    /// Determines whether a presentation mode is supported by the window.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `window`: An SDL window.
+    /// * `present_mode`: The presentation mode to check.
+    ///
+    /// ## Return Value
+    /// Returns true if supported, false if unsupported.
+    ///
+    /// ## Remarks
+    /// The window must be claimed before calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn windowSupportsPresentMode(
+        self: Device,
+        window: video.Window,
+        present_mode: PresentMode,
+    ) bool {
+        return C.SDL_WindowSupportsGPUPresentMode(
+            self.value,
+            window.value,
+            @intFromEnum(present_mode),
+        );
+    }
+
+    /// Determines whether a swapchain composition is supported by the window.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `window`: An SDL window.
+    /// * `swapchain_composition`: The swapchain composition to check.
+    ///
+    /// ## Return Value
+    /// Returns true if supported, false if unsupported.
+    ///
+    /// ## Remarks
+    /// The window must be claimed before calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn windowSupportsSwapchainComposition(
+        self: Device,
+        window: video.Window,
+        swapchain_composition: SwapchainComposition,
+    ) bool {
+        return C.SDL_WindowSupportsGPUSwapchainComposition(
+            self.value,
+            window.value,
+            @intFromEnum(swapchain_composition),
         );
     }
 };
@@ -2320,6 +2634,61 @@ pub const RenderPass = packed struct {
             @intCast(storage_textures.len),
         );
     }
+
+    /// Sets the current scissor state on a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `scissor`: The scissor area to set.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setScissor(
+        self: RenderPass,
+        scissor: rect.IRect,
+    ) void {
+        C.SDL_SetGPUScissor(
+            self.value,
+            @ptrCast(&scissor),
+        );
+    }
+
+    /// Sets the current stencil reference value on a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `reference`: The stencil reference value to set.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setStencilReference(
+        self: RenderPass,
+        reference: u8,
+    ) void {
+        C.SDL_SetGPUStencilReference(
+            self.value,
+            reference,
+        );
+    }
+
+    /// Sets the current viewport state on a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `viewport`: The viewport to set.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setViewport(
+        self: RenderPass,
+        viewport: Viewport,
+    ) void {
+        const viewport_sdl = viewport.toSdl();
+        C.SDL_SetGPUViewport(
+            self.value,
+            &viewport_sdl,
+        );
+    }
 };
 
 /// Specifies the sample count of a texture.
@@ -2515,17 +2884,17 @@ pub const ShaderCreateInfo = struct {
 /// This datatype is available since SDL 3.2.0.
 pub const ShaderFormatFlags = struct {
     /// Shaders for NDA'd platforms.
-    private: bool,
+    private: bool = false,
     /// SPIR-V shaders for Vulkan.
-    spirv: bool,
+    spirv: bool = false,
     /// DXBC SM5_1 shaders for D3D12.
-    dxbc: bool,
+    dxbc: bool = false,
     /// DXIL SM6_0 shaders for D3D12.
-    dxil: bool,
+    dxil: bool = false,
     /// MSL shaders for Metal.
-    msl: bool,
+    msl: bool = false,
     /// Precompiled metallib shaders for Metal.
-    metal_lib: bool,
+    metal_lib: bool = false,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUShaderFormat) ?ShaderFormatFlags {
@@ -3006,6 +3375,64 @@ pub const TextureLocation = struct {
     }
 };
 
+/// A structure specifying a region of a texture.
+///
+/// ## Remarks
+/// Used when transferring data to or from a texture.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const TextureRegion = struct {
+    /// The texture used in the copy operation.
+    texture: Texture,
+    /// The mip level index to transfer.
+    mip_level: u32,
+    /// The layer index to transfer.
+    layer: u32,
+    /// The left offset of the region.
+    x: u32,
+    /// The top offset of the region.
+    y: u32,
+    /// The front offset of the region.
+    z: u32,
+    /// The width of the region.
+    width: u32,
+    /// The height of the region.
+    height: u32,
+    /// The depth of the region.
+    depth: u32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUTextureRegion) TextureRegion {
+        return .{
+            .texture = .{ .value = value.texture.? },
+            .mip_level = value.mip_level,
+            .layer = value.layer,
+            .x = value.x,
+            .y = value.y,
+            .z = value.z,
+            .width = value.w,
+            .height = value.h,
+            .depth = value.d,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: TextureRegion) C.SDL_GPUTextureRegion {
+        return .{
+            .texture = self.texture.value,
+            .mip_level = self.mip_level,
+            .layer = self.layer,
+            .x = self.x,
+            .y = self.y,
+            .z = self.z,
+            .w = self.width,
+            .h = self.height,
+            .d = self.depth,
+        };
+    }
+};
+
 /// A structure specifying parameters in a sampler binding call.
 ///
 /// ## Version
@@ -3024,6 +3451,49 @@ pub const TextureSamplerBinding = extern struct {
         std.debug.assert(@offsetOf(C.SDL_GPUTextureSamplerBinding, "texture") == @offsetOf(TextureSamplerBinding, "texture"));
         std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUTextureSamplerBinding, "sampler")) == @sizeOf(@FieldType(TextureSamplerBinding, "sampler")));
         std.debug.assert(@offsetOf(C.SDL_GPUTextureSamplerBinding, "sampler") == @offsetOf(TextureSamplerBinding, "sampler"));
+    }
+};
+
+/// A structure specifying parameters related to transferring data to or from a texture.
+///
+/// ## Remarks
+/// If either of `pixels_per_row` or `rows_per_layer` is zero, then width and height of passed `gpu.TextureRegion` to `gpu.CopyPass.uploadToTexture()`
+/// or `gpu.CopyPass.downloadFromTexture()` are used as default values respectively and data is considered to be tightly packed.
+///
+/// WARNING: Direct3D 12 requires texture data row pitch to be 256 byte aligned, and offsets to be aligned to 512 bytes.
+/// If they are not, SDL will make a temporary copy of the data that is properly aligned, but this adds overhead to the transfer process.
+/// Apps can avoid this by aligning their data appropriately, or using a different GPU backend than Direct3D 12.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const TextureTransferInfo = struct {
+    /// The transfer buffer used in the transfer operation.
+    transfer_buffer: TransferBuffer,
+    /// The starting byte of the image data in the transfer buffer.
+    offset: u32,
+    /// The number of pixels from one row to the next.
+    pixels_per_row: u32,
+    /// The number of rows from one layer/depth-slice to the next.
+    rows_per_layer: u32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUTextureTransferInfo) TextureTransferInfo {
+        return .{
+            .transfer_buffer = .{ .value = value.transfer_buffer.? },
+            .offset = value.offset,
+            .pixels_per_row = value.pixels_per_row,
+            .rows_per_layer = value.rows_per_layer,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: TextureTransferInfo) C.SDL_GPUTextureTransferInfo {
+        return .{
+            .transfer_buffer = self.transfer_buffer.value,
+            .offset = self.offset,
+            .pixels_per_row = self.pixels_per_row,
+            .rows_per_layer = self.rows_per_layer,
+        };
     }
 };
 
@@ -3118,6 +3588,36 @@ pub const TextureUsageFlags = struct {
 /// This struct is available since SDL 3.2.0.
 pub const TransferBuffer = struct {
     value: *C.SDL_GPUTransferBuffer,
+};
+
+/// A structure specifying a location in a transfer buffer.
+///
+/// ## Remarks
+/// Used when transferring buffer data to or from a transfer buffer.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const TransferBufferLocation = struct {
+    /// The transfer buffer used in the transfer operation.
+    transfer_buffer: TransferBuffer,
+    /// The starting byte of the buffer data in the transfer buffer.
+    offset: u32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUTransferBufferLocation) TransferBufferLocation {
+        return .{
+            .transfer_buffer = .{ .value = value.transfer_buffer.? },
+            .offset = value.offset,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: TransferBufferLocation) C.SDL_GPUTransferBufferLocation {
+        return .{
+            .transfer_buffer = self.transfer_buffer.value,
+            .offset = self.offset,
+        };
+    }
 };
 
 /// Specifies how a transfer buffer is intended to be used by the client.
@@ -3291,6 +3791,45 @@ pub const VertexInputState = struct {
             .num_vertex_buffers = @intCast(self.vertex_buffer_descriptions.len),
             .vertex_attributes = @ptrCast(self.vertex_attributes.ptr),
             .num_vertex_attributes = @intCast(self.vertex_attributes.len),
+        };
+    }
+};
+
+/// A structure specifying a viewport.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const Viewport = struct {
+    /// Viewport region.
+    region: rect.FRect,
+    /// The minimum depth of the viewport.
+    min_depth: f32,
+    /// The maximum depth of the viewport.
+    max_depth: f32,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUViewport) Viewport {
+        return .{
+            .region = .{
+                .x = value.x,
+                .y = value.y,
+                .w = value.w,
+                .h = value.h,
+            },
+            .min_depth = value.min_depth,
+            .max_depth = value.max_depth,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: Viewport) C.SDL_GPUViewport {
+        return .{
+            .x = self.region.x,
+            .y = self.region.y,
+            .w = self.region.w,
+            .h = self.region.h,
+            .min_depth = self.min_depth,
+            .max_depth = self.max_depth,
         };
     }
 };
