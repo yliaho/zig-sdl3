@@ -753,6 +753,62 @@ pub const CommandBuffer = packed struct {
         return errors.wrapCallBool(C.SDL_CancelGPUCommandBuffer(self.value));
     }
 
+    /// Generates mipmaps for the given texture.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `texture`: A texture with more than 1 mip level.
+    ///
+    /// ## Remarks
+    /// This function must not be called inside of any pass.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn generateMipmapsForTexture(
+        self: CommandBuffer,
+        texture: Texture,
+    ) void {
+        C.SDL_GenerateMipmapsForGPUTexture(
+            self.value,
+            texture.value,
+        );
+    }
+
+    /// Inserts an arbitrary string label into the command buffer callstream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `name`: A UTF-8 string constant to insert as the label.
+    ///
+    /// ## Remarks
+    /// Useful for debugging.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn insertDebugLabel(
+        self: CommandBuffer,
+        text: [:0]const u8,
+    ) void {
+        C.SDL_InsertGPUDebugLabel(
+            self.value,
+            text.ptr,
+        );
+    }
+
+    /// Ends the most-recently pushed debug group.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn popDebugGroup(
+        self: CommandBuffer,
+    ) void {
+        C.SDL_PopGPUDebugGroup(
+            self.value,
+        );
+    }
+
     /// Pushes data to a uniform slot on the command buffer.
     ///
     /// ## Function Parameters
@@ -774,6 +830,88 @@ pub const CommandBuffer = packed struct {
         data: []const u8,
     ) void {
         C.SDL_PushGPUComputeUniformData(
+            self.value,
+            slot_index,
+            data.ptr,
+            @intCast(data.len),
+        );
+    }
+
+    /// Begins a debug group with an arbitary name.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `name`: A UTF-8 string constant that names the group.
+    ///
+    /// ## Remarks
+    /// Used for denoting groups of calls when viewing the command buffer callstream in a graphics debugging tool.
+    ///
+    /// Each call to `gpu.CommandBuffer.pushDebugGroup()` must have a corresponding call to `gpu.CommandBuffer.popDebugGroup()`.
+    ///
+    /// On some backends (e.g. Metal), pushing a debug group during a render/blit/compute pass will create a group that is scoped to the native pass rather than the command buffer.
+    /// For best results, if you push a debug group during a pass, always pop it in the same pass.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn pushDebugGroup(
+        self: CommandBuffer,
+        name: [:0]const u8,
+    ) void {
+        C.SDL_PushGPUDebugGroup(
+            self.value,
+            name.ptr,
+        );
+    }
+
+    /// Pushes data to a fragment uniform slot on the command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `slot_index: The fragment uniform slot to push data to.
+    /// * `data`: Client data to write.
+    ///
+    /// ## Remarks
+    /// Subsequent draw calls will use this uniform data.
+    ///
+    /// The data being pushed must respect std140 layout conventions.
+    /// In practical terms this means you must ensure that vec3 and vec4 fields are 16-byte aligned.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn pushFragmentUniformData(
+        self: CommandBuffer,
+        slot_index: u32,
+        data: []const u8,
+    ) void {
+        C.SDL_PushGPUFragmentUniformData(
+            self.value,
+            slot_index,
+            data.ptr,
+            @intCast(data.len),
+        );
+    }
+
+    /// Pushes data to a vertex uniform slot on the command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A command buffer.
+    /// * `slot_index: The vertex uniform slot to push data to.
+    /// * `data`: Client data to write.
+    ///
+    /// ## Remarks
+    /// Subsequent draw calls will use this uniform data.
+    ///
+    /// The data being pushed must respect std140 layout conventions.
+    /// In practical terms this means you must ensure that vec3 and vec4 fields are 16-byte aligned.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn pushVertexUniformData(
+        self: CommandBuffer,
+        slot_index: u32,
+        data: []const u8,
+    ) void {
+        C.SDL_PushGPUVertexUniformData(
             self.value,
             slot_index,
             data.ptr,
@@ -1216,6 +1354,73 @@ pub const CopyPass = packed struct {
             &destination_sdl,
             size,
             cycle,
+        );
+    }
+
+    /// Copies data from a buffer to a transfer buffer on the GPU timeline.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A copy pass handle.
+    /// * `source`: The source buffer with offset and size.
+    /// * `destination`: The destination transfer buffer with offset.
+    ///
+    /// ## Remarks
+    /// This data is not guaranteed to be copied until the command buffer fence is signaled.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn downloadFromBuffer(
+        self: CopyPass,
+        source: BufferRegion,
+        destination: TransferBufferLocation,
+    ) void {
+        const source_sdl = source.toSdl();
+        const destination_sdl = destination.toSdl();
+        C.SDL_DownloadFromGPUBuffer(
+            self.value,
+            &source_sdl,
+            &destination_sdl,
+        );
+    }
+
+    /// Copies data from a texture to a transfer buffer on the GPU timeline.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A copy pass handle.
+    /// * `source`: The source texture region.
+    /// * `destination`: The destination transfer buffer with image layout information.
+    ///
+    /// ## Remarks
+    /// This data is not guaranteed to be copied until the command buffer fence is signaled.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn downloadFromTexture(
+        self: CopyPass,
+        source: TextureRegion,
+        destination: TextureTransferInfo,
+    ) void {
+        const source_sdl = source.toSdl();
+        const destination_sdl = destination.toSdl();
+        C.SDL_DownloadFromGPUTexture(
+            self.value,
+            &source_sdl,
+            &destination_sdl,
+        );
+    }
+
+    /// Ends the current copy pass.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A copy pass handle.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn end(
+        self: CopyPass,
+    ) void {
+        C.SDL_EndGPUCopyPass(
+            self.value,
         );
     }
 
@@ -1745,10 +1950,85 @@ pub const Device = packed struct {
         };
     }
 
+    /// Creates a texture object to be used in graphics or compute workflows.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context.
+    /// * `create_info`: A struct describing the state of the texture to create.
+    ///
+    /// ## Return Value
+    /// Returns a texture object.
+    ///
+    /// ## Remarks
+    /// The contents of this texture are undefined until data is written to the texture.
+    ///
+    /// Note that certain combinations of usage flags are invalid.
+    /// For example, a texture cannot have both the `gpu.TextureUsageFlags.sampler` and `gpu.TextureUsageFlags.graphics_storage` flags.
+    ///
+    /// If you request a sample count higher than the hardware supports, the implementation will automatically fall back to the highest available sample count.
+    ///
+    /// There are optional properties that can be provided through `gpu.TextureCreateInfo`'s `props`.
+    /// These are the supported properties:
+    /// * `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT`: (Direct3D 12 only) if the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture to a color with this red intensity. Defaults to zero.
+    /// * `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT`: (Direct3D 12 only) if the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture to a color with this green intensity. Defaults to zero.
+    /// * `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT`: (Direct3D 12 only) if the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture to a color with this blue intensity. Defaults to zero.
+    /// * `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT`: (Direct3D 12 only) if the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture to a color with this alpha intensity. Defaults to zero.
+    /// * `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT`: (Direct3D 12 only) if the texture usage is SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET, clear the texture to a depth of this value. Defaults to zero.
+    /// * `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_NUMBER`: (Direct3D 12 only) if the texture usage is SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET, clear the texture to a stencil of this Uint8 value. Defaults to zero.
+    /// * `SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING`: a name that can be displayed in debugging tools.
+    /// TODO: PROPERLY HANDLE PROPERTIES!!!
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createTexture(
+        self: Device,
+        create_info: TextureCreateInfo,
+    ) !Texture {
+        const create_info_sdl = create_info.toSdl();
+        return .{
+            .value = try errors.wrapNull(*C.SDL_GPUTexture, C.SDL_CreateGPUTexture(
+                self.value,
+                &create_info_sdl,
+            )),
+        };
+    }
+
+    /// Creates a transfer buffer to be used when uploading to or downloading from graphics resources.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU Context.
+    /// * `create_info`: A struct describing the state of the transfer buffer to create.
+    ///
+    /// ## Return Value
+    /// Returns a texture object.
+    ///
+    /// ## Remarks
+    /// Download buffers can be particularly expensive to create, so it is good practice to reuse them if data will be downloaded regularly.
+    ///
+    /// There are optional properties that can be provided through `props`.
+    /// These are the supported properties:
+    /// * `SDL_PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING`: a name that can be displayed in debugging tools.
+    /// TODO: PROPER PROPERTIES!!!
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn createTransferBuffer(
+        self: Device,
+        create_info: TransferBufferCreateInfo,
+    ) !TransferBuffer {
+        const create_info_sdl = create_info.toSdl();
+        return .{
+            .value = try errors.wrapNull(*C.SDL_GPUTransferBuffer, C.SDL_CreateGPUTransferBuffer(
+                self.value,
+                &create_info_sdl,
+            )),
+        };
+    }
+
     /// Destroys a GPU context previously returned by `gpu.Device.init().
     ///
     /// ## Function Parameters
-    /// * `self`: A GPU Context to destroy.
+    /// * `self`: A GPU context to destroy.
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
@@ -1758,6 +2038,111 @@ pub const Device = packed struct {
         return C.SDL_DestroyGPUDevice(
             self.value,
         );
+    }
+
+    /// Call this to resume GPU operation on Xbox when you receive the `events.Type.will_enter_foreground` event.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    ///
+    /// ## Remarks
+    /// When resuming, this function MUST be called before calling any other `gpu` functions.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn gdkResume(
+        self: Device,
+    ) void {
+        C.SDL_GDKResumeGPU(self.value);
+    }
+
+    /// Call this to suspend GPU operation on Xbox when you receive the `events.Type.did_enter_background` event.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    ///
+    /// ## Remarks
+    /// Do NOT call any `gpu` functions after calling this function!
+    /// This must also be called before calling `gpu.Device.gdkSuspendComplete()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn gdkSuspend(
+        self: Device,
+    ) void {
+        C.SDL_GDKSuspendGPU(self.value);
+    }
+
+    /// Returns the name of the backend used to create this GPU context.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context to query.
+    ///
+    /// ## Return Value
+    /// Returns the name of the device's driver.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getDriver(
+        self: Device,
+    ) ![:0]const u8 {
+        return errors.wrapCallCString(C.SDL_GetGPUDeviceDriver(
+            self.value,
+        ));
+    }
+
+    // Does not exist until SDL 3.4.0.
+    // /// Get the properties associated with a GPU device.
+    // ///
+    // /// TODO: DOCS AND PROPER PROPERTIES!!!
+    // pub fn getProperties(
+    //     self: Device,
+    // ) !properties.Group {
+    //     return .{
+    //         .value = try errors.wrapCall(C.SDL_PropertiesID, C.SDL_GetGPUDeviceProperties(self.value), 0),
+    //     };
+    // }
+
+    /// Returns the supported shader formats for this GPU context.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context to query.
+    ///
+    /// ## Return Value
+    /// Returns a bitflag indicating which shader formats the driver is able to consume.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getShaderFormats(
+        self: Device,
+    ) ShaderFormatFlags {
+        return ShaderFormatFlags.fromSdl(
+            C.SDL_GetGPUShaderFormats(self.value),
+        );
+    }
+
+    /// Obtains the texture format of the swapchain for the given window.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `window`: An SDL window.
+    ///
+    /// ## Return Value
+    /// Returns the texture format of the swapchain.
+    ///
+    /// ## Remarks
+    /// Note that this format can change if the swapchain parameters change.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSwapchainTextureFormat(
+        self: Device,
+        window: video.Window,
+    ) TextureFormat {
+        return @enumFromInt(C.SDL_GetGPUSwapchainTextureFormat(
+            self.value,
+            window.value,
+        ));
     }
 
     /// Creates a GPU context.
@@ -1793,6 +2178,89 @@ pub const Device = packed struct {
         };
     }
 
+    /// Creates a GPU context.
+    ///
+    /// TODO: DOCS AND PROPER PROPERTIES!!!
+    pub fn initWithProperties(
+        props: properties.Group,
+    ) !Device {
+        return .{
+            .value = try errors.wrapNull(*C.SDL_GPUDevice, C.SDL_CreateGPUDeviceWithProperties(
+                props.value,
+            )),
+        };
+    }
+
+    /// Maps a transfer buffer into application address space.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `transfer_buffer`: A transfer buffer.
+    /// * `cycle`: If true, cycles the transfer buffer if it is already bound.
+    ///
+    /// ## Return Value
+    /// Returns the address of the mapped transfer buffer memory.
+    ///
+    /// ## Remarks
+    /// You must unmap the transfer buffer before encoding upload commands.
+    /// The memory is owned by the graphics driver - do NOT call `stdinc.free()` on the returned pointer.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn mapTransferBuffer(
+        self: Device,
+        transfer_buffer: TransferBuffer,
+        cycle: bool,
+    ) ![*]u8 {
+        return @alignCast(@ptrCast(try errors.wrapNull(*anyopaque, C.SDL_MapGPUTransferBuffer(
+            self.value,
+            transfer_buffer.value,
+            cycle,
+        ))));
+    }
+
+    /// Checks the status of a fence.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `fence`: A fence.
+    ///
+    /// ## Return Value
+    /// Returns true if the fence is signaled, false if it is not.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn queryFence(
+        self: Device,
+        fence: Fence,
+    ) void {
+        return C.SDL_QueryGPUFence(
+            self.value,
+            fence.value,
+        );
+    }
+
+    /// Frees the given buffer as soon as it is safe to do so.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `buffer`: A buffer to be destroyed.
+    ///
+    /// ## Remarks
+    /// You must not reference the buffer after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseBuffer(
+        self: Device,
+        buffer: Buffer,
+    ) void {
+        C.SDL_ReleaseGPUBuffer(
+            self.value,
+            buffer.value,
+        );
+    }
+
     /// Frees the given compute pipeline as soon as it is safe to do so.
     ///
     /// ## Function Parameters
@@ -1811,6 +2279,27 @@ pub const Device = packed struct {
         C.SDL_ReleaseGPUComputePipeline(
             self.value,
             compute_pipeline.value,
+        );
+    }
+
+    /// Releases a fence obtained from `gpu.CommandBuffer.submitAndAcquireFence()`.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `fence`: A fence.
+    ///
+    /// ## Remarks
+    /// You must not reference the fence after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseFence(
+        self: Device,
+        fence: Fence,
+    ) void {
+        C.SDL_ReleaseGPUFence(
+            self.value,
+            fence.value,
         );
     }
 
@@ -2048,6 +2537,57 @@ pub const Device = packed struct {
             self.value,
             texture.value,
             text.ptr,
+        );
+    }
+
+    /// Determines whether a texture format is supported for a given type and usage.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `format`: The texture format to check.
+    /// * `texture_type`: The type of texture (2D, 3D, Cube).
+    /// * `usage`: A bitmask of all usage scenarios to check.
+    ///
+    /// ## Return Value
+    /// Returns whether the texture format is supported for this type and usage.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn textureSupportsFormat(
+        self: Device,
+        format: TextureFormat,
+        texture_type: TextureType,
+        usage: TextureUsageFlags,
+    ) bool {
+        return C.SDL_GPUTextureSupportsFormat(
+            self.value,
+            @intFromEnum(format),
+            @intFromEnum(texture_type),
+            usage.toSdl(),
+        );
+    }
+
+    /// Determines if a sample count for a texture format is supported.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `format`: The texture format to check.
+    /// * `sample_count`: The sample count to check.
+    ///
+    /// ## Return Value
+    /// Returns whether the sample count is supported for this texture format.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn textureSupportsSampleCount(
+        self: Device,
+        format: TextureFormat,
+        sample_count: SampleCount,
+    ) bool {
+        return C.SDL_GPUTextureSupportsSampleCount(
+            self.value,
+            @intFromEnum(format),
+            @intFromEnum(sample_count),
         );
     }
 
@@ -2329,6 +2869,43 @@ pub const IndexElementSize = enum(c_uint) {
     indices_32bit = C.SDL_GPU_INDEXELEMENTSIZE_32BIT,
 };
 
+/// A structure specifying the parameters of an indexed indirect draw command.
+///
+/// ## Remarks
+/// Note that the `first_vertex` and `first_instance` parameters are NOT compatible with built-in vertex/instance ID variables in shaders (for example, `SV_VertexID`);
+/// GPU APIs and shader languages do not define these built-in variables consistently, so if your shader depends on them,
+/// the only way to keep behavior consistent and portable is to always pass `0` for the correlating parameter in the draw calls.
+///
+/// Version
+/// This struct is available since SDL 3.2.0.
+pub const IndexedIndirectDrawCommand = extern struct {
+    /// The number of indices to draw.
+    num_indices: u32,
+    /// The number of instances to draw.
+    num_instances: u32,
+    /// The base index within the index buffer.
+    first_index: u32,
+    /// The value added to the vertex index before indexing into the vertex buffer.
+    vertex_offset: i32,
+    /// The ID of the first instance to draw.
+    first_instance: u32,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUIndexedIndirectDrawCommand) == @sizeOf(IndexedIndirectDrawCommand));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndexedIndirectDrawCommand, "num_indices")) == @sizeOf(@FieldType(IndexedIndirectDrawCommand, "num_indices")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndexedIndirectDrawCommand, "num_indices") == @offsetOf(IndexedIndirectDrawCommand, "num_indices"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndexedIndirectDrawCommand, "num_instances")) == @sizeOf(@FieldType(IndexedIndirectDrawCommand, "num_instances")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndexedIndirectDrawCommand, "num_instances") == @offsetOf(IndexedIndirectDrawCommand, "num_instances"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndexedIndirectDrawCommand, "first_index")) == @sizeOf(@FieldType(IndexedIndirectDrawCommand, "first_index")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndexedIndirectDrawCommand, "first_index") == @offsetOf(IndexedIndirectDrawCommand, "first_index"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndexedIndirectDrawCommand, "vertex_offset")) == @sizeOf(@FieldType(IndexedIndirectDrawCommand, "vertex_offset")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndexedIndirectDrawCommand, "vertex_offset") == @offsetOf(IndexedIndirectDrawCommand, "vertex_offset"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndexedIndirectDrawCommand, "first_instance")) == @sizeOf(@FieldType(IndexedIndirectDrawCommand, "first_instance")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndexedIndirectDrawCommand, "first_instance") == @offsetOf(IndexedIndirectDrawCommand, "first_instance"));
+    }
+};
+
 /// A structure specifying the parameters of an indexed dispatch command.
 ///
 /// ## Version
@@ -2350,6 +2927,39 @@ pub const IndirectDispatchCommand = extern struct {
         std.debug.assert(@offsetOf(C.SDL_GPUIndirectDispatchCommand, "groupcount_y") == @offsetOf(IndirectDispatchCommand, "group_count_y"));
         std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDispatchCommand, "groupcount_z")) == @sizeOf(@FieldType(IndirectDispatchCommand, "group_count_z")));
         std.debug.assert(@offsetOf(C.SDL_GPUIndirectDispatchCommand, "groupcount_z") == @offsetOf(IndirectDispatchCommand, "group_count_z"));
+    }
+};
+
+/// A structure specifying the parameters of an indirect draw command.
+///
+/// ## Remarks
+/// Note that the `first_vertex` and `first_instance` parameters are NOT compatible with built-in vertex/instance ID variables in shaders (for example, `SV_VertexID`);
+/// GPU APIs and shader languages do not define these built-in variables consistently, so if your shader depends on them,
+/// the only way to keep behavior consistent and portable is to always pass `0` for the correlating parameter in the draw calls.
+///
+/// Version
+/// This struct is available since SDL 3.2.0.
+pub const IndirectDrawCommand = extern struct {
+    /// The number of vertices to draw.
+    num_vertices: u32,
+    /// The number of instances to draw.
+    num_instances: u32,
+    /// The index of the first vertex to draw.
+    first_virtex: u32,
+    /// The ID of the first instance to draw.
+    first_instance: u32,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_GPUIndirectDrawCommand) == @sizeOf(IndirectDrawCommand));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "num_vertices")) == @sizeOf(@FieldType(IndirectDrawCommand, "num_vertices")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "num_vertices") == @offsetOf(IndirectDrawCommand, "num_vertices"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "num_instances")) == @sizeOf(@FieldType(IndirectDrawCommand, "num_instances")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "num_instances") == @offsetOf(IndirectDrawCommand, "num_instances"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "first_virtex")) == @sizeOf(@FieldType(IndirectDrawCommand, "first_virtex")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "first_virtex") == @offsetOf(IndirectDrawCommand, "first_virtex"));
+        std.debug.assert(@sizeOf(@FieldType(C.SDL_GPUIndirectDrawCommand, "first_instance")) == @sizeOf(@FieldType(IndirectDrawCommand, "first_instance")));
+        std.debug.assert(@offsetOf(C.SDL_GPUIndirectDrawCommand, "first_instance") == @offsetOf(IndirectDrawCommand, "first_instance"));
     }
 };
 
@@ -2753,6 +3363,152 @@ pub const RenderPass = packed struct {
         );
     }
 
+    /// Draws data using bound graphics state with an index buffer and instancing enabled.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `num_indices`: The number of indices to draw per instance.
+    /// * `num_instances`: The number of instances to draw.
+    /// * `first_index`: The starting index within the index buffer.
+    /// * `vertex_offset`: Value added to vertex index before indexing into the vertex buffer.
+    /// * `first_instance`: The ID of the first instance to draw.
+    ///
+    /// ## Remarks
+    /// You must not call this function before binding a graphics pipeline.
+    ///
+    /// Note that the `first_vertex` and `first_instance` parameters are NOT compatible with built-in vertex/instance ID variables in shaders (for example, `SV_VertexID`);
+    /// GPU APIs and shader languages do not define these built-in variables consistently, so if your shader depends on them,
+    /// the only way to keep behavior consistent and portable is to always pass `0` for the correlating parameter in the draw calls.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn drawIndexedPrimitives(
+        self: RenderPass,
+        num_indices: u32,
+        num_instances: u32,
+        first_index: u32,
+        vertex_offset: i32,
+        first_instance: u32,
+    ) void {
+        C.SDL_DrawGPUIndexedPrimitives(
+            self.value,
+            num_indices,
+            num_instances,
+            first_index,
+            vertex_offset,
+            first_instance,
+        );
+    }
+
+    /// Draws data using bound graphics state with an index buffer enabled and with draw parameters set from a buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `buffer`: A buffer containing draw parameters.
+    /// * `offset`: The offset to start reading from the draw buffer.
+    /// * `draw_count`: The number of draw parameter sets that should be read from the draw buffer.
+    ///
+    /// ## Remarks
+    /// The buffer must consist of tightly-packed draw parameter sets that each match the layout of `IndexedIndirectDrawCommand`.
+    /// You must not call this function before binding a graphics pipeline.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn drawIndexedPrimitivesIndirect(
+        self: RenderPass,
+        buffer: Buffer,
+        offset: u32,
+        draw_count: u32,
+    ) void {
+        C.SDL_DrawGPUIndexedPrimitivesIndirect(
+            self.value,
+            buffer.value,
+            offset,
+            draw_count,
+        );
+    }
+
+    /// Draws data using bound graphics state.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `num_vertices`: The number of vertices to draw.
+    /// * `num_instances`: The number of instances that will be drawn.
+    /// * `first_virtex`: The index of the first vertex to draw.
+    /// * `first_instance`: The ID of the first instance to draw.
+    ///
+    /// ## Remarks
+    /// You must not call this function before binding a graphics pipeline.
+    ///
+    /// Note that the `first_vertex` and `first_instance` parameters are NOT compatible with built-in vertex/instance ID variables in shaders (for example, `SV_VertexID`);
+    /// GPU APIs and shader languages do not define these built-in variables consistently, so if your shader depends on them,
+    /// the only way to keep behavior consistent and portable is to always pass `0` for the correlating parameter in the draw calls.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn drawPrimitives(
+        self: RenderPass,
+        num_vertices: u32,
+        num_instances: u32,
+        first_virtex: u32,
+        first_instance: u32,
+    ) void {
+        C.SDL_DrawGPUPrimitives(
+            self.value,
+            num_vertices,
+            num_instances,
+            first_virtex,
+            first_instance,
+        );
+    }
+
+    /// Draws data using bound graphics state and with draw parameters set from a buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `buffer`: A buffer containing draw parameters.
+    /// * `offset`: The offset to start reading from the draw buffer.
+    /// * `draw_count`: The number of draw parameter sets that should be read from the draw buffer.
+    ///
+    /// ## Remarks
+    /// The buffer must consist of tightly-packed draw parameter sets that each match the layout of `IndirectDrawCommand`.
+    /// You must not call this function before binding a graphics pipeline.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn drawPrimitivesIndirect(
+        self: RenderPass,
+        buffer: Buffer,
+        offset: u32,
+        draw_count: u32,
+    ) void {
+        C.SDL_DrawGPUPrimitivesIndirect(
+            self.value,
+            buffer.value,
+            offset,
+            draw_count,
+        );
+    }
+
+    /// Ends the given render pass.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    ///
+    /// ## Remarks
+    /// All bound graphics state on the render pass command buffer is unset.
+    /// The render pass handle is now invalid.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn end(
+        self: RenderPass,
+    ) void {
+        C.SDL_EndGPURenderPass(
+            self.value,
+        );
+    }
+
     /// Sets the current blend constants on a command buffer.
     ///
     /// ## Function Parameters
@@ -3066,6 +3822,27 @@ pub const ShaderFormatFlags = struct {
         }
         return C.SDL_GPU_SHADERFORMAT_INVALID;
     }
+
+    /// Checks for GPU runtime support.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A bitflag indicating which shader formats the app is able to provide.
+    /// * `name`: The preferred GPU driver, or `null` to let SDL pick the optimal driver.
+    ///
+    /// ## Return Value
+    /// Returns true if supported, false otherwise.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn supported(
+        self: ShaderFormatFlags,
+        name: ?[:0]const u8,
+    ) bool {
+        return C.SDL_GPUSupportsShaderFormats(
+            ShaderFormatFlags.toSdl(self),
+            if (name) |val| val.ptr else null,
+        );
+    }
 };
 
 /// Specifies which stage a shader program corresponds to.
@@ -3253,6 +4030,67 @@ pub const SwapchainComposition = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const Texture = packed struct {
     value: *C.SDL_GPUTexture,
+};
+
+/// A structure specifying the parameters of a texture.
+///
+/// ## Remarks
+/// Usage flags can be bitwise OR'd together for combinations of usages.
+/// Note that certain usage combinations are invalid, for example `gpu.TextureUsageFlags.sampler` and `gpu.TextureUsageFlags.graphics_storage`.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const TextureCreateInfo = struct {
+    /// The base dimensionality of the texture.
+    texture_type: TextureType = .two_dimensional,
+    /// The pixel format of the texture.
+    format: TextureFormat,
+    /// How the texture is intended to be used by the client.
+    usage: TextureUsageFlags,
+    /// The width of the texture.
+    width: u32,
+    /// The height of the texture.
+    height: u32,
+    /// The layer count or depth of the texture.
+    /// This value is treated as a layer count on 2D array textures, and as a depth value on 3D textures.
+    layer_count_or_depth: u32 = 0,
+    /// The number of mip levels in the texture.
+    num_levels: u32 = 0,
+    /// The number of samples per texel.
+    /// Only applies if the texture is used as a render target.
+    sample_count: SampleCount = .no_multisampling,
+    /// Properties for extensions.
+    props: ?properties.Group = null,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUTextureCreateInfo) TextureCreateInfo {
+        return .{
+            .texture_type = @enumFromInt(value.type),
+            .format = @enumFromInt(value.format),
+            .usage = TextureUsageFlags.fromSdl(value.usage),
+            .width = value.width,
+            .height = value.height,
+            .layer_count_or_depth = value.layer_count_or_depth,
+            .num_levels = value.num_levels,
+            .sample_count = @enumFromInt(value.sample_count),
+            .props = if (value.props == 0) null else .{ .value = value.props },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: TextureCreateInfo) C.SDL_GPUTextureCreateInfo {
+        return .{
+            .type = @intFromEnum(self.texture_type),
+            .format = @intFromEnum(self.format),
+            .usage = self.usage.toSdl(),
+            .width = self.width,
+            .height = self.height,
+            .layer_count_or_depth = self.layer_count_or_depth,
+            .num_levels = self.num_levels,
+            .sample_count = @intFromEnum(self.sample_count),
+            .props = if (self.props) |val| val.value else 0,
+        };
+    }
 };
 
 /// Specifies the pixel format of a texture.
@@ -3457,6 +4295,24 @@ pub const TextureFormat = enum(c_uint) {
             width,
             height,
             depth_or_layer_count,
+        );
+    }
+
+    /// Obtains the texel block size for a texture format.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The texture format you want to know the texel size of.
+    ///
+    /// ## Return Value
+    /// Returns the texel block size of the texture format.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn texelSize(
+        self: TextureFormat,
+    ) u32 {
+        return C.SDL_GPUTextureFormatTexelBlockSize(
+            @intFromEnum(self),
         );
     }
 };
@@ -3726,6 +4582,37 @@ pub const TransferBuffer = struct {
     value: *C.SDL_GPUTransferBuffer,
 };
 
+/// A structure specifying the parameters of a transfer buffer.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const TransferBufferCreateInfo = struct {
+    /// How the transfer buffer is intended to be used by the client.
+    usage: TransferBufferUsage,
+    /// The size in bytes of the transfer buffer.
+    size: u32,
+    /// Properties for extensions.
+    props: ?properties.Group = null,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_GPUTransferBufferCreateInfo) TransferBufferCreateInfo {
+        return .{
+            .usage = @enumFromInt(value.usage),
+            .size = value.size,
+            .props = if (value.props == 0) null else .{ .value = value.props },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: TransferBufferCreateInfo) C.SDL_GPUTransferBufferCreateInfo {
+        return .{
+            .usage = @intFromPtr(self.usage),
+            .size = self.size,
+            .props = if (self.props) |val| val.value else 0,
+        };
+    }
+};
+
 /// A structure specifying a location in a transfer buffer.
 ///
 /// ## Remarks
@@ -3970,6 +4857,58 @@ pub const Viewport = struct {
     }
 };
 
+/// Get the name of a built in GPU driver.
+///
+/// ## Function Parameters
+/// * `index`: The index of a GPU driver.
+///
+/// ## Return Value
+/// Returns the name of the GPU driver with the given index.
+///
+/// ## Remarks
+/// The GPU drivers are presented in the order in which they are normally checked during initialization.
+///
+/// The names of drivers are all simple, low-ASCII identifiers, like "vulkan", "metal" or "direct3d12".
+/// These never have Unicode characters, and are not meant to be proper names.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getDriverName(
+    index: usize,
+) ?[:0]const u8 {
+    const ret = C.SDL_GetGPUDriver(@intCast(index));
+    return std.mem.span(ret);
+}
+
+/// Get the number of GPU drivers compiled into SDL.
+///
+/// ## Return Value
+/// Returns the number of built in GPU drivers.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getNumDrivers() usize {
+    return @intCast(C.SDL_GetNumGPUDrivers());
+}
+
+/// Checks for GPU runtime support.
+///
+/// ## Function Parameters
+/// * `props`: The properties to use.
+///
+/// ## Return Value
+/// Returns true if supported, false otherwise.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn supportsProperties(
+    props: properties.Group,
+) bool {
+    return C.SDL_GPUSupportsProperties(
+        props.value,
+    );
+}
+
 // Test the GPU.
 test "Gpu" {
     _ = BufferBinding{
@@ -4005,10 +4944,23 @@ test "Gpu" {
         .store = undefined,
         .resolve_texture = undefined,
     };
+    _ = IndexedIndirectDrawCommand{
+        .first_index = undefined,
+        .first_instance = undefined,
+        .num_indices = undefined,
+        .num_instances = undefined,
+        .vertex_offset = undefined,
+    };
     _ = IndirectDispatchCommand{
         .group_count_x = undefined,
         .group_count_y = undefined,
         .group_count_z = undefined,
+    };
+    _ = IndirectDrawCommand{
+        .first_instance = undefined,
+        .first_virtex = undefined,
+        .num_instances = undefined,
+        .num_vertices = undefined,
     };
     _ = StorageBufferReadWriteBinding{
         .cycle = undefined,

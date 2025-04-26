@@ -144,6 +144,10 @@ pub const events = @import("events.zig");
 /// SDL also offers functions to manipulate the directory tree: renaming, removing, copying files.
 pub const filesystem = @import("filesystem.zig");
 
+/// The GPU API offers a cross-platform way for apps to talk to modern graphics hardware.
+/// It offers both 3D graphics and compute support, in the style of Metal, Vulkan, and Direct3D 12.
+///
+/// This is a very complex category, and so it is recommended to read over https://wiki.libsdl.org/SDL3/CategoryGPU.
 pub const gpu = @import("gpu.zig");
 
 /// A GUID is a 128-bit value that represents something that is uniquely identifiable by this value: "globally unique."
