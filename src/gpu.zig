@@ -358,7 +358,7 @@ pub const BufferUsageFlags = struct {
 
     /// Get the SDL flags.
     pub fn toSdl(self: BufferUsageFlags) C.SDL_GPUBufferUsageFlags {
-        const ret: C.SDL_GPUBufferUsageFlags = 0;
+        var ret: C.SDL_GPUBufferUsageFlags = 0;
         if (self.vertex)
             ret |= C.SDL_GPU_BUFFERUSAGE_VERTEX;
         if (self.index)
@@ -705,7 +705,7 @@ pub const CommandBuffer = packed struct {
                 @ptrCast(color_target_infos.ptr),
                 @intCast(color_target_infos.len),
                 if (depth_stencil_target_info == null) null else &depth_stencil,
-            ),
+            ).?,
         };
     }
 
@@ -1642,10 +1642,11 @@ pub const Device = packed struct {
         self: Device,
         create_info: GraphicsPipelineCreateInfo,
     ) !GraphicsPipeline {
+        const create_info_sdl = create_info.toSdl();
         return .{
             .value = try errors.wrapNull(*C.SDL_GPUGraphicsPipeline, C.SDL_CreateGPUGraphicsPipeline(
                 self.value,
-                create_info.toSdl(),
+                &create_info_sdl,
             )),
         };
     }
@@ -1737,7 +1738,7 @@ pub const Device = packed struct {
     ) !Shader {
         const create_info_sdl = create_info.toSdl();
         return .{
-            .value = try errors.wrapNull(*C.SDL_GPUShader, C.SDL_CreateGPUSampler(
+            .value = try errors.wrapNull(*C.SDL_GPUShader, C.SDL_CreateGPUShader(
                 self.value,
                 &create_info_sdl,
             )),
@@ -2924,10 +2925,10 @@ pub const SamplerCreateInfo = struct {
             .address_mode_v = @intFromEnum(self.address_mode_v),
             .address_mode_w = @intFromEnum(self.address_mode_w),
             .mip_lod_bias = self.mip_lod_bias,
-            .enable_anisotrophy = self.max_anisotrophy != null,
-            .max_anisotrophy = if (self.max_anisotropy) |val| val else 0,
+            .enable_anisotropy = self.max_anisotropy != null,
+            .max_anisotropy = if (self.max_anisotropy) |val| val else 0,
             .enable_compare = self.compare != null,
-            .compare_op = if (self.enable_compare) @intFromEnum(self.compare) else null,
+            .compare_op = if (self.compare) |val| @intFromEnum(val) else 0,
             .min_lod = self.min_lod,
             .max_lod = self.max_lod,
             .props = if (self.props) |val| val.value else 0,
@@ -3048,7 +3049,7 @@ pub const ShaderFormatFlags = struct {
     /// Convert to an SDL value.
     pub fn toSdl(self: ?ShaderFormatFlags) C.SDL_GPUShaderFormat {
         if (self) |val| {
-            var ret = 0;
+            var ret: C.SDL_GPUShaderFormat = 0;
             if (val.private)
                 ret |= C.SDL_GPU_SHADERFORMAT_PRIVATE;
             if (val.spirv)
@@ -3142,10 +3143,10 @@ pub const StencilOperationState = struct {
     /// Convert to an SDL value.
     pub fn toSdl(self: StencilOperationState) C.SDL_GPUStencilOpState {
         return .{
-            .fail = StencilOperation.toSdl(self.fail),
-            .pass = StencilOperation.toSdl(self.pass),
-            .depth_fail = StencilOperation.toSdl(self.depth_fail),
-            .compare = CompareOperation.toSdl(self.compare),
+            .fail_op = StencilOperation.toSdl(self.fail),
+            .pass_op = StencilOperation.toSdl(self.pass),
+            .depth_fail_op = StencilOperation.toSdl(self.depth_fail),
+            .compare_op = CompareOperation.toSdl(self.compare),
         };
     }
 };
