@@ -231,7 +231,7 @@ pub const BufferCreateInfo = struct {
     /// The size in bytes of the buffer.
     size: u32,
     /// Properties for extensions.
-    props: ?properties.Group,
+    props: ?properties.Group = null,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUBufferCreateInfo) BufferCreateInfo {
@@ -402,24 +402,24 @@ pub const ColorComponentFlags = packed struct(C.SDL_GPUColorComponentFlags) {
 /// This struct is available since SDL 3.2.0.
 pub const ColorTargetBlendState = extern struct {
     /// The value to be multiplied by the source RGB value.
-    source_color: BlendFactor,
+    source_color: BlendFactor = .zero,
     /// The value to be multiplied by the destination RGB value.
-    destination_color: BlendFactor,
+    destination_color: BlendFactor = .zero,
     /// The blend operation for the RGB components.
-    color_blend: BlendOperation,
+    color_blend: BlendOperation = .add,
     /// The value to be multiplied by the source alpha.
-    source_alpha: BlendFactor,
+    source_alpha: BlendFactor = .zero,
     /// The value to be multiplied by the destination alpha.
-    destination_alpha: BlendFactor,
+    destination_alpha: BlendFactor = .zero,
     /// The blend operation for the alpha component.
-    alpha_blend: BlendOperation,
+    alpha_blend: BlendOperation = .add,
     /// A bitmask specifying which of the RGBA components are enabled for writing.
     /// Writes to all channels if `enable_color_write_mask` is false.
-    color_write_mask: ColorComponentFlags,
+    color_write_mask: ColorComponentFlags = .{},
     /// Whether blending is enabled for the color target.
-    enable_blend: bool,
+    enable_blend: bool = false,
     /// Whether the color write mask is enabled.
-    enable_color_write_mask: bool,
+    enable_color_write_mask: bool = false,
     _1: u8 = 0,
     _2: u8 = 0,
 
@@ -455,7 +455,7 @@ pub const ColorTargetDescription = extern struct {
     /// The pixel format of the texture to be used as a color target.
     format: TextureFormat,
     /// The blend state to be used for the color target.
-    blend_state: ColorTargetBlendState,
+    blend_state: ColorTargetBlendState = .{},
 
     // Size tests.
     comptime {
@@ -487,31 +487,31 @@ pub const ColorTargetInfo = extern struct {
     /// The texture that will be used as a color target by a render pass.
     texture: Texture,
     /// The mip level to use as a color target.
-    mip_level: u32,
+    mip_level: u32 = 0,
     /// The layer index or depth plane to use as a color target.
     /// This value is treated as a layer index on 2D array and cube textures, and as a depth plane on 3D textures.
-    layer_or_depth_plane: u32,
+    layer_or_depth_plane: u32 = 0,
     /// The color to clear the color target to at the start of the render pass.
     /// Ignored if `gpu.LoadOperation.clear` for `load` is not used.
-    clear_color: pixels.FColor,
+    clear_color: pixels.FColor = .{},
     /// What is done with the contents of the color target at the beginning of the render pass.
-    load: LoadOperation,
+    load: LoadOperation = .load,
     /// What is done with the results of the render pass.
-    store: StoreOperation,
+    store: StoreOperation = .store,
     /// The texture that will receive the results of a multisample resolve operation.
     /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
-    resolve_texture: Texture,
+    resolve_texture: Texture = .{ .value = undefined },
     /// The mip level of the resolve texture to use for the resolve operation.
     /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
-    resolve_mip_level: u32,
+    resolve_mip_level: u32 = 0,
     /// The layer index of the resolve texture to use for the resolve operation.
     /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
-    resolve_layer: u32,
+    resolve_layer: u32 = 0,
     /// If `true` cycles the texture if the texture is bound and `load` is not `gpu.LoadOperation.load`.
-    cycle: bool,
+    cycle: bool = false,
     /// If `true` cycles the resolve texture if the resolve texture is bound.
     /// Ignored if a `gpu.StoreOperation.resolve` for `store` is not used.
-    cycle_resolve_texture: bool,
+    cycle_resolve_texture: bool = false,
     _1: u8 = 0,
     _2: u8 = 0,
 
@@ -1111,19 +1111,19 @@ pub const ComputePipelineCreateInfo = struct {
     /// A UTF-8 string specifying the entry point function name for the shader.
     entry_point: [:0]const u8,
     /// The format of the compute shader code.
-    format: ?ShaderFormatFlags,
+    format: ShaderFormatFlags,
     /// The number of samplers defined in the shader.
-    num_samplers: u32,
+    num_samplers: u32 = 0,
     /// The number of readonly storage textures defined in the shader.
-    num_readonly_storage_textures: u32,
+    num_readonly_storage_textures: u32 = 0,
     /// The number of readonly storage buffers defined in the shader.
-    num_readonly_storage_buffers: u32,
+    num_readonly_storage_buffers: u32 = 0,
     /// The number of read-write storage textures defined in the shader.
-    num_readwrite_storage_textures: u32,
+    num_readwrite_storage_textures: u32 = 0,
     /// The number of read-write storage buffers defined in the shader.
-    num_readwrite_storage_buffers: u32,
+    num_readwrite_storage_buffers: u32 = 0,
     /// The number of uniform buffers defined in the shader.
-    num_uniform_buffers: u32,
+    num_uniform_buffers: u32 = 0,
     /// The number of threads in the X dimension.
     /// This should match the value in the shader.
     thread_count_x: u32,
@@ -1135,14 +1135,14 @@ pub const ComputePipelineCreateInfo = struct {
     thread_count_z: u32,
     /// A properties group for extensions.
     /// Should be `null` if no extensions are needed.
-    props: ?properties.Group,
+    props: ?properties.Group = null,
 
     /// From an SDL value.
     pub fn fromSdl(value: C.SDL_GPUComputePipelineCreateInfo) ComputePipelineCreateInfo {
         return .{
             .code = value.code[0..value.code_size],
             .entry_point = std.mem.span(value.entrypoint),
-            .format = ShaderFormatFlags.fromSdl(value.format),
+            .format = ShaderFormatFlags.fromSdl(value.format).?,
             .num_samplers = value.num_samplers,
             .num_readonly_storage_textures = value.num_readonly_storage_textures,
             .num_readonly_storage_buffers = value.num_readonly_storage_buffers,
@@ -1356,21 +1356,21 @@ pub const CullMode = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const DepthStencilState = struct {
     /// The comparison operator used for depth testing.
-    compare: CompareOperation,
+    compare: CompareOperation = .never,
     /// The stencil op state for back-facing triangles.
-    back_stencil_state: StencilOperationState,
+    back_stencil_state: StencilOperationState = .{},
     /// The stencil op state for front-facing triangles.
-    front_stencil_state: StencilOperationState,
+    front_stencil_state: StencilOperationState = .{},
     /// Selects the bits of the stencil values participating in the stencil test.
-    compare_mask: u8,
+    compare_mask: u8 = 0,
     /// Selects the bits of the stencil values updated by the stencil test.
-    write_mask: u8,
+    write_mask: u8 = 0,
     /// True enables the depth test.
-    enable_depth_test: bool,
+    enable_depth_test: bool = false,
     /// True enables depth writes. Depth writes are always disabled when `enable_depth_test` is false.
-    enable_depth_write: bool,
+    enable_depth_write: bool = false,
     /// True enables the stencil test.
-    enable_stencil_test: bool,
+    enable_stencil_test: bool = false,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUDepthStencilState) DepthStencilState {
@@ -1734,7 +1734,7 @@ pub const Device = packed struct {
     pub fn createShader(
         self: Device,
         create_info: ShaderCreateInfo,
-    ) !ShaderCreateInfo {
+    ) !Shader {
         const create_info_sdl = create_info.toSdl();
         return .{
             .value = try errors.wrapNull(*C.SDL_GPUShader, C.SDL_CreateGPUSampler(
@@ -1873,6 +1873,123 @@ pub const Device = packed struct {
         C.SDL_ReleaseGPUShader(
             self.value,
             shader.value,
+        );
+    }
+
+    /// Frees the given texture as soon as it is safe to do so.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `texture`: A texture to be destroyed.
+    ///
+    /// ## Remarks
+    /// You must not reference the texture after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseTexture(
+        self: Device,
+        texture: Texture,
+    ) void {
+        C.SDL_ReleaseGPUTexture(
+            self.value,
+            texture.value,
+        );
+    }
+
+    /// Frees the given transfer buffer as soon as it is safe to do so.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `transfer_buffer`: A transfer buffer to be destroyed.
+    ///
+    /// ## Remarks
+    /// You must not reference the transfer buffer after calling this function.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseTransferBuffer(
+        self: Device,
+        transfer_buffer: TransferBuffer,
+    ) void {
+        C.SDL_ReleaseGPUTransferBuffer(
+            self.value,
+            transfer_buffer.value,
+        );
+    }
+
+    /// Unclaims a window, destroying its swapchain structure.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `window`: A window that has been claimed.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn releaseWindow(
+        self: Device,
+        window: video.Window,
+    ) void {
+        C.SDL_ReleaseWindowFromGPUDevice(
+            self.value,
+            window.value,
+        );
+    }
+
+    /// Configures the maximum allowed number of frames in flight.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `allowed_frames_in_flight`: The maximum number of frames that can be pending on the GPU.
+    ///
+    /// ## Remarks
+    /// The default value when the device is created is `2`.
+    /// This means that after you have submitted `2` frames for presentation, if the GPU has not finished working on the first frame,
+    /// `gpu.CommandBuffer.acquireSwapchainTexture()` will fill the swapchain texture pointer with `null`, and `gpu.CommandBuffer.waitAndAcquireSwapchainTexture()` will block.
+    ///
+    /// Higher values increase throughput at the expense of visual latency.
+    /// Lower values decrease visual latency at the expense of throughput.
+    ///
+    /// Note that calling this function will stall and flush the command queue to prevent synchronization issues.
+    ///
+    /// The minimum value of allowed frames in flight is `1`, and the maximum is `3`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setAllowedFramesInFlight(
+        self: Device,
+        allowed_frames_in_flight: u32,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_SetGPUAllowedFramesInFlight(
+            self.value,
+            allowed_frames_in_flight,
+        ));
+    }
+
+    /// Sets an arbitrary string constant to label a buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A GPU context.
+    /// * `buffer`: A buffer to attach the name to.
+    /// * `text`: A UTF-8 string constant to mark as the name of the buffer.
+    ///
+    /// ## Remarks
+    /// You should use `SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING` with `gpu.Device.createBuffer()` instead of this function to avoid thread safety issues.
+    ///
+    /// ## Thread Safety
+    /// This function is not thread safe, you must make sure the buffer is not simultaneously used by any other thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setBufferName(
+        self: Device,
+        buffer: Buffer,
+        text: [:0]const u8,
+    ) void {
+        C.SDL_SetGPUBufferName(
+            self.value,
+            buffer.value,
+            text.ptr,
         );
     }
 
@@ -2126,19 +2243,19 @@ pub const GraphicsPipelineCreateInfo = struct {
     /// The fragment shader used by the graphics pipeline.
     fragment_shader: Shader,
     /// The vertex layout of the graphics pipeline.
-    vertex_input_state: VertexInputState,
+    vertex_input_state: VertexInputState = .{},
     /// The primitive topology of the graphics pipeline.
-    primitive_type: PrimitiveType,
+    primitive_type: PrimitiveType = .triangle_list,
     /// The rasterizer state of the graphics pipeline.
-    rasterizer_state: RasterizerState,
+    rasterizer_state: RasterizerState = .{},
     /// The multisample state of the graphics pipeline.
-    multisample_state: MultisampleState,
+    multisample_state: MultisampleState = .{},
     /// The depth-stencil state of the graphics pipeline.
-    depth_stencil_state: DepthStencilState,
+    depth_stencil_state: DepthStencilState = .{},
     /// Formats and blend modes for the render targets of the graphics pipeline.
-    target_info: GraphicsPipelineTargetInfo,
+    target_info: GraphicsPipelineTargetInfo = .{},
     /// Extra properties for extensions.
-    props: ?properties.Group,
+    props: ?properties.Group = null,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUGraphicsPipelineCreateInfo) GraphicsPipelineCreateInfo {
@@ -2177,9 +2294,9 @@ pub const GraphicsPipelineCreateInfo = struct {
 /// This struct is available since SDL 3.2.0.
 pub const GraphicsPipelineTargetInfo = struct {
     /// Color target descriptions.
-    color_target_descriptions: []const ColorTargetDescription,
+    color_target_descriptions: []const ColorTargetDescription = &.{},
     /// The pixel format of the depth-stencil target if used.
-    depth_stencil_format: ?TextureFormat,
+    depth_stencil_format: ?TextureFormat = null,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUGraphicsPipelineTargetInfo) GraphicsPipelineTargetInfo {
@@ -2255,7 +2372,7 @@ pub const LoadOperation = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const MultisampleState = struct {
     /// The number of samples to be used in rasterization.
-    sample_count: SampleCount,
+    sample_count: SampleCount = .no_multisampling,
     /// Reserved for future use.
     /// Must be set to 0.
     sample_mask: u32 = 0,
@@ -2354,21 +2471,21 @@ pub const PrimitiveType = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const RasterizerState = struct {
     /// Whether polygons will be filled in or drawn as lines.
-    fill_mode: FillMode,
+    fill_mode: FillMode = .fill,
     /// The facing direction in which triangles will be culled.
-    cull_mode: CullMode,
+    cull_mode: CullMode = .none,
     /// The vertex winding that will cause a triangle to be determined as front-facing.
-    front_face: FrontFace,
+    front_face: FrontFace.counter_clockwise,
     /// A scalar factor controlling the depth value added to each fragment.
-    depth_bias_constant_factor: f32,
+    depth_bias_constant_factor: f32 = 0,
     /// The maximum depth bias of a fragment.
-    depth_bias_clamp: f32,
+    depth_bias_clamp: f32 = 0,
     /// A scalar factor applied to a fragment's slope in depth calculations.
-    depth_bias_slope_factor: f32,
+    depth_bias_slope_factor: f32 = 0,
     /// True to bias fragment depth values.
-    enable_depth_bias: bool,
+    enable_depth_bias: bool = false,
     /// True to enable depth clip, false to enable depth clamp.
-    enable_depth_clip: bool,
+    enable_depth_clip: bool = false,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPURasterizerState) RasterizerState {
@@ -2635,6 +2752,24 @@ pub const RenderPass = packed struct {
         );
     }
 
+    /// Sets the current blend constants on a command buffer.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A render pass handle.
+    /// * `blend_constants`: The blend constant color.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setBlendConstants(
+        self: RenderPass,
+        blend_constants: pixels.FColor,
+    ) void {
+        C.SDL_SetGPUBlendConstants(
+            self.value,
+            blend_constants,
+        );
+    }
+
     /// Sets the current scissor state on a command buffer.
     ///
     /// ## Function Parameters
@@ -2737,29 +2872,29 @@ pub const SamplerAddressMode = enum(c_uint) {
 /// This function is available since SDL 3.2.0.
 pub const SamplerCreateInfo = struct {
     /// The minification filter to apply to lookups.
-    min_filter: Filter,
+    min_filter: Filter = .nearest,
     /// The magnification filter to apply to lookups.
-    max_filter: Filter,
+    max_filter: Filter = .nearest,
     /// The mipmap filter to apply to lookups.
-    mipmap_mode: SamplerMipmapMode,
+    mipmap_mode: SamplerMipmapMode = .nearest,
     /// The addressing mode for U coordinates outside [0, 1).
-    address_mode_u: SamplerAddressMode,
+    address_mode_u: SamplerAddressMode = .repeat,
     /// The addressing mode for V coordinates outside [0, 1).
-    address_mode_v: SamplerAddressMode,
+    address_mode_v: SamplerAddressMode = .repeat,
     /// The addressing mode for W coordinates outside [0, 1).
-    address_mode_w: SamplerAddressMode,
+    address_mode_w: SamplerAddressMode = .repeat,
     /// The bias to be added to mipmap LOD calculation.
-    mip_lod_bias: f32,
+    mip_lod_bias: f32 = 0,
     /// The anisotropy value clamp used by the sampler.
-    max_anisotropy: ?f32,
+    max_anisotropy: ?f32 = null,
     /// The comparison operator to apply to fetched data before filtering.
-    compare: ?CompareOperation,
+    compare: ?CompareOperation = null,
     /// Clamps the minimum of the computed LOD value.
-    min_lod: f32,
+    min_lod: f32 = 0,
     /// Clamps the maximum of the computed LOD value.
-    max_lod: f32,
+    max_lod: f32 = 0,
     /// Properties for extensions.
-    props: ?properties.Group,
+    props: ?properties.Group = null,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUSamplerCreateInfo) SamplerCreateInfo {
@@ -2833,15 +2968,15 @@ pub const ShaderCreateInfo = struct {
     /// The stage the shader program corresponds to.
     stage: ShaderStage,
     /// The number of samplers defined in the shader.
-    num_samplers: u32,
+    num_samplers: u32 = 0,
     /// The number of storage textures defined in the shader.
-    num_storage_textures: u32,
+    num_storage_textures: u32 = 0,
     /// The number of storage buffers defined in the shader.
-    num_storage_buffers: u32,
+    num_storage_buffers: u32 = 0,
     /// The number of uniform buffers defined in the shader.
-    num_uniform_buffers: u32,
+    num_uniform_buffers: u32 = 0,
     /// Properties for extensions.
-    props: ?properties.Group,
+    props: ?properties.Group = null,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUShaderCreateInfo) ShaderCreateInfo {
@@ -2986,13 +3121,13 @@ pub const StencilOperation = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const StencilOperationState = struct {
     /// The action performed on samples that fail the stencil test.
-    fail: StencilOperation,
+    fail: StencilOperation = .keep,
     /// The action performed on samples that pass the depth and stencil tests.
-    pass: StencilOperation,
+    pass: StencilOperation = .keep,
     /// The action performed on samples that pass the stencil test and fail the depth test.
-    depth_fail: StencilOperation,
+    depth_fail: StencilOperation = .keep,
     /// The comparison operator used in the stencil test.
-    compare: CompareOperation,
+    compare: CompareOperation = .never,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: C.SDL_GPUStencilOpState) StencilOperationState {
@@ -3772,9 +3907,9 @@ pub const VertexInputRate = enum(c_uint) {
 /// This struct is available since SDL 3.2.0.
 pub const VertexInputState = struct {
     /// Vertex buffer descriptions.
-    vertex_buffer_descriptions: []const VertexBufferDescription,
+    vertex_buffer_descriptions: []const VertexBufferDescription = &.{},
     /// Vertex attribute descriptions.
-    vertex_attributes: []const VertexAttribute,
+    vertex_attributes: []const VertexAttribute = &.{},
 
     /// From an SDL value.
     pub fn fromSdl(value: C.SDL_GPUVertexInputState) VertexInputState {
