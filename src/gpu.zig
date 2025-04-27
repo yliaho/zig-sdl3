@@ -3086,7 +3086,7 @@ pub const RasterizerState = struct {
     /// The facing direction in which triangles will be culled.
     cull_mode: CullMode = .none,
     /// The vertex winding that will cause a triangle to be determined as front-facing.
-    front_face: FrontFace.counter_clockwise,
+    front_face: FrontFace = .counter_clockwise,
     /// A scalar factor controlling the depth value added to each fragment.
     depth_bias_constant_factor: f32 = 0,
     /// The maximum depth bias of a fragment.
