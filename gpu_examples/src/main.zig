@@ -29,7 +29,7 @@ const examples = [_]Example{
 };
 
 /// Example index to start with.
-const starting_example = 0;
+const starting_example = 3;
 
 /// An example function to handle errors from SDL.
 ///

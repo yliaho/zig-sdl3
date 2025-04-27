@@ -9,12 +9,6 @@ extern var vert_in_color: constants.vert_in_color.typ addrspace(.input);
 extern var vert_out_position: constants.vert_out_position_type addrspace(.output);
 extern var vert_out_color: constants.vert_out_frag_in_color.typ addrspace(.output);
 
-// Bindings for reflection.
-pub const bindings = [_]constants.Binding{
-    constants.vert_in_position,
-    constants.vert_in_color,
-};
-
 export fn main() callconv(.spirv_vertex) void {
 
     // Setup vertex buffer inputs.

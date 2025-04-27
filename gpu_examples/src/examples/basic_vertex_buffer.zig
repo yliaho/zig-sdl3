@@ -1,8 +1,11 @@
 const common = @import("../common.zig");
 const sdl3 = @import("sdl3");
+const std = @import("std");
 
-const vert_shader_bin = @embedFile("position_color.vert.spv");
-const frag_shader_bin = @embedFile("solid_color.frag.spv");
+const vert_shader_name = "position_color.vert";
+const frag_shader_name = "solid_color.frag";
+const vert_shader_bin = @embedFile(vert_shader_name ++ ".spv");
+const frag_shader_bin = @embedFile(frag_shader_name ++ ".spv");
 
 var pipeline: sdl3.gpu.GraphicsPipeline = undefined;
 var vertex_buffer: sdl3.gpu.Buffer = undefined;
@@ -39,7 +42,15 @@ pub fn init() !common.Context {
     );
     defer ctx.device.releaseShader(frag_shader);
 
-    // Create the pipelines. TODO: MAKE FUNCTION FOR REFLECTION!
+    // Create the pipelines.
+    const input_state_buffers = [_]common.VertexInputStateBuffer{
+        .{
+            .cpu_backing = PositionColorVertex,
+            .vert_shader_name = vert_shader_name,
+        },
+    };
+    const vertex_buffer_descriptions = common.makeVertexBufferDescriptions(&input_state_buffers);
+    const vertex_attributes = common.makeVertexAttributes(&input_state_buffers);
     const pipeline_create_info = sdl3.gpu.GraphicsPipelineCreateInfo{
         .target_info = .{
             .color_target_descriptions = &.{
@@ -49,27 +60,8 @@ pub fn init() !common.Context {
             },
         },
         .vertex_input_state = .{
-            .vertex_buffer_descriptions = &.{
-                .{
-                    .slot = 0,
-                    .input_rate = .vertex,
-                    .pitch = @intCast(@sizeOf(PositionColorVertex)),
-                },
-            },
-            .vertex_attributes = &.{
-                .{
-                    .buffer_slot = 0,
-                    .format = .f32x3,
-                    .location = 0,
-                    .offset = @offsetOf(PositionColorVertex, "position"),
-                },
-                .{
-                    .buffer_slot = 0,
-                    .format = .u8x4_normalized,
-                    .location = 1,
-                    .offset = @offsetOf(PositionColorVertex, "color"),
-                },
-            },
+            .vertex_buffer_descriptions = &vertex_buffer_descriptions,
+            .vertex_attributes = &vertex_attributes,
         },
         .vertex_shader = vert_shader,
         .fragment_shader = frag_shader,
@@ -98,7 +90,19 @@ pub fn init() !common.Context {
         .size = vertex_data_size,
     });
     defer ctx.device.releaseTransferBuffer(transfer_buffer);
-    const transfer_buffer_mapped = @as(*[3]PositionColorVertex, @alignCast(@ptrCast(try ctx.device.mapTransferBuffer(transfer_buffer, false))));
+    const transfer_buffer_mapped = @as(
+        @Type(.{ .pointer = .{
+            .child = @TypeOf(vertex_data),
+            .size = .one,
+            .sentinel_ptr = null,
+            .address_space = .generic,
+            .is_const = false,
+            .is_volatile = false,
+            .is_allowzero = false,
+            .alignment = @alignOf(@TypeOf(&vertex_data)),
+        } }),
+        @alignCast(@ptrCast(try ctx.device.mapTransferBuffer(transfer_buffer, false))),
+    );
     transfer_buffer_mapped.* = vertex_data;
     ctx.device.unmapTransferBuffer(transfer_buffer);
 

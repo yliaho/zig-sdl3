@@ -8,9 +8,6 @@ extern var vert_index: u32 addrspace(.input);
 extern var vert_out_position: constants.vert_out_position_type addrspace(.output);
 extern var vert_out_color: constants.vert_out_frag_in_color.typ addrspace(.output);
 
-// Bindings for reflection.
-pub const bindings = [_]constants.Binding{};
-
 export fn main() callconv(.spirv_vertex) void {
 
     // Vertex index and position are built-ins.
