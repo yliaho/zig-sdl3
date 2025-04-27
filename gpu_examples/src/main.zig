@@ -22,8 +22,14 @@ fn makeExample(example: anytype) Example {
 
 /// List of example files.
 const examples = [_]Example{
+    makeExample(@import("examples/clear_screen.zig")),
+    makeExample(@import("examples/clear_screen_multi.zig")),
     makeExample(@import("examples/basic_triangle.zig")),
+    makeExample(@import("examples/basic_vertex_buffer.zig")),
 };
+
+/// Example index to start with.
+const starting_example = 0;
 
 /// An example function to handle errors from SDL.
 ///
@@ -99,6 +105,7 @@ pub fn main() !void {
     // Setup logging.
     sdl3.errors.error_callback = &sdlErr;
     sdl3.log.setAllPriorities(.info);
+    sdl3.log.setLogOutputFunction(sdlLog, null);
 
     // Setup SDL3.
     defer sdl3.init.shutdown();
@@ -107,7 +114,7 @@ pub fn main() !void {
     defer sdl3.init.quit(init_flags);
 
     // Setup initial example.
-    var example_index: usize = 0;
+    var example_index: usize = starting_example;
     var ctx = try examples[example_index].init();
     defer examples[example_index].quit(ctx);
 

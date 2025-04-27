@@ -4606,7 +4606,7 @@ pub const TransferBufferCreateInfo = struct {
     /// Convert to an SDL value.
     pub fn toSdl(self: TransferBufferCreateInfo) C.SDL_GPUTransferBufferCreateInfo {
         return .{
-            .usage = @intFromPtr(self.usage),
+            .usage = @intFromEnum(self.usage),
             .size = self.size,
             .props = if (self.props) |val| val.value else 0,
         };

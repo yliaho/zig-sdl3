@@ -1,17 +1,22 @@
 const constants = @import("constants.zig");
 const std = @import("std");
 
-extern var in_color: @Vector(4, f32) addrspace(.input);
-extern var out_color: @Vector(4, f32) addrspace(.output);
+extern var frag_in_color: constants.vert_out_frag_in_color.typ addrspace(.input);
+extern var frag_out_color: constants.frag_out_color.typ addrspace(.output);
+
+comptime {
+    std.debug.assert(@TypeOf(frag_in_color) == @TypeOf(frag_out_color));
+}
 
 export fn main() callconv(.spirv_fragment) void {
+
     // Out color still needs to have a location be specified, but should be 0.
     std.gpu.fragmentOrigin(main, .upper_left);
-    std.gpu.location(&out_color, constants.frag_out_color_loc);
+    constants.frag_out_color.bind(&frag_out_color);
 
     // Import the input color as the pre-selected location (must match with vertex shader).
-    std.gpu.location(&in_color, constants.vert_out_color_loc);
+    constants.vert_out_frag_in_color.bind(&frag_in_color);
 
     // Simple out = in.
-    out_color = in_color;
+    frag_out_color = frag_in_color;
 }

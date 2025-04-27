@@ -60,6 +60,11 @@ pub fn init() !common.Context {
     line_pipeline = try ctx.device.createGraphicsPipeline(pipeline_create_info);
     errdefer ctx.device.releaseGraphicsPipeline(line_pipeline);
 
+    sdl3.log.log("Loaded \"" ++ example_name ++ "\"");
+    sdl3.log.log("Press left to toggle wireframe");
+    sdl3.log.log("Press down to toggle small viewport");
+    sdl3.log.log("Press right to toggle scissor rect");
+
     return ctx;
 }
 
