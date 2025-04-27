@@ -18,7 +18,7 @@ export fn main() callconv(.spirv_vertex) void {
     std.gpu.position(&vert_out_position);
 
     // Export the color to a pre-selected slot.
-    constants.vert_out_frag_in_color.bind(&vert_out_color);
+    std.gpu.location(&vert_out_color, constants.vert_out_frag_in_color.loc);
 
     // Since we are drawing 1 primitive triangle, the indices 0, 1, and 2 are the only vetices expected.
     switch (vert_index) {

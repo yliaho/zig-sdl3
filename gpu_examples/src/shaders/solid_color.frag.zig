@@ -12,10 +12,10 @@ export fn main() callconv(.spirv_fragment) void {
 
     // Out color still needs to have a location be specified, but should be 0.
     std.gpu.fragmentOrigin(main, .upper_left);
-    constants.frag_out_color.bind(&frag_out_color);
+    std.gpu.location(&frag_out_color, constants.frag_out_color.loc);
 
     // Import the input color as the pre-selected location (must match with vertex shader).
-    constants.vert_out_frag_in_color.bind(&frag_in_color);
+    std.gpu.location(&frag_in_color, constants.vert_out_frag_in_color.loc);
 
     // Simple out = in.
     frag_out_color = frag_in_color;

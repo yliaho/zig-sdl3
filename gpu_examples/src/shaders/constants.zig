@@ -21,11 +21,6 @@ pub const Binding = struct {
     byte_normalize: bool = false,
     /// Stage the uniform exists.
     stage: BindingStage,
-
-    /// Bind an instance of the binding using its location.
-    pub fn bind(comptime self: Binding, comptime value: anytype) void {
-        std.gpu.location(&value, self.loc);
-    }
 };
 
 // The GPU has multiple "locations" that can be used for inputs and outputs for either the vertex or fragment stage.
