@@ -257,7 +257,9 @@ pub const Type = enum(C.SDL_EventType) {
     // WindowLeaveFullscreen,
     // WindowDestroyed,
     // WindowHdrStateChanged,
+    /// Key pressed
     key_down = C.SDL_EVENT_KEY_DOWN,
+    /// Key released
     key_up = C.SDL_EVENT_KEY_UP,
     // TextEditing,
     // TextInput,
@@ -415,8 +417,8 @@ pub const User = struct {
 ///    }
 pub const Key = struct {
     type: Type,
-    reserved: u32,
-    timestamp: u64,
+    /// Common event information.
+    common: Common,
     window_id: ?video.WindowID = null,
     which: ?keyboard.ID,
     scancode: ?scancode.Scancode,
@@ -493,35 +495,33 @@ pub const Event = union(Type) {
                 .data1 = event.user.data1,
                 .data2 = event.user.data2,
             } },
-            C.SDL_EVENT_KEY_UP => .{
-                .key_up = .{
-                    .type = .key_up,
-                    .reserved = event.key.reserved,
-                    .timestamp = event.key.timestamp,
+            C.SDL_EVENT_KEY_DOWN => .{
+                .key_down = .{
+                    .type = .key_down,
+                    .common = Common.fromSdl(&event),
                     .window_id = if (event.user.windowID == 0) null else event.key.windowID,
                     .which = .{
                         .value = event.key.which,
                     },
                     .scancode = @enumFromInt(event.key.scancode),
                     .key = @enumFromInt(event.key.key),
-                    .mod = @import("keycode.zig").KeyModifier.fromSdl(event.key.mod),
+                    .mod = keycode.KeyModifier.fromSdl(event.key.mod),
                     .raw = event.key.raw,
                     .down = event.key.down,
                     .repeat = event.key.repeat,
                 },
             },
-            C.SDL_EVENT_KEY_DOWN => .{
-                .key_down = .{
-                    .type = .key_down,
-                    .reserved = event.key.reserved,
-                    .timestamp = event.key.timestamp,
+            C.SDL_EVENT_KEY_UP => .{
+                .key_up = .{
+                    .type = .key_up,
+                    .common = Common.fromSdl(&event),
                     .window_id = if (event.user.windowID == 0) null else event.key.windowID,
                     .which = .{
                         .value = event.key.which,
                     },
                     .scancode = @enumFromInt(event.key.scancode),
                     .key = @enumFromInt(event.key.key),
-                    .mod = @import("keycode.zig").KeyModifier.fromSdl(event.key.mod),
+                    .mod = keycode.KeyModifier.fromSdl(event.key.mod),
                     .raw = event.key.raw,
                     .down = event.key.down,
                     .repeat = event.key.repeat,
@@ -616,14 +616,14 @@ pub const Event = union(Type) {
                 .data1 = val.data1,
                 .data2 = val.data2,
             } },
-            .padding => .{
-                .type = C.SDL_EVENT_ENUM_PADDING,
-            },
             .key_up => .{
                 .type = C.SDL_EVENT_KEY_UP,
             },
             .key_down => .{
                 .type = C.SDL_EVENT_KEY_DOWN,
+            },
+            .padding => .{
+                .type = C.SDL_EVENT_ENUM_PADDING,
             },
         };
     }

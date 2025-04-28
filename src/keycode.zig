@@ -270,6 +270,7 @@ pub const Keycode = enum(C.SDL_Keycode) {
     right_meta = C.SDLK_RMETA,
     left_hyper = C.SDLK_LHYPER,
     right_hyper = C.SDLK_RHYPER,
+    _, // non-exhaustive enum for SDL compatibility
 
     /// Create a keycode from a scancode.
     ///
@@ -284,7 +285,7 @@ pub const Keycode = enum(C.SDL_Keycode) {
     /// CAUSES AN ERROR IN NEW IMPLEMENTATION (could not find a solution).
     pub fn fromScancode(
         code: scancode.Scancode,
-    ) Keycode {
+    ) ?Keycode {
         const ret = C.SDL_SCANCODE_TO_KEYCODE(code.toSdl());
         return Keycode.fromSdl(ret);
     }
@@ -315,9 +316,7 @@ pub const Keycode = enum(C.SDL_Keycode) {
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    pub fn isScancode(
-        self: Keycode,
-    ) bool {
+    pub fn isScancode(self: Keycode) bool {
         return C.SDLK_SCANCODE_MASK & @intFromEnum(self) != 0;
     }
 
@@ -334,8 +333,8 @@ pub const Keycode = enum(C.SDL_Keycode) {
     ///
     /// ## Version
     /// This function is provided by zig-sdl3.
-    pub fn toSdl(self: Keycode) C.SDL_Keycode {
-        return @intFromEnum(self);
+    pub fn toSdl(self: ?Keycode) C.SDL_Keycode {
+        return if (self) |val| @intFromEnum(val) else C.SDLK_UNKNOWN;
     }
 
     /// Create a keycode enum from an SDL keycode.
@@ -477,7 +476,7 @@ pub const KeyModifier = struct {
 
 // Keycode testing.
 test "Keycode" {
-    const code = Keycode.fromScancode(.a);
+    const code = Keycode.fromScancode(.a).?;
     try std.testing.expect(code.isScancode());
     try std.testing.expect(!code.isExtended());
 

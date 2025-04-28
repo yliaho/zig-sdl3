@@ -409,11 +409,6 @@ pub const Scancode = enum(C.SDL_Scancode) {
     /// Used for rejecting phone calls.
     end_call = C.SDL_SCANCODE_ENDCALL,
 
-    /// If the scancode matches another.
-    pub fn matches(self: Scancode, other: Scancode) bool {
-        return self == other;
-    }
-
     /// Create an unmanaged scancode from a scancode enum.
     ///
     /// ## Function Parameters
@@ -448,8 +443,3 @@ pub const Scancode = enum(C.SDL_Scancode) {
         return @enumFromInt(key_code);
     }
 };
-
-// Simple scancode test.
-test "Scancode" {
-    try std.testing.expect(Scancode.g.matches(.g));
-}
