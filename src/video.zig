@@ -753,7 +753,7 @@ pub const gl = struct {
     /// ## Version
     /// This datatype is available since SDL 3.2.0.
     pub const Context = struct {
-        value: *C.SDL_GLContext,
+        value: *C.struct_SDL_GLContextState,
 
         /// Create an OpenGL context for an OpenGL window, and make it current.
         ///
@@ -777,11 +777,14 @@ pub const gl = struct {
         ) !gl.Context {
             const ret = C.SDL_GL_CreateContext(window.value);
             return .{
-                .value = try errors.wrapNull(*C.SDL_GLContext, ret)
+                .value = try errors.wrapNull(*C.struct_SDL_GLContextState, ret)
             };
         }
 
         /// Delete an OpenGL context.
+        ///
+        /// ## Return Value
+        /// Returns true on success or false on failure; call `errors.get()` for more information.
         ///
         /// ## Thread Safety
         /// This function should only be called on the main thread.
@@ -790,9 +793,8 @@ pub const gl = struct {
         /// This function is available since SDL 3.2.0.
         pub fn deinit(
             self: gl.Context
-        ) !void {
-            const ret = C.SDL_GL_DestroyContext(self.value);
-            try errors.wrapCallBool(ret);
+        ) bool {
+           return C.SDL_GL_DestroyContext(self.value);
         }
 
         /// Set up an OpenGL context for rendering into an OpenGL window.
@@ -830,7 +832,7 @@ pub const gl = struct {
         var value: c_int = undefined;
         const ret = C.SDL_GL_GetAttribute(attr, &value);
         try errors.wrapCallBool(ret);
-        return value;
+        return @intCast(value);
     }
 
     /// Get the currently active OpenGL context.
@@ -843,7 +845,7 @@ pub const gl = struct {
     pub fn getCurrentContext() !gl.Context {
         const ret = C.SDL_GL_GetCurrentContext();
         return .{
-            .value = try errors.wrapNull(C.SDL_GLContext, ret)
+            .value = try errors.wrapNull(*C.struct_SDL_GLContextState, ret)
         };
     }
 
@@ -1729,9 +1731,7 @@ pub const Window = packed struct {
     pub fn getSurface(
         self: Window,
     ) !surface.Surface {
-        const ret = C.SDL_GetWindowSurface(
-            self.value,
-        );
+        const ret = C.SDL_GetWindowSurface(self.value);
         if (ret == null)
             return error.SdlError;
         return surface.Surface{ .value = ret };
@@ -1774,8 +1774,7 @@ pub const Window = packed struct {
             self.value,
             if (area_sdl == null) null else &(area_sdl.?),
         );
-        if (!ret)
-            return error.SdlError;
+        try errors.wrapCallBool(ret);
     }
 
     /// Copy the window surface to the screen.
@@ -1793,11 +1792,8 @@ pub const Window = packed struct {
     pub fn updateSurface(
         self: Window,
     ) !void {
-        const ret = C.SDL_UpdateWindowSurface(
-            self.value,
-        );
-        if (!ret)
-            return error.SdlError;
+        const ret = C.SDL_UpdateWindowSurface(self.value);
+        try errors.wrapCallBool(ret);
     }
 };
 
