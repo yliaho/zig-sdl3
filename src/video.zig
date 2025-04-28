@@ -702,7 +702,7 @@ pub const gl = struct {
         /// The minimum number of bits for the alpha channel of the color buffer; defaults to 8.
         alpha_size = C.SDL_GL_ALPHA_SIZE,
         /// The minimum number of bits for frame buffer size; defaults to 0.
-        buffer_size = C.SDL_GL_BLUE_SIZE,
+        buffer_size = C.SDL_GL_BUFFER_SIZE,
         /// Whether the output is single or double buffered; defaults to double buffering on.
         double_buffer = C.SDL_GL_DOUBLEBUFFER,
         /// The minimum number of bits in the depth buffer; defaults to 16.
@@ -742,7 +742,7 @@ pub const gl = struct {
         /// Sets context the release behavior. See `SDL_GLContextReleaseFlag`; defaults to FLUSH.
         context_release_behavior = C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR,
         /// Set context reset notification. See `SDL_GLContextResetNotification`; defaults to NO_NOTIFICATION.
-        context_reset_notification = C.SDL_GL_CONTEXT_RESET_NO_NOTIFICATION,
+        context_reset_notification = C.SDL_GL_CONTEXT_RESET_NOTIFICATION,
         context_no_error = C.SDL_GL_CONTEXT_NO_ERROR,
         float_buffers = C.SDL_GL_FLOATBUFFERS,
         egl_platform = C.SDL_GL_EGL_PLATFORM
@@ -830,8 +830,8 @@ pub const gl = struct {
         attr: gl.Attribute
     ) !u32 {
         var value: c_int = undefined;
-        const ret = C.SDL_GL_GetAttribute(attr, &value);
-        try errors.wrapCallBool(ret);
+        const ret = C.SDL_GL_GetAttribute(@intFromEnum(attr), &value);
+        try errors.wrapCallBool(ret); 
         return @intCast(value);
     }
 
