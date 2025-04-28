@@ -678,6 +678,86 @@ pub const egl = struct {
     }
 };
 
+/// Wrapper for GL related functions.
+pub const gl = struct {
+    /// An opaque handle to an OpenGL context.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const Context = struct {
+        value: *C.SDL_GLContext,
+
+        /// Create an OpenGL context for an OpenGL window, and make it current.
+        ///
+        /// ## Return Value
+        /// Returns the OpenGL context associated with window.
+        ///
+        /// ## Remarks
+        /// Windows users new to OpenGL should note that, for historical reasons, GL functions added after OpenGL version 1.1 are not available by default.
+        /// Those functions must be loaded at run-time, either with an OpenGL extension-handling library or with `video.sdl.getProcAddress()` and its related functions.
+        ///
+        /// ## Thread Safety
+        /// This function should only be called on the main thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn init(window: Window) !gl.Context {
+            const ret = C.SDL_GL_CreateContext(window.value);
+            return .{
+                .value = try errors.wrapNull(*C.SDL_GLContext, ret)
+            };
+        }
+
+        /// Delete an OpenGL context.
+        ///
+        /// ## Thread Safety
+        /// This function should only be called on the main thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn deinit(self: gl.Context) !void {
+            const ret = C.SDL_GL_DestroyContext(self.value);
+            try errors.wrapCallBool(ret);
+        }
+
+        /// Set up an OpenGL context for rendering into an OpenGL window.
+        ///
+        /// ## Remarks
+        /// The context must have been created with a compatible window.
+        ///
+        /// ## Thread Safety
+        /// This function should only be called on the main thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn makeCurrent(self: gl.Context, window: Window) !void {
+            const ret = C.SDL_GL_MakeCurrent(window.value, self.value);
+            try errors.wrapCallBool(ret);
+        }
+    };
+
+    /// Get an OpenGL function by name.
+    ///
+    /// ## Return Value
+    /// Returns a pointer to the named OpenGL function. The returned pointer should be cast to the appropriate function signature.
+    ///
+    /// # Remarks
+    /// If the GL library is loaded at runtime with SDL_GL_LoadLibrary(), then all GL functions must be retrieved this way.
+    /// Usually this is used to retrieve function pointers to OpenGL extensions.
+    ///
+    /// There are some quirks to looking up OpenGL functions that require some extra care from the application.
+    /// If you code carefully, you can handle these quirks without any platform-specific code, though:
+    ///
+    /// * On Windows, function pointers are specific to the current GL context; this means you need to have created a GL context and made it current before calling `video.gl.getProcAddress()`. If you recreate your context or create a second context, you should assume that any existing function pointers aren't valid to use with it. This is (currently) a Windows-specific limitation, and in practice lots of drivers don't suffer this limitation, but it is still the way the wgl API is documented to work and you should expect crashes if you don't respect it. Store a copy of the function pointers that comes and goes with context lifespan.
+    /// * On X11, function pointers returned by this function are valid for any context, and can even be looked up before a context is created at all. This means that, for at least some common OpenGL implementations, if you look up a function that doesn't exist, you'll get a non-NULL result that is NOT safe to call. You must always make sure the function is actually available for a given GL context before calling it, by checking for the existence of the appropriate extension with `video.gl.extensionSupported()`, or verifying that the version of OpenGL you're using offers the function as core functionality.
+    /// * Some OpenGL drivers, on all platforms, will return NULL if a function isn't supported, but you can't count on this behavior. Check for extensions you use, and if you get a NULL anyway, act as if that extension wasn't available. This is probably a bug in the driver, but you can code defensively for this scenario anyhow.
+    /// * Just because you're on Linux/Unix, don't assume you'll be using X11. Next-gen display servers are waiting to replace it, and may or may not make the same promises about function pointers.
+    /// * OpenGL function pointers must be declared APIENTRY as in the example code. This will ensure the proper calling convention is followed on platforms where this matters (Win32) thereby avoiding stack corruption
+    pub fn getProcAddress(proc: [:0]const u8) *C.SDL_FunctionPointer {
+        return C.SDL_GL_GetProcAddress(proc);
+    }
+};
+
 /// Window flash operation.
 ///
 /// ## Version
@@ -1139,7 +1219,13 @@ pub const Window = packed struct {
     ///     try surface.fillRect(null, surface.mapRgb(128, 30, 255));
     ///     try window.updateSurface();
     ///
-    ///     sdl3.timer.delayMilliseconds(5000);
+    ///     while (true) {
+    ///         switch ((try sdl3.events.wait(true)).?) {
+    ///             .quit => break,
+    ///             .terminating => break,
+    ///             else => {}
+    ///         }
+    ///     }
     /// }
     /// ```
     ///
@@ -1322,6 +1408,50 @@ pub const Window = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn getGrabbed() ?Window {
         return .{ .value = C.SDL_GetGrabbedWindow() orelse return null };
+    }
+
+    /// Get the size of the window's client area.
+    /// 
+    /// ### Return Value
+    /// Returns the size of the window's client area.
+    ///
+    /// ### Remarks
+    /// The window pixel size may differ from its window coordinate size if the window is on a high pixel density display.
+    /// Use `video.Window.getWindowSizeInPixels()` or `video.render.Renderer.getOutputSize()` to get the real client area size in pixels.
+    ///
+    /// ### Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ### Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSize(self: Window) !struct{ width: u32, height: u32 } {
+        var width: c_int = undefined;
+        var height: c_int = undefined;
+        const ret = C.SDL_GetWindowSize(self.value, &width, &height);
+        try errors.wrapCallBool(ret);
+        return .{ .width = @intCast(width), .height = @intCast(height) };
+    }
+
+    /// Get the size of the window's client area in pixels.
+    ///
+    /// ### Return Value
+    /// Returns the size of the window's client area in pixels.
+    ///
+    /// ### Remarks
+    /// The window pixel size may differ from its window coordinate size if the window is on a high pixel density display.
+    /// Use `video.Window.getSizeInPixels()` or `video.render.Renderer.getOutputSize()` to get the real client area size in pixels.
+    ///
+    /// ### Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ### Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSizeInPixels(self: Window) !struct{ width: u32, height: u32 } {
+        var width: c_int = undefined;
+        var height: c_int = undefined;
+        const ret = C.SDL_GetWindowSizeInPixels(self.value, &width, &height);
+        try errors.wrapCallBool(ret);
+        return .{ .width = @intCast(width), .height = @intCast(height) };
     }
 
     /// Get the SDL surface associated with the window.
