@@ -679,7 +679,11 @@ pub const egl = struct {
 };
 
 /// Wrapper for GL related functions.
+///
+/// ## Version
+/// Provided by zig-sdl3.
 pub const gl = struct {
+
     /// An enumeration of OpenGL configuration attributes.
     ///
     /// ## Remarks
@@ -731,21 +735,47 @@ pub const gl = struct {
         context_major_version = C.SDL_GL_CONTEXT_MAJOR_VERSION,
         /// OpenGL context minor version.
         context_minor_version = C.SDL_GL_CONTEXT_MINOR_VERSION,
-        /// Some combination of 0 or more of elements of the SDL_GLContextFlag enumeration; defaults to 0.
+        /// Some combination of 0 or more of elements of the `video.gl.ContextFlag` enumeration; defaults to 0.
         context_flags = C.SDL_GL_CONTEXT_FLAGS,
-        /// Type of GL context (Core, Compatibility, ES). See SDL_GLProfile; default value depends on platform.
+        /// Type of GL context (Core, Compatibility, ES). See `video.gl.Profile`; default value depends on platform.
         context_profile_mask = C.SDL_GL_CONTEXT_PROFILE_MASK,
         /// OpenGL context sharing; defaults to 0.
         share_with_current_context = C.SDL_GL_SHARE_WITH_CURRENT_CONTEXT,
         /// Requests sRGB capable visual; defaults to 0.
         framebuffer_srgb_capable = C.SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,
-        /// Sets context the release behavior. See `SDL_GLContextReleaseFlag`; defaults to FLUSH.
+        /// Sets context the release behavior. See `video.gl.ContextReleaseFlag`; defaults to flush.
         context_release_behavior = C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR,
-        /// Set context reset notification. See `SDL_GLContextResetNotification`; defaults to NO_NOTIFICATION.
+        /// Set context reset notification. See `video.gl.ContextResetNotification`; defaults to no_notification.
         context_reset_notification = C.SDL_GL_CONTEXT_RESET_NOTIFICATION,
         context_no_error = C.SDL_GL_CONTEXT_NO_ERROR,
         float_buffers = C.SDL_GL_FLOATBUFFERS,
         egl_platform = C.SDL_GL_EGL_PLATFORM
+    };
+
+    /// Possible values to be set for the `video.gl.Attribute.context_profile_mask`.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const Profile = enum(u32) {
+        /// OpenGL core profile - deprecated functions are disabled.
+        core = @intCast(C.SDL_GL_CONTEXT_PROFILE_CORE),
+        /// OpenGL compatibility profile - deprecated functions are allowed.
+        compatibility = @intCast(C.SDL_GL_CONTEXT_PROFILE_COMPATIBILITY),
+        /// OpenGL ES profile - only a subset of the base OpenGL functionality is available.
+        es = @intCast(C.SDL_GL_CONTEXT_PROFILE_ES)
+    };
+
+    /// Swap interval.
+    ///
+    /// ## Version
+    /// Provided by zig-sdl3.
+    pub const SwapInterval = enum(c_int) {
+        /// Immediate updates.
+        immediate = 0,
+        /// Updates synchronized with the vertical retrace.
+        synchronized = 1,
+        /// Adaptive vsync.
+        vsync = -1
     };
 
     /// An opaque handle to an OpenGL context.
@@ -753,7 +783,7 @@ pub const gl = struct {
     /// ## Version
     /// This datatype is available since SDL 3.2.0.
     pub const Context = struct {
-        value: *C.struct_SDL_GLContextState,
+        value: *C.SDL_GLContextState,
 
         /// Create an OpenGL context for an OpenGL window, and make it current.
         ///
@@ -774,10 +804,10 @@ pub const gl = struct {
         /// TODO!!!
         pub fn init(
             window: Window
-        ) !gl.Context {
+        ) !gl.Context { 
             const ret = C.SDL_GL_CreateContext(window.value);
             return .{
-                .value = try errors.wrapNull(*C.struct_SDL_GLContextState, ret)
+                .value = try errors.wrapNull(*C.SDL_GLContextState, ret)
             };
         }
 
@@ -809,14 +839,43 @@ pub const gl = struct {
         /// This function is available since SDL 3.2.0.
         pub fn makeCurrent(
             self: gl.Context,
-            window: ?Window
+            window: Window
         ) !void {
             const ret = C.SDL_GL_MakeCurrent(
-                if (window == null) null else window.?.value,
+                window.value,
                 self.value
             );
             try errors.wrapCallBool(ret);
         }
+    };
+
+    /// Possible flags to be set for the `video.gl.Attribute.context_flags` attribute.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const ContextFlag = enum(u32) {
+        debug = @intCast(C.SDL_GL_CONTEXT_DEBUG_FLAG),
+        forward_compatible = @intCast(C.SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG),
+        robust_access = @intCast(C.SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG),
+        reset_isolation = @intCast(C.SDL_GL_CONTEXT_RESET_ISOLATION_FLAG) 
+    };
+
+    /// Possible values to be set for the `video.gl.Attribute.context_release_behavior` attribute.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const ContextReleaseFlag = enum(u32) {
+        none = @intCast(C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR_NONE),
+        flush = @intCast(C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR_FLUSH)
+    };
+
+    /// Possible values to be set `video.gl.Attribute.context_reset_notification` attribute.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const ContextResetNotification = enum(u32) {
+        no_notification = @intCast(C.SDL_GL_CONTEXT_RESET_NO_NOTIFICATION),
+        lose_context = @intCast(C.SDL_GL_CONTEXT_RESET_LOSE_CONTEXT)
     };
 
     /// Get the actual value for an attribute from the current context.
@@ -845,7 +904,7 @@ pub const gl = struct {
     pub fn getCurrentContext() !gl.Context {
         const ret = C.SDL_GL_GetCurrentContext();
         return .{
-            .value = try errors.wrapNull(*C.struct_SDL_GLContextState, ret)
+            .value = try errors.wrapNull(*C.SDL_GLContextState, ret)
         };
     }
 
@@ -869,17 +928,29 @@ pub const gl = struct {
     /// Returns a pointer to the named OpenGL function. The returned pointer should be cast to the appropriate function signature.
     ///
     /// # Remarks
-    /// If the GL library is loaded at runtime with SDL_GL_LoadLibrary(), then all GL functions must be retrieved this way.
+    /// If the GL library is loaded at runtime with `video.gl.loadLibrary()`, then all GL functions must be retrieved this way.
     /// Usually this is used to retrieve function pointers to OpenGL extensions.
     ///
     /// There are some quirks to looking up OpenGL functions that require some extra care from the application.
     /// If you code carefully, you can handle these quirks without any platform-specific code, though:
     ///
-    /// * On Windows, function pointers are specific to the current GL context; this means you need to have created a GL context and made it current before calling `video.gl.getProcAddress()`. If you recreate your context or create a second context, you should assume that any existing function pointers aren't valid to use with it. This is (currently) a Windows-specific limitation, and in practice lots of drivers don't suffer this limitation, but it is still the way the wgl API is documented to work and you should expect crashes if you don't respect it. Store a copy of the function pointers that comes and goes with context lifespan.
-    /// * On X11, function pointers returned by this function are valid for any context, and can even be looked up before a context is created at all. This means that, for at least some common OpenGL implementations, if you look up a function that doesn't exist, you'll get a non-NULL result that is NOT safe to call. You must always make sure the function is actually available for a given GL context before calling it, by checking for the existence of the appropriate extension with `video.gl.extensionSupported()`, or verifying that the version of OpenGL you're using offers the function as core functionality.
-    /// * Some OpenGL drivers, on all platforms, will return NULL if a function isn't supported, but you can't count on this behavior. Check for extensions you use, and if you get a NULL anyway, act as if that extension wasn't available. This is probably a bug in the driver, but you can code defensively for this scenario anyhow.
-    /// * Just because you're on Linux/Unix, don't assume you'll be using X11. Next-gen display servers are waiting to replace it, and may or may not make the same promises about function pointers.
-    /// * OpenGL function pointers must be declared APIENTRY as in the example code. This will ensure the proper calling convention is followed on platforms where this matters (Win32) thereby avoiding stack corruption
+    /// * On Windows, function pointers are specific to the current GL context; this means you need to have created a GL context and made it current before calling `video.gl.getProcAddress()`.
+    /// If you recreate your context or create a second context, you should assume that any existing function pointers aren't valid to use with it.
+    /// This is (currently) a Windows-specific limitation, and in practice lots of drivers don't suffer this limitation,
+    /// but it is still the way the wgl API is documented to work and you should expect crashes if you don't respect it.
+    /// Store a copy of the function pointers that comes and goes with context lifespan.
+    /// * On X11, function pointers returned by this function are valid for any context, and can even be looked up before a context is created at all.
+    /// This means that, for at least some common OpenGL implementations, if you look up a function that doesn't exist, you'll get a non-null result that is NOT safe to call.
+    /// You must always make sure the function is actually available for a given GL context before calling it,
+    /// by checking for the existence of the appropriate extension with `video.gl.extensionSupported()`,
+    /// or verifying that the version of OpenGL you're using offers the function as core functionality.
+    /// * Some OpenGL drivers, on all platforms, will return null if a function isn't supported, but you can't count on this behavior.
+    /// Check for extensions you use, and if you get a null anyway, act as if that extension wasn't available.
+    /// This is probably a bug in the driver, but you can code defensively for this scenario anyhow.
+    /// * Just because you're on Linux/Unix, don't assume you'll be using X11.
+    /// Next-gen display servers are waiting to replace it, and may or may not make the same promises about function pointers.
+    /// * OpenGL function pointers must be declared APIENTRY as in the example code.
+    /// This will ensure the proper calling convention is followed on platforms where this matters (Win32) thereby avoiding stack corruption.
     pub fn getProcAddress(
         proc: [:0]const u8
     ) *C.SDL_FunctionPointer {
@@ -896,11 +967,11 @@ pub const gl = struct {
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    pub fn getSwapInterval() !i32 {
+    pub fn getSwapInterval() !SwapInterval {
         var interval: c_int = undefined;
         const ret = C.SDL_GL_GetSwapInterval(&interval);
         try errors.wrapCallBool(ret);
-        return @intCast(interval);
+        return @enumFromInt(interval);
     }
 
     /// Dynamically load an OpenGL library.
@@ -949,7 +1020,7 @@ pub const gl = struct {
         attr: gl.Attribute,
         value: u32
     ) !void {
-        const ret = C.SDL_GL_SetAttribute(attr, value);
+        const ret = C.SDL_GL_SetAttribute(@intFromEnum(attr), value);
         try errors.wrapCallBool(ret);
     }
 
@@ -972,9 +1043,9 @@ pub const gl = struct {
     /// ## Version
     /// This function is available since SDL 3.2.0.
     pub fn setSwapInterval(
-        interval: i32
+        interval: SwapInterval
     ) !void {
-        const ret = C.SDL_GL_SetSwapInterval(@intCast(interval));
+        const ret = C.SDL_GL_SetSwapInterval(@intFromEnum(interval));
         try errors.wrapCallBool(ret);
     }
 
@@ -984,7 +1055,7 @@ pub const gl = struct {
     /// This is used with double-buffered OpenGL contexts, which are the default.
     ///
     /// On macOS, make sure you bind 0 to the draw framebuffer before swapping the window, otherwise nothing will happen.
-    /// If you aren't using glBindFramebuffer(), this is the default and you won't have to do anything extra.
+    /// If you aren't using `glBindFramebuffer()`, this is the default and you won't have to do anything extra.
     ///
     /// ## Thread Safety
     /// This function should only be called on the main thread.
