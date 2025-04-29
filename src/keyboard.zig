@@ -219,7 +219,7 @@ pub fn getKeyboards() ![]ID {
 /// This function is available since SDL 3.2.0.
 pub fn getKeyFromName(
     name: [:0]const u8,
-) !keycode.Keycode {
+) !?keycode.Keycode {
     const ret = C.SDL_GetKeyFromName(
         name,
     );

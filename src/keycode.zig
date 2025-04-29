@@ -282,7 +282,6 @@ pub const Keycode = enum(C.SDL_Keycode) {
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    /// CAUSES AN ERROR IN NEW IMPLEMENTATION (could not find a solution).
     pub fn fromScancode(
         code: scancode.Scancode,
     ) ?Keycode {
@@ -350,7 +349,8 @@ pub const Keycode = enum(C.SDL_Keycode) {
     ///
     /// ## Version
     /// This function is provided by zig-sdl3.
-    pub fn fromSdl(key_code: C.SDL_Keycode) Keycode {
+    pub fn fromSdl(key_code: C.SDL_Keycode) ?Keycode {
+        if (key_code == C.SDLK_UNKNOWN) return null;
         return @enumFromInt(key_code);
     }
 };
