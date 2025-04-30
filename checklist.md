@@ -84,7 +84,7 @@ For monitoring how close various subsystems are to completion.
 * Process Control
 * Standard Lib
 
-## Not Started (7/57)
+## Not Started (6/57)
 
 ### Input
 * HIDAPI
