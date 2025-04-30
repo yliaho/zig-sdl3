@@ -48,54 +48,6 @@ pub const Display = packed struct {
         }
     };
 
-    /// Get a list of currently connected displays.
-    ///
-    /// ## Return Value
-    /// Returns a pointer of display items that will be terminated by a value of 0.
-    /// Return value must be freed with `stdinc.free()`.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    ///
-    /// ## Code Examples
-    /// TODO!!!
-    pub fn getAll() ![*:0]Display {
-        var count: c_int = undefined;
-        const ret = try errors.wrapCallCPtr(C.SDL_DisplayID, C.SDL_GetDisplays(&count));
-        return @as([*:0]Display, ret);
-    }
-
-    /// Get the desktop area represented by a display.
-    ///
-    /// ## Function Parameters
-    /// * `self`: The display to query.
-    ///
-    /// ## Return Value
-    /// The rectangle filled in with the display bounds.
-    ///
-    /// ## Remarks
-    /// The primary display is often located at (0,0), but may be placed at a different location depending on monitor layout.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn getBounds(
-        self: Display,
-    ) !rect.IRect {
-        var area: C.SDL_Rect = undefined;
-        const ret = C.SDL_GetDisplayBounds(
-            self.value,
-            &area,
-        );
-        try errors.wrapCallBool(ret);
-        return rect.IRect.fromSdl(area);
-    }
-
     /// Get the closest match to the requested display mode.
     ///
     /// ## Function Parameters
@@ -138,38 +90,6 @@ pub const Display = packed struct {
         );
         try errors.wrapCallBool(ret);
         return DisplayMode.fromSdl(mode);
-    }
-
-    /// Get the content scale of a display.
-    ///
-    /// ## Function Parameters
-    /// * `self`: The display to query.
-    ///
-    /// ## Return Value
-    /// Returns the content scale of the display.
-    ///
-    /// ## Remarks
-    /// The content scale is the expected scale for content based on the DPI settings of the display.
-    /// For example, a 4K display might have a 2.0 (200%) display scale,
-    /// which means that the user expects UI elements to be twice as big on this display, to aid in readability.
-    ///
-    /// After window creation, `video.Window.getDisplayScale()` should be used to query the content scale factor
-    /// for individual windows instead of querying the display for a window and calling this function,
-    /// as the per-window content scale factor may differ from the base value of the display it is on,
-    /// particularly on high-DPI and/or multi-monitor desktop configurations.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn getContentScale(
-        self: Display,
-    ) !f32 {
-        const ret = C.SDL_GetDisplayContentScale(
-            self.value,
-        );
-        return errors.wrapCall(f32, ret, 0.0);
     }
 
     /// Get information about the current display mode.
@@ -244,40 +164,95 @@ pub const Display = packed struct {
         return DisplayMode.fromSdl(val.*);
     }
 
-    /// Get a list of fullscreen display modes available on a display.
+    /// Get the desktop area represented by a display.
     ///
-    /// ## Function Parameter
+    /// ## Function Parameters
     /// * `self`: The display to query.
-    /// * `allocator`: Allocator used to allocator the display modes.
     ///
     /// ## Return Value
-    /// Returns a slice of display modes, this needs to be freed.
+    /// The rectangle filled in with the display bounds.
     ///
     /// ## Remarks
-    /// The display modes are sorted in this priority:.
-    /// * Width -> Largest to smallest.
-    /// * Height -> Largest to smallest.
-    /// * Bits per pixel -> More colors to fewer colors.
-    /// * Packed pixel layout -> Largest to smallest.
-    /// * Refresh rate -> Highest to lowest.
-    /// * Pixel density -> Lowest to highest.
+    /// The primary display is often located at (0,0), but may be placed at a different location depending on monitor layout.
     ///
     /// ## Thread Safety
     /// This function should only be called on the main thread.
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    pub fn getFullscreenModes(
+    pub fn getBounds(
         self: Display,
-        allocator: std.mem.Allocator,
-    ) ![]DisplayMode {
-        var count: c_int = undefined;
-        const val = try errors.wrapCallCPtr([*c]C.SDL_DisplayMode, C.SDL_GetFullscreenDisplayModes(self.value, &count));
-        var ret = try allocator.alloc(DisplayMode, @intCast(count));
-        for (0..count) |ind| {
-            ret[ind] = DisplayMode.fromSdl(val[ind].*);
-        }
-        return ret;
+    ) !rect.IRect {
+        var area: C.SDL_Rect = undefined;
+        const ret = C.SDL_GetDisplayBounds(
+            self.value,
+            &area,
+        );
+        try errors.wrapCallBool(ret);
+        return rect.IRect.fromSdl(area);
+    }
+
+    /// Get the content scale of a display.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The display to query.
+    ///
+    /// ## Return Value
+    /// Returns the content scale of the display.
+    ///
+    /// ## Remarks
+    /// The content scale is the expected scale for content based on the DPI settings of the display.
+    /// For example, a 4K display might have a 2.0 (200%) display scale,
+    /// which means that the user expects UI elements to be twice as big on this display, to aid in readability.
+    ///
+    /// After window creation, `video.Window.getDisplayScale()` should be used to query the content scale factor
+    /// for individual windows instead of querying the display for a window and calling this function,
+    /// as the per-window content scale factor may differ from the base value of the display it is on,
+    /// particularly on high-DPI and/or multi-monitor desktop configurations.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getContentScale(
+        self: Display,
+    ) !f32 {
+        const ret = C.SDL_GetDisplayContentScale(
+            self.value,
+        );
+        return errors.wrapCall(f32, ret, 0.0);
+    }
+
+    /// Get the usable desktop area represented by a display, in screen coordinates.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The display to query.
+    ///
+    /// ## Return Value
+    /// The rectangle filled in with the display bounds.
+    ///
+    /// ## Remarks
+    /// This is the same area as `video.Display.getBounds()` reports, but with portions reserved by the system removed.
+    /// For example, on Apple's macOS, this subtracts the area occupied by the menu bar and dock.
+    ///
+    /// Setting a window to be fullscreen generally bypasses these unusable areas, so these are good guidelines for the maximum space available to a non-fullscreen window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getUsableBounds(
+        self: Display,
+    ) !rect.IRect {
+        var area: C.SDL_Rect = undefined;
+        const ret = C.SDL_GetDisplayUsableBounds(
+            self.value,
+            &area,
+        );
+        try errors.wrapCallBool(ret);
+        return rect.IRect.fromSdl(area);
     }
 
     /// Get the name of a display in UTF-8 encoding.
@@ -303,6 +278,85 @@ pub const Display = packed struct {
             self.value,
         );
         return try errors.wrapCallCString(ret);
+    }
+
+    /// Get the properties associated with a display.
+    ///
+    /// ## Function Parameters
+    /// * `self` - The display to query.
+    ///
+    /// ## Return Value
+    /// Returns the display properties.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    ///
+    /// ## Code Examples
+    /// TODO!!!
+    pub fn getProperties(
+        self: Display,
+    ) !Properties {
+        const ret = C.SDL_GetDisplayProperties(self.value);
+        return Properties.fromSdl(properties.Group{ .value = try errors.wrapCall(C.SDL_PropertiesID, ret, 0) });
+    }
+
+    /// Get a list of currently connected displays.
+    ///
+    /// ## Return Value
+    /// Returns a pointer of display items that will be terminated by a value of 0.
+    /// Return value must be freed with `stdinc.free()`.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    ///
+    /// ## Code Examples
+    /// TODO!!!
+    pub fn getAll() ![*:0]Display {
+        var count: c_int = undefined;
+        const ret = try errors.wrapCallCPtr(C.SDL_DisplayID, C.SDL_GetDisplays(&count));
+        return @as([*:0]Display, ret);
+    }
+
+    /// Get a list of fullscreen display modes available on a display.
+    ///
+    /// ## Function Parameter
+    /// * `self`: The display to query.
+    /// * `allocator`: Allocator used to allocator the display modes.
+    ///
+    /// ## Return Value
+    /// Returns a slice of display modes, this needs to be freed.
+    ///
+    /// ## Remarks
+    /// The display modes are sorted in this priority:.
+    /// * Width -> Largest to smallest.
+    /// * Height -> Largest to smallest.
+    /// * Bits per pixel -> More colors to fewer colors.
+    /// * Packed pixel layout -> Largest to smallest.
+    /// * Refresh rate -> Highest to lowest.
+    /// * Pixel density -> Lowest to highest.
+    ///
+     /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFullscreenModes(
+        self: Display,
+        allocator: std.mem.Allocator,
+    ) ![]DisplayMode {
+        var count: c_int = undefined;
+        const val = try errors.wrapCallCPtr([*c]C.SDL_DisplayMode, C.SDL_GetFullscreenDisplayModes(self.value, &count));
+        var ret = try allocator.alloc(DisplayMode, @intCast(count));
+        for (0..count) |ind| {
+            ret[ind] = DisplayMode.fromSdl(val[ind].*);
+        }
+        return ret;
     }
 
     /// Get the orientation of a display when it is unrotated.
@@ -342,60 +396,6 @@ pub const Display = packed struct {
     pub fn getPrimaryDisplay() !Display {
         const ret = C.SDL_GetPrimaryDisplay();
         return Display{ .value = try errors.wrapCall(C.SDL_DisplayID, ret, 0) };
-    }
-
-    /// Get the properties associated with a display.
-    ///
-    /// ## Function Parameters
-    /// * `self` - The display to query.
-    ///
-    /// ## Return Value
-    /// Returns the display properties.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    ///
-    /// ## Code Examples
-    /// TODO!!!
-    pub fn getProperties(
-        self: Display,
-    ) !Properties {
-        const ret = C.SDL_GetDisplayProperties(self.value);
-        return Properties.fromSdl(properties.Group{ .value = try errors.wrapCall(C.SDL_PropertiesID, ret, 0) });
-    }
-
-    /// Get the usable desktop area represented by a display, in screen coordinates.
-    ///
-    /// ## Function Parameters
-    /// * `self`: The display to query.
-    ///
-    /// ## Return Value
-    /// The rectangle filled in with the display bounds.
-    ///
-    /// ## Remarks
-    /// This is the same area as `video.Display.getBounds()` reports, but with portions reserved by the system removed.
-    /// For example, on Apple's macOS, this subtracts the area occupied by the menu bar and dock.
-    ///
-    /// Setting a window to be fullscreen generally bypasses these unusable areas, so these are good guidelines for the maximum space available to a non-fullscreen window.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn getUsableBounds(
-        self: Display,
-    ) !rect.IRect {
-        var area: C.SDL_Rect = undefined;
-        const ret = C.SDL_GetDisplayUsableBounds(
-            self.value,
-            &area,
-        );
-        try errors.wrapCallBool(ret);
-        return rect.IRect.fromSdl(area);
     }
 };
 
@@ -696,7 +696,7 @@ pub const gl = struct {
     ///
     /// ## Version
     /// This enum is available since SDL 3.2.0.
-    pub const Attribute = enum(c_int) {
+    pub const Attribute = enum(c_uint) {
         /// The minimum number of bits for the red channel of the color buffer; defaults to 8.
         red_size = C.SDL_GL_RED_SIZE,
         /// The minimum number of bits for the green channel of the color buffer; defaults to 8.
@@ -806,9 +806,7 @@ pub const gl = struct {
             window: Window
         ) !gl.Context { 
             const ret = C.SDL_GL_CreateContext(window.value);
-            return .{
-                .value = try errors.wrapNull(*C.SDL_GLContextState, ret)
-            };
+            return .{ .value = try errors.wrapNull(*C.SDL_GLContextState, ret) };
         }
 
         /// Delete an OpenGL context.
@@ -903,9 +901,7 @@ pub const gl = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getCurrentContext() !gl.Context {
         const ret = C.SDL_GL_GetCurrentContext();
-        return .{
-            .value = try errors.wrapNull(*C.SDL_GLContextState, ret)
-        };
+        return .{ .value = try errors.wrapNull(*C.SDL_GLContextState, ret) };
     }
 
     /// Get the currently active OpenGL window.
@@ -917,9 +913,7 @@ pub const gl = struct {
     /// This function is available since SDL 3.2.0.
     pub fn getCurrentWindow() !Window {
         const ret = C.SDL_GL_GetCurrentWindow();
-        return Window{
-            .value = try errors.wrapNull(*C.SDL_Window, ret)
-        };
+        return Window{ .value = try errors.wrapNull(*C.SDL_Window, ret) };
     }
 
     /// Get an OpenGL function by name.
@@ -1020,7 +1014,7 @@ pub const gl = struct {
         attr: gl.Attribute,
         value: u32
     ) !void {
-        const ret = C.SDL_GL_SetAttribute(@intFromEnum(attr), value);
+        const ret = C.SDL_GL_SetAttribute(@intFromEnum(attr), @intCast(value));
         try errors.wrapCallBool(ret);
     }
 
@@ -1365,9 +1359,7 @@ pub const Window = packed struct {
             @intCast(height),
             flags.toSdl(),
         );
-        return .{
-            .value = try errors.wrapNull(*C.SDL_Window, ret),
-        };
+        return .{ .value = try errors.wrapNull(*C.SDL_Window, ret) };
     }
 
     /// Create a window with the specified dimensions and flags.
@@ -1459,9 +1451,7 @@ pub const Window = packed struct {
             @intCast(height),
             flags.toSdl(),
         );
-        return .{
-            .value = try errors.wrapNull(*C.SDL_Window, ret),
-        };
+        return .{ .value = try errors.wrapNull(*C.SDL_Window, ret) };
     }
 
     /// Create a window with the specified properties.
@@ -1574,7 +1564,7 @@ pub const Window = packed struct {
     pub fn getGrabbed() ?Window {
         return .{ .value = C.SDL_GetGrabbedWindow() orelse return null };
     }
-
+ 
     /// Get the size of a window's client area.
     ///
     /// ## Function Parameters
@@ -1733,7 +1723,203 @@ pub const Window = packed struct {
         return null;
     }
 
-    /// Get the size of the window's client area.
+    /// Get the numeric ID of a window.
+    ///
+    /// ## Remarks
+    /// The numeric ID is what `video.WindowEvent` references, and is necessary to map these events to specific `video.Window` objects.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getID(
+        self: Window
+    ) !WindowID {
+        const ret = C.SDL_GetWindowID(self.value);
+        return errors.wrapCall(WindowID, ret, 0);
+    }
+
+    /// Get a window's keyboard grab mode.
+    ///
+    /// ## Return Value
+    /// Returns true if keyboard is grabbed, and false otherwise.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getKeyboardGrab(
+        self: Window
+    ) bool {
+        return C.SDL_GetWindowKeyboardGrab(self.value);
+    }
+
+    /// Get the maximum size of a window's client area.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getMaximumSize(
+        self: Window
+    ) struct { width: u32, height: u32 } {
+        var width: c_int = undefined;
+        var height: c_int = undefined;
+        const ret = C.SDL_GetWindowMaximumSize(self.value, &width, &height);
+        errors.wrapCallBool(ret);
+        return .{ .width = @intCast(width), .height = @intCast(height) };
+    }
+
+    /// Get the minimum size of a window's client area.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getMinimumSize(
+        self: Window
+    ) struct { width: u32, height: u32 } {
+        var width: c_int = undefined;
+        var height: c_int = undefined;
+        const ret = C.SDL_GetWindowMinimumSize(self.value, &width, &height);
+        errors.wrapCallBool(ret);
+        return .{ .width = @intCast(width), .height = @intCast(height) };        
+    }
+
+    /// Get a window's mouse grab mode.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getMouseGrab(
+        self: Window
+    ) bool {
+        return C.SDL_GetWindowMouseGrab(self.value);
+    }
+
+    /// Get the mouse confinement rectangle of a window.
+    ///
+    /// ## Return Value
+    /// Returns a pointer to the mouse confinement rectangle of a window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getMouseRect(
+        self: Window
+    ) !rect.IRect {
+        const ret = C.SDL_GetWindowMouseRect(self.value);
+        return rect.IRect.fromSdl(errors.wrapCall(C.SDL_Rect, ret, null));
+    }
+
+    /// Get the opacity of a window.
+    ///
+    /// ## Return Value 
+    /// Returns the opacity, (0.0f - transparent, 1.0f - opaque).
+    ///
+    /// ## Remarks
+    /// If transparency isn't supported on this platform, opacity will be returned as 1.0f without error.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getOpacity(
+        self: Window
+    ) !f32 {
+        const ret = C.SDL_GetWindowOpacity(self.value);
+        return try errors.wrapCall(f32, ret, -1);
+    }
+
+    /// Get parent of a window.
+    ///
+    /// ## Return Value
+    /// Returns the parent of the window on success or null if the window has no parent.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getParent(
+        self: Window
+    ) !Window {
+        const ret = C.SDL_GetWindowParent(self.value);
+        if (ret == null)
+            return null;
+        return .{ .value = ret };
+    }
+
+    /// Get the pixel density of a window.
+    ///
+    /// ## Return Value
+    /// Returns the pixel density.
+    ///
+    /// ## Remarks
+    /// This is a ratio of pixel size to window size.
+    /// For example, if the window is 1920x1080 and it has a high density back buffer of 3840x2160 pixels, it would have a pixel density of 2.0.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getPixelDensity(
+        self: Window
+    ) !f32 {
+        const ret = C.SDL_GetWindowPixelDensity(self.value);
+        return try errors.wrapCall(f32, ret, 0);
+    }
+
+    /// Get the pixel format associated with the window.
+    ///
+    /// ## Return Value
+    /// Returns the pixel format of the window on success or `pixels.Format.unknown` on failure; call `errors.get()` for more information.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getPixelFormat(
+        self: Window
+    ) pixels.Format {
+        const ret = C.SDL_GetWindowPixelFormat(self.value);
+        return .{ .value = ret };
+    }
+
+    /// Get the position of a window.
+    ///
+    /// ## Remarks
+    /// This is the current position of the window as last reported by the windowing system.
+    ///
+    /// If you do not need the value for one of the positions a null may be passed in the x or y parameter.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getWindowPosition(
+        self: Window
+    ) !struct { x: i32, height: i32 } {
+        var x: c_int = undefined;
+        var y: c_int = undefined;
+        const ret = C.SDL_GetWindowPosition(self.value, &x, &y);
+        try errors.wrapCallBool(ret);
+        return .{ .x = @intCast(x), .y = @intCast(y) };
+    }
+
+        /// Get the size of the window's client area.
     /// 
     /// ## Return Value
     /// Returns the size of the window's client area.
@@ -1805,7 +1991,243 @@ pub const Window = packed struct {
         const ret = C.SDL_GetWindowSurface(self.value);
         if (ret == null)
             return error.SdlError;
+        
         return surface.Surface{ .value = ret };
+    }
+
+    /// Hide a window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn hide(
+        self: Window
+    ) !void {
+        const ret = C.SDL_HideWindow(self.value);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Request that the window be made as large as possible.
+    ///
+    /// ## Remarks
+    /// Non-resizable windows can't be maximized. The window must have the `video.WindowFlags.resizable` flag set, or this will have no effect.
+    ///
+    /// On some windowing systems this request is asynchronous and the new window state may not have have been applied immediately upon the return of this function.
+    /// If an immediate change is required, call `video.Window.sync()` to block until the changes have taken effect.
+    ///
+    /// When the window state changes, an `events.Type.window_maximized` event will be emitted. Note that, as this is just a request, the windowing system can deny the state change.
+    ///
+    /// When maximizing a window, whether the constraints set via `video.Window.setMaximumSize()` are honored depends on the policy of the window manager.
+    /// Win32 and macOS enforce the constraints when maximizing, while X11 and Wayland window managers may vary.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn maximize(
+        self: Window
+    ) !void {
+        const ret = C.SDL_MaximizeWindow(self.window);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Request that the window be minimized to an iconic representation.
+    ///
+    /// ## Remarks
+    /// If the window is in a fullscreen state, this request has no direct effect.
+    /// It may alter the state the window is returned to when leaving fullscreen.
+    ///
+    /// On some windowing systems this request is asynchronous and the new window state may not have been applied immediately upon the return of this function.
+    /// If an immediate change is required, call `video.Window.sync()` to block until the changes have taken effect.
+    ///
+    /// When the window state changes, an `events.Type.window_minimized` event will be emitted. Note that, as this is just a request, the windowing system can deny the state change.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn minimize(
+        self: Window
+    ) !void {
+        const ret = C.SDL_MinimizeWindow(self.value);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Request that a window be raised above other windows and gain the input focus.
+    ///
+    /// ## Remarks
+    /// The result of this request is subject to desktop window manager policy, particularly if raising the requested window would result in stealing focus from another application.
+    /// If the window is successfully raised and gains input focus, an `events.Type.window_focus_gained` event will be emitted, and the window will have the `video.WindowFlags.input_focus` flag set.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn raise(
+        self: Window
+    ) !void {
+        const ret = C.SDL_RaiseWindow(self.value);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Request that the size and position of a minimized or maximized window be restored.
+    ///
+    /// ## Remarks
+    /// If the window is in a fullscreen state, this request has no direct effect.
+    /// It may alter the state the window is returned to when leaving fullscreen.
+    ///
+    /// On some windowing systems this request is asynchronous and the new window state may not have have been applied immediately upon the return of this function.
+    /// If an immediate change is required, call SDL_SyncWindow() to block until the changes have taken effect.
+    ///
+    /// When the window state changes, an `events.Type.window_restored` event will be emitted.
+    /// Note that, as this is just a request, the windowing system can deny the state change.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn restore(
+        self: Window
+    ) !void {
+        const ret = C.SDL_RestoreWindow(self.value);
+        try errors.wrapCallBool(ret);
+    } 
+
+    /// Set the window to always be above the others.
+    ///
+    /// ## Remarks
+    /// This will add or remove the window's `video.WindowFlags.always_on_top` flag. This will bring the window to the front and keep the window above the rest.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setAlwaysOnTop(
+        self: Window,
+        on_top: bool
+    ) !void {
+        const ret = C.SDL_SetWindowAlwaysOnTop(self.value, on_top);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Request that the aspect ratio of a window's client area be set.
+    ///
+    /// ## Remarks
+    /// The aspect ratio is the ratio of width divided by height, e.g. 2560x1600 would be 1.6.
+    /// Larger aspect ratios are wider and smaller aspect ratios are narrower.
+    ///
+    /// If, at the time of this request, the window in a fixed-size state, such as maximized or fullscreen,
+    /// the request will be deferred until the window exits this state and becomes resizable again.
+    ///
+    /// On some windowing systems, this request is asynchronous and the new window aspect ratio may not have have been applied immediately upon the return of this function.
+    /// If an immediate change is required, call `video.Window.sync()` to block until the changes have taken effect.
+    ///
+    /// When the window size changes, an `events.Type.window_resized` event will be emitted with the new window dimensions.
+    /// Note that the new dimensions may not match the exact aspect ratio requested, as some windowing systems can restrict the window size in certain scenarios (e.g. constraining the size of the content area to remain within the usable desktop bounds).
+    /// Additionally, as this is just a request, it can be denied by the windowing system.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setAspectRatio(
+        self: Window,
+        min_aspect: f32,
+        max_aspect: f32
+    ) !void {
+        const ret = C.SDL_SetWindowAspectRatio(self.value, min_aspect, max_aspect);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Set the border state of a window.
+    ///
+    /// ## Remarks
+    /// This will add or remove the window's `video.WindowFlags.borderless` flag and add or remove the border from the actual window.
+    /// This is a no-op if the window's border already matches the requested state.
+    ///
+    /// You can't change the border state of a fullscreen window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setBordered(
+        self: Window,
+        bordered: bool
+    ) !void {
+        const ret = C.SDL_SetWindowBordered(self.value, bordered);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Set whether the window may have input focus.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setFocusable(
+        self: Window,
+        focusable: bool
+    ) !void {
+        const ret = C.SDL_SetWindowFocusable(self.value, focusable);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Request that the window's fullscreen state be changed.
+    ///
+    /// ## Remarks
+    /// By default a window in fullscreen state uses borderless fullscreen desktop mode, but a specific exclusive display mode can be set using `video.Window.setFullscreenMode()`.
+    ///
+    /// On some windowing systems this request is asynchronous and the new fullscreen state may not have have been applied immediately upon the return of this function.
+    /// If an immediate change is required, call `video.Window.sync()` to block until the changes have taken effect.
+    ///
+    /// When the window state changes, an `events.Type.window_enter_fullscreen` or `events.Type.window_leave_fullscreen` event will be emitted.
+    /// Note that, as this is just a request, it can be denied by the windowing system.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setFullscreen(
+        self: Window,
+        fullscreen: bool
+    ) !void {
+        const ret = C.SDL_SetWindowFullscreen(self.value, fullscreen);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Set the display mode to use when a window is visible and fullscreen.
+    /// 
+    /// ## Remarks
+    /// This only affects the display mode used when the window is fullscreen. To change the window size when the window is not fullscreen, use `video.Window.setSize()`.
+    ///
+    /// If the window is currently in the fullscreen state, this request is asynchronous on some windowing systems and the new mode dimensions may not be applied immediately upon the return of this function.
+    /// If an immediate change is required, call `video.Window.sync()` to block until the changes have taken effect.
+    ///
+    /// When the new mode takes effect, an `events.Type.window_resized` and/or an `events.Type.window_pixel_size_changed`event will be emitted with the new mode dimensions.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setFullscreenMode(
+        self: Window,
+        mode: DisplayMode
+    ) !void {
+        const ret = C.SDL_SetWindowFullscreenMode(self.value, @constCast(&mode.toSdl()));
+        try errors.wrapCallBool(ret);
     }
 
     /// Set a window's mouse grab mode.
@@ -1845,6 +2267,28 @@ pub const Window = packed struct {
             self.value,
             if (area_sdl == null) null else &(area_sdl.?),
         );
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Block until any pending window state is finalized.
+    ///
+    /// ## Remarks
+    /// On asynchronous windowing systems, this acts as a synchronization barrier for pending window state.
+    /// It will attempt to wait until any pending window state has been applied and is guaranteed to return within finite time.
+    /// Note that for how long it can potentially block depends on the underlying window system,
+    /// as window state changes may involve somewhat lengthy animations that must complete before the window is in its final requested state.
+    ///
+    /// On windowing systems where changes are immediate, this does nothing.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn sync(
+        self: Window
+    ) !void {
+        const ret = C.SDL_SyncWindow(self.value);
         try errors.wrapCallBool(ret);
     }
 
