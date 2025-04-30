@@ -216,7 +216,7 @@ pub const Process = packed struct {
         var exit_code: c_int = undefined;
         const ret = C.SDL_ReadProcess(self.value, &size, &exit_code);
         return .{
-            .data = try errors.wrapCallCPtr(u8, ret)[0..@intCast(size)],
+            .data = @as([*]u8, @alignCast(@ptrCast(try errors.wrapCallNull(*anyopaque, ret))))[0..@intCast(size)],
             .exit_code = exit_code,
         };
     }

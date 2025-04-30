@@ -226,7 +226,7 @@ pub const Storage = packed struct {
         callback: filesystem.EnumerateDirectoryCallback,
         user_data: ?*anyopaque,
     ) !void {
-        return errors.wrapCallBool(C.SDL_EnumerateStorageDirectory(storage, if (path) |val| val.ptr else null, callback, user_data));
+        return errors.wrapCallBool(C.SDL_EnumerateStorageDirectory(storage.value, if (path) |val| val.ptr else null, callback, user_data));
     }
 
     /// Query the size of a file within a storage container.
@@ -345,7 +345,7 @@ pub const Storage = packed struct {
     ) ![][*:0]u8 {
         var count: c_int = undefined;
         const ret: [*][*:0]u8 = @ptrCast(try errors.wrapCallCPtr([*c]u8, C.SDL_GlobStorageDirectory(
-            self,
+            self.value,
             if (path) |val| val.ptr else null,
             if (pattern) |val| val.ptr else null,
             flags.toSdl(),

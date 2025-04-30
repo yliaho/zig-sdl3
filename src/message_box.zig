@@ -22,7 +22,7 @@ pub const BoxData = struct {
             .parent_window = if (value.window) |window| .{ .value = window } else null,
             .title = std.mem.span(value.title),
             .message = std.mem.span(value.message),
-            .buttons = @as(*const Button, value.buttons)[0..@intCast(value.numbuttons)],
+            .buttons = @as([*]const Button, value.buttons)[0..@intCast(value.numbuttons)],
             .color_scheme = if (value.colorScheme) |color_scheme| ColorScheme.fromSdl(color_scheme) else null,
         };
     }

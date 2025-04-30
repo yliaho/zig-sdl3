@@ -101,6 +101,21 @@ pub const Path = struct {
         try self.data.appendSlice(path);
         try self.data.append(0);
     }
+
+    // /// Get the parent path.
+    // ///
+    // /// ## Function Parameters
+    // /// * `self`: The path to get the parent of.
+    // ///
+    // /// ## Remarks
+    // /// If there is no parent, this will return `null`.
+    // /// This will also make the path represent the parent as well.
+    // ///
+    // /// ## Version
+    // /// This function is provided by zig-sdl3.
+    // pub fn parent(
+    //     self: Path,
+    // ) !?[]const u8 {}
 };
 
 /// Callback for directory enumeration.
@@ -124,7 +139,7 @@ pub const Path = struct {
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const EnumerateDirectoryCallback = *const fn (user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.C) EnumerationResult;
+pub const EnumerateDirectoryCallback = *const fn (user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.C) C.SDL_EnumerationResult;
 
 /// Possible results from an enumeration callback.
 ///
@@ -233,6 +248,28 @@ pub const PathInfo = struct {
     modify_time: time.Time,
     /// The last time when the path was read.
     access_time: time.Time,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_PathInfo) PathInfo {
+        return .{
+            .path_type = PathType.fromSdl(value.type).?,
+            .file_size = value.size,
+            .create_time = .{ .value = value.create_time },
+            .modify_time = .{ .value = value.modify_time },
+            .access_time = .{ .value = value.access_time },
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: PathInfo) C.SDL_PathInfo {
+        return .{
+            .type = PathType.toSdl(self.path_type),
+            .file_size = self.file_size,
+            .create_time = self.create_time,
+            .modify_time = self.modify_time,
+            .access_time = self.access_time,
+        };
+    }
 };
 
 /// Types of filesystem entries.
@@ -478,8 +515,7 @@ pub fn getPrefPath(
     org: [:0]const u8,
     app: [:0]const u8,
 ) ![:0]u8 {
-    const ret = try errors.wrapCallCPtr(u8, C.SDL_GetPrefPath(org.ptr, app.ptr));
-    return std.mem.span(ret);
+    return errors.wrapCallCString(u8, C.SDL_GetPrefPath(org.ptr, app.ptr));
 }
 
 /// Finds the most suitable user folder for a specific purpose.

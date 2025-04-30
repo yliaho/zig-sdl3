@@ -150,7 +150,7 @@ inline fn countNumAttributes(
     }
 }
 
-/// Make a vertex attribute from a buffer given the attribute/attribute index.
+/// Make a vertex attribute from a buffer given the attribute/attribute index. TODO: SUPPORT ATTRIBUTES ACROSS MULTIPLE BUFFERS!!!
 inline fn makeVertexAttribute(
     comptime buffer_entry: VertexInputStateBuffer,
     comptime index: usize,

@@ -560,4 +560,5 @@ pub const AppQuitCallback = *const fn (app_state: ?*anyopaque, result: c_uint) c
 // Add all tests from subsystems.
 test {
     std.testing.refAllDecls(@This());
+    // std.testing.refAllDeclsRecursive(@This());
 }

@@ -169,7 +169,7 @@ pub const ID = struct {
             return error.SdlError;
         defer C.SDL_free(ret);
         var converted_ret = try allocator.alloc(ID, @intCast(count));
-        for (0..count) |ind| {
+        for (0..@intCast(count)) |ind| {
             converted_ret[ind].value = ret[ind];
         }
         return converted_ret;
@@ -183,7 +183,7 @@ pub const Joystick = struct {
     /// Open a joystick for use.
     pub fn init(
         id: ID,
-    ) Joystick {
+    ) !Joystick {
         const ret = C.SDL_OpenJoystick(
             id.value,
         );
@@ -195,7 +195,7 @@ pub const Joystick = struct {
     /// Get the SDL_Joystick associated with a player index.
     pub fn fromPlayerIndex(
         index: u31,
-    ) Joystick {
+    ) !Joystick {
         const ret = C.SDL_GetJoystickFromPlayerIndex(
             @intCast(index),
         );
@@ -310,7 +310,7 @@ pub const Joystick = struct {
     /// Get the properties associated with a joystick.
     pub fn getProperties(
         self: Joystick,
-    ) properties.Group {
+    ) !properties.Group {
         const ret = C.SDL_GetJoystickProperties(
             self.value,
         );
@@ -736,7 +736,7 @@ pub const Joystick = struct {
         );
         if (ret == C.SDL_POWERSTATE_ERROR)
             return error.SdlError;
-        return .{ .state = ret, .percent = if (percent == -1) null else @intCast(percent) };
+        return .{ .state = @enumFromInt(ret), .percent = if (percent == -1) null else @intCast(percent) };
     }
 
     /// Locking for atomic access to the joystick API.

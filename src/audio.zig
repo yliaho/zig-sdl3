@@ -998,7 +998,7 @@ pub const Spec = struct {
         self: Stream,
         data: []u8,
     ) ![]u8 {
-        const ret = errors.wrapCall(c_int, C.SDL_GetAudioStreamData(self.value, data.ptr, @intCast(data.len)), -1);
+        const ret = try errors.wrapCall(c_int, C.SDL_GetAudioStreamData(self.value, data.ptr, @intCast(data.len)), -1);
         return data.ptr[0..@intCast(ret)];
     }
 

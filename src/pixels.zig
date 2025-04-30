@@ -243,6 +243,20 @@ pub const Format = struct {
     pub const array_bgrx_32 = Format{ .value = C.SDL_PIXELFORMAT_BGRX32 };
     pub const array_xbgr_32 = Format{ .value = C.SDL_PIXELFORMAT_XBGR32 };
 
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_PixelFormat) ?Format {
+        if (value == C.SDL_PIXELFORMAT_UNKNOWN)
+            return null;
+        return @enumFromInt(value);
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: ?Format) C.SDL_PixelFormat {
+        if (self) |val|
+            return @intFromEnum(val);
+        return C.SDL_PIXELFORMAT_UNKNOWN;
+    }
+
     /// Create a `pixels.FormatDetails` structure corresponding to a pixel format.
     ///
     /// ## Function Parameters
@@ -758,7 +772,7 @@ pub const FormatDetails = struct {
     /// Convert to an SDL value.
     pub fn toSdl(self: FormatDetails) C.SDL_PixelFormatDetails {
         return .{
-            .format = if (self.format == null) C.SDL_PIXELFORMAT_UNKNOWN else self.format,
+            .format = Format.toSdl(self.format),
             .bits_per_pixel = @intCast(self.bits_per_pixel),
             .bytes_per_pixel = @intCast(self.bytes_per_pixel),
             .Rmask = @intCast(self.r_mask),

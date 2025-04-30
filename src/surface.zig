@@ -44,7 +44,7 @@ pub const ScaleMode = enum(c_uint) {
         dst_format: pixels.Format,
         dst_colorspace: pixels.Colorspace,
         dst_properties: properties.Group,
-        dst: []const u8,
+        dst: []u8,
     ) !void {
         const ret = C.SDL_ConvertPixelsAndColorspace(
             @intCast(width),
@@ -105,7 +105,7 @@ pub const FlipMode = enum(c_uint) {
     }
 
     /// Convert to an SDL value.
-    pub fn toSdl(self: FlipMode) C.SDL_FlipMode {
+    pub fn toSdl(self: ?FlipMode) C.SDL_FlipMode {
         if (self) |val|
             return @intFromEnum(val);
         return C.SDL_FLIP_NONE;
@@ -143,7 +143,7 @@ pub const Surface = struct {
             @intCast(width),
             @intCast(height),
             format.value,
-            pixel_data.ptr,
+            @constCast(pixel_data.ptr),
             @intCast(pixel_data.len / height),
         );
         if (ret == null)
@@ -401,7 +401,7 @@ pub const Surface = struct {
         );
         if (!ret)
             return error.SdlError;
-        return pixels.Pixel{ .value = ret };
+        return pixels.Pixel{ .value = key };
     }
 
     /// Set an additional color value multiplied into blit operations.
@@ -453,7 +453,7 @@ pub const Surface = struct {
     /// Get the additional alpha value used in blit operations.
     pub fn getAlphaMod(
         self: Surface,
-    ) u8 {
+    ) !u8 {
         var alpha: u8 = undefined;
         const ret = C.SDL_GetSurfaceAlphaMod(
             self.value,
@@ -943,8 +943,6 @@ pub const Surface = struct {
     pub fn getFormat(
         self: Surface,
     ) ?pixels.Format {
-        if (self.value.format == C.SDL_PIXELFORMAT_UNKNOWN)
-            return null;
         return pixels.Format.fromSdl(self.value.format);
     }
 
@@ -974,7 +972,7 @@ pub const Surface = struct {
         self: Surface,
     ) ?[]u8 {
         if (self.value.pixels) |pixel|
-            return .{ .ptr = @ptrCast(pixel), .len = @intCast(self.value.h * self.value.pitch) };
+            return @as([*]u8, @ptrCast(pixel))[0..@intCast(self.value.h * self.value.pitch)];
         return null;
     }
 
@@ -987,9 +985,9 @@ pub const Surface = struct {
         const ret = C.SDL_GetSurfaceImages(self.value, &num);
         if (ret == null)
             return error.SdlError;
-        defer C.SDL_free(ret);
+        defer C.SDL_free(@ptrCast(ret));
         const converted_ret = try allocator.alloc(Surface, @intCast(num));
-        for (converted_ret, 0..num) |surface, index| {
+        for (converted_ret, 0..@intCast(num)) |*surface, index| {
             surface.value = ret[index];
         }
         return converted_ret;

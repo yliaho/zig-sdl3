@@ -347,12 +347,12 @@ pub const BufferUsageFlags = struct {
     /// Convert flags from SDL.
     pub fn fromSdl(val: C.SDL_GPUBufferUsageFlags) BufferUsageFlags {
         return .{
-            .vertex = val & C.SDL_GPU_BUFFERUSAGE_VERTEX,
-            .index = val & C.SDL_GPU_BUFFERUSAGE_INDEX,
-            .indirect = val & C.SDL_GPU_BUFFERUSAGE_INDIRECT,
-            .graphics_storage_read = val & C.SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .compute_storage_read = val & C.SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ,
-            .compute_storage_write = val & C.SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
+            .vertex = val & C.SDL_GPU_BUFFERUSAGE_VERTEX != 0,
+            .index = val & C.SDL_GPU_BUFFERUSAGE_INDEX != 0,
+            .indirect = val & C.SDL_GPU_BUFFERUSAGE_INDIRECT != 0,
+            .graphics_storage_read = val & C.SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ != 0,
+            .compute_storage_read = val & C.SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ != 0,
+            .compute_storage_write = val & C.SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE != 0,
         };
     }
 
@@ -3631,7 +3631,7 @@ pub const SamplerCreateInfo = struct {
     /// The minification filter to apply to lookups.
     min_filter: Filter = .nearest,
     /// The magnification filter to apply to lookups.
-    max_filter: Filter = .nearest,
+    mag_filter: Filter = .nearest,
     /// The mipmap filter to apply to lookups.
     mipmap_mode: SamplerMipmapMode = .nearest,
     /// The addressing mode for U coordinates outside [0, 1).
@@ -3657,13 +3657,13 @@ pub const SamplerCreateInfo = struct {
     pub fn fromSdl(value: C.SDL_GPUSamplerCreateInfo) SamplerCreateInfo {
         return .{
             .min_filter = @enumFromInt(value.min_filter),
-            .max_filter = @enumFromInt(value.max_filter),
+            .mag_filter = @enumFromInt(value.mag_filter),
             .mipmap_mode = @enumFromInt(value.mipmap_mode),
             .address_mode_u = @enumFromInt(value.address_mode_u),
             .address_mode_v = @enumFromInt(value.address_mode_v),
             .address_mode_w = @enumFromInt(value.address_mode_w),
             .mip_lod_bias = value.mip_lod_bias,
-            .max_anisotrophy = if (value.enable_anisotropy) value.max_anisotropy else null,
+            .max_anisotropy = if (value.enable_anisotropy) value.max_anisotropy else null,
             .compare = if (value.enable_compare) @enumFromInt(value.compare_op) else null,
             .min_lod = value.min_lod,
             .max_lod = value.max_lod,
@@ -3675,7 +3675,7 @@ pub const SamplerCreateInfo = struct {
     pub fn toSdl(self: SamplerCreateInfo) C.SDL_GPUSamplerCreateInfo {
         return .{
             .min_filter = @intFromEnum(self.min_filter),
-            .max_filter = @intFromEnum(self.max_filter),
+            .mag_filter = @intFromEnum(self.mag_filter),
             .mipmap_mode = @intFromEnum(self.mipmap_mode),
             .address_mode_u = @intFromEnum(self.address_mode_u),
             .address_mode_v = @intFromEnum(self.address_mode_v),
@@ -3740,7 +3740,7 @@ pub const ShaderCreateInfo = struct {
         return .{
             .code = value.code[0..value.code_size],
             .entry_point = std.mem.span(value.entrypoint),
-            .format = ShaderFormatFlags.fromSdl(value.format),
+            .format = ShaderFormatFlags.fromSdl(value.format).?,
             .stage = @enumFromInt(value.stage),
             .num_samplers = value.num_samplers,
             .num_storage_textures = value.num_storage_textures,

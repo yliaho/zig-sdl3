@@ -1354,17 +1354,17 @@ pub const Vertex = extern struct {
 
 /// VSync mode.
 pub const VSync = union(enum) {
-    OnEachNumRefresh: usize,
-    Adaptive: void,
+    on_each_num_refresh: usize,
+    adaptive: void,
     pub fn fromSdl(val: c_int) ?VSync {
-        return if (val == 0) null else if (val == -1) .Apdative else .OnEachNumRefresh(@intCast(val));
+        return if (val == 0) null else if (val == -1) .apdative else .on_each_num_refresh(@intCast(val));
     }
     /// Convert to an SDL value.
     pub fn toSdl(self: ?VSync) c_int {
         return if (self) |sync|
             switch (sync) {
                 .OnEachNumRefresh => |val| @intCast(val),
-                .Adaptive => -1,
+                .adaptive => -1,
             }
         else
             0;
