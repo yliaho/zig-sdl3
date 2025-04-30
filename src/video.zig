@@ -2078,7 +2078,7 @@ pub const Window = packed struct {
     /// It may alter the state the window is returned to when leaving fullscreen.
     ///
     /// On some windowing systems this request is asynchronous and the new window state may not have have been applied immediately upon the return of this function.
-    /// If an immediate change is required, call SDL_SyncWindow() to block until the changes have taken effect.
+    /// If an immediate change is required, call `video.Window.sync()` to block until the changes have taken effect.
     ///
     /// When the window state changes, an `events.Type.window_restored` event will be emitted.
     /// Note that, as this is just a request, the windowing system can deny the state change.
