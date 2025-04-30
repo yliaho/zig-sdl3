@@ -219,11 +219,11 @@ pub fn getKeyboards() ![]ID {
 /// This function is available since SDL 3.2.0.
 pub fn getKeyFromName(
     name: [:0]const u8,
-) !keycode.Keycode {
+) !?keycode.Keycode {
     const ret = C.SDL_GetKeyFromName(
         name,
     );
-    return keycode.Keycode{ .value = try errors.wrapCall(C.SDL_Keycode, ret, C.SDLK_UNKNOWN) };
+    return keycode.Keycode.fromSdl(try errors.wrapCall(C.SDL_Keycode, ret, C.SDLK_UNKNOWN));
 }
 
 /// Get the key code corresponding to the given scancode according to the current keyboard layout.
@@ -252,13 +252,13 @@ pub fn getKeyFromScancode(
     used_in_key_events: bool,
 ) ?keycode.Keycode {
     const ret = C.SDL_GetKeyFromScancode(
-        code.value,
+        code.toSdl(),
         modifier.toSdl(),
         used_in_key_events,
     );
     if (ret == C.SDLK_UNKNOWN)
         return null;
-    return keycode.Keycode{ .value = ret };
+    return keycode.Keycode.fromSdl(ret);
 }
 
 /// Get a human-readable name for a key.
@@ -283,7 +283,7 @@ pub fn getKeyName(
     key: keycode.Keycode,
 ) ?[:0]const u8 {
     const ret = C.SDL_GetKeyName(
-        key.value,
+        key.toSdl(),
     );
     const converted_ret = std.mem.span(ret);
     if (std.mem.eql(u8, converted_ret, ""))
@@ -328,12 +328,12 @@ pub fn getScancodeFromKey(
 ) ?struct { code: scancode.Scancode, key_mod: keycode.KeyModifier } {
     var key_mod: C.SDL_Keymod = undefined;
     const ret = C.SDL_GetScancodeFromKey(
-        key.value,
+        key.toSdl(),
         &key_mod,
     );
     if (ret == C.SDL_SCANCODE_UNKNOWN)
         return null;
-    return .{ .code = .{ .value = @intCast(ret) }, .key_mod = keycode.KeyModifier.fromSdl(key_mod) };
+    return .{ .code = scancode.Scancode.fromSdl(@intCast(ret)), .key_mod = keycode.KeyModifier.fromSdl(key_mod) };
 }
 
 /// Get a scancode from a human-readable name.
@@ -355,7 +355,7 @@ pub fn getScancodeFromName(
     const ret = C.SDL_GetScancodeFromName(
         name,
     );
-    return scancode.Scancode{ .value = @intCast(try errors.wrapCall(C.SDL_Scancode, ret, C.SDL_SCANCODE_UNKNOWN)) };
+    return scancode.Scancode.fromSdl(@intCast(try errors.wrapCall(C.SDL_Scancode, ret, C.SDL_SCANCODE_UNKNOWN)));
 }
 
 /// Get a human-readable name for a scancode.
@@ -382,7 +382,7 @@ pub fn getScancodeName(
     code: scancode.Scancode,
 ) ?[:0]const u8 {
     const ret = C.SDL_GetScancodeName(
-        code.value,
+        code.toSdl(),
     );
     const converted_ret = std.mem.span(ret);
     if (std.mem.eql(u8, converted_ret, ""))
@@ -534,7 +534,7 @@ pub fn setScancodeName(
     name: [:0]const u8,
 ) !void {
     const ret = C.SDL_SetScancodeName(
-        code.value,
+        code.toSdl(),
         name,
     );
     return errors.wrapCallBool(ret);
