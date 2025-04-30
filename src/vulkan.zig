@@ -220,7 +220,7 @@ pub fn unloadLibrary() void {
 
 // Vulkan related testing.
 test "Vulkan" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     defer init.shutdown();
     const flags = init.Flags{ .video = true };

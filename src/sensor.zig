@@ -375,7 +375,7 @@ pub fn update() void {
 
 // Sensor related tests.
 test "Sensor" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     defer init.shutdown();
     try init.init(.{ .sensor = true });

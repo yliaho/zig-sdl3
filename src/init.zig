@@ -379,7 +379,7 @@ fn testRunOnMainThreadCb(user_data: ?*anyopaque) callconv(.C) void {
 
 // Ensure the init subsystem works as expected.
 test "Init" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
     // stdinc.custom_allocator = std.testing.allocator;
     // defer stdinc.custom_allocator = null;
     // try stdinc.setMemoryFunctionsByAllocator();

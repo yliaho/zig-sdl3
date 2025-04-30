@@ -22,8 +22,8 @@ pub const BoxData = struct {
             .parent_window = if (value.window) |window| .{ .value = window } else null,
             .title = std.mem.span(value.title),
             .message = std.mem.span(value.message),
-            .buttons = @as([*]const Button, value.buttons)[0..@intCast(value.numbuttons)],
-            .color_scheme = if (value.colorScheme) |color_scheme| ColorScheme.fromSdl(color_scheme) else null,
+            .buttons = @as([*]const Button, @ptrCast(value.buttons))[0..@intCast(value.numbuttons)],
+            .color_scheme = if (value.colorScheme != null) ColorScheme.fromSdl(value.colorScheme.*) else null,
         };
     }
 
@@ -303,5 +303,5 @@ pub fn showSimple(
 
 // Message box tests.
 test "Message Box" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 }

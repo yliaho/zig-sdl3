@@ -96,5 +96,5 @@ pub const InputFlags = struct {
 
 // Pen tests.
 test "Pen" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 }

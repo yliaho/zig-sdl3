@@ -100,7 +100,7 @@ pub const SharedObject = packed struct {
 
 // Shared object functionality.
 test "SharedObject" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     const obj: ?SharedObject = SharedObject.load("Gota") catch null;
     if (obj) |val| {

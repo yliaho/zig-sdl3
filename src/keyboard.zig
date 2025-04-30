@@ -696,7 +696,7 @@ pub fn textInputActive(
 
 // Test keyboard functions.
 test "Keyboard" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     defer init.shutdown();
     try init.init(.{ .video = true });

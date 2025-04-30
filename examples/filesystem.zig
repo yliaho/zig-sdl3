@@ -13,6 +13,4 @@ pub fn main() !void {
 
     // Check if a path exists.
     _ = sdl3.filesystem.getPathExists("/home");
-
-    // Filesystem manipulation.
 }

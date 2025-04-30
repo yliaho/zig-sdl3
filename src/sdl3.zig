@@ -1,11 +1,11 @@
-pub const audio = @import("audio.zig");
-
 /// Not recommended for usage unless absolutely needed.
 ///
 /// SDL's macros are not compatible with zig, use zig when appropriate.
 ///
 /// However, setting callbacks should work fine.
 pub const assert = @import("assert.zig");
+
+pub const audio = @import("audio.zig");
 
 /// Functions for fiddling with bits and bitmasks.
 pub const bits = @import("bits.zig");

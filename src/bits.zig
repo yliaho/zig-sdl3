@@ -44,7 +44,7 @@ pub fn mostSignificantBitIndex(val: u32) ?u5 {
 
 // Test bit-level functions.
 test "Bits" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     try std.testing.expect(hasExactlyOneBitSet(0x00010000));
     try std.testing.expect(!hasExactlyOneBitSet(0x10010000));

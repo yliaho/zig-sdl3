@@ -851,7 +851,7 @@ pub fn warpInWindow(
 
 // Mouse related tests.
 test "Mouse" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     defer init.shutdown();
     try init.init(.{ .video = true });

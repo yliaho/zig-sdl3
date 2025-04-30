@@ -446,5 +446,5 @@ pub const Scancode = enum(C.SDL_Scancode) {
 
 // Scancode tests.
 test "Scancode" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 }

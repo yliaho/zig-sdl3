@@ -1,5 +1,7 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
+const io_stream = @import("io_stream.zig");
+const properties = @import("properties.zig");
 const std = @import("std");
 
 /// A callback that fires when data is about to be fed to an audio device.
@@ -30,7 +32,7 @@ const std = @import("std");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const PostmixCallback = *const fn (user_data: ?*anyopaque, spec: *const C.SDL_AudioSpec, buffer: [*]f32, buffer_len: c_int) callconv(.C) void;
+pub const PostmixCallback = *const fn (user_data: ?*anyopaque, spec: [*c]const C.SDL_AudioSpec, buffer: [*c]f32, buffer_len: c_int) callconv(.C) void;
 
 /// A callback that fires when data passes through a `Stream`.
 ///
@@ -62,7 +64,7 @@ pub const PostmixCallback = *const fn (user_data: ?*anyopaque, spec: *const C.SD
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const StreamCallback = *const fn (user_data: ?*anyopaque, stream: *C.SDL_AudioStream, additional_amount: c_int, total_amount: c_int) callconv(.C) void;
+pub const StreamCallback = *const fn (user_data: ?*anyopaque, stream: ?*C.SDL_AudioStream, additional_amount: c_int, total_amount: c_int) callconv(.C) void;
 
 /// Audio format.
 ///
@@ -113,13 +115,15 @@ pub const Format = struct {
         float: bool,
         bit_width: u8,
     ) Format {
-        const ret = C.SDL_DEFINE_AUDIO_FORMAT(
-            @intFromBool(signed),
-            @intFromBool(big_endian),
-            @intFromBool(float),
-            @intCast(bit_width),
-        );
-        return Format{ .value = ret };
+        var ret: c_int = 0;
+        if (signed)
+            ret |= C.SDL_AUDIO_MASK_SIGNED;
+        if (big_endian)
+            ret |= C.SDL_AUDIO_MASK_BIG_ENDIAN;
+        if (float)
+            ret |= C.SDL_AUDIO_MASK_FLOAT;
+        ret |= @as(c_int, @intCast(bit_width));
+        return Format{ .value = @as(c_uint, @bitCast(ret)) };
     }
 
     /// Retrieve the size in bits.
@@ -194,6 +198,28 @@ pub const Format = struct {
         return ret;
     }
 
+    /// Get the appropriate memset value for silencing an audio format.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio data format to query.
+    ///
+    /// ## Return Value
+    /// Returns a byte value that can be passed to memset.
+    ///
+    /// ## Remarks
+    /// The value returned by this function can be used as the second argument to `@memset` (or `stdinc.memset()`) to set an audio buffer in a specific format to silence.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSilenceValue(
+        self: Format,
+    ) u8 {
+        return @intCast(C.SDL_GetSilenceValueForFormat(self.value));
+    }
+
     /// If the format is big endian.
     ///
     /// ## Function Parameters
@@ -266,7 +292,7 @@ pub const Format = struct {
         const ret = C.SDL_AUDIO_ISINT(
             self.value,
         );
-        return ret > 0;
+        return ret;
     }
 
     /// If the format represents little-endian data.
@@ -291,7 +317,7 @@ pub const Format = struct {
         const ret = C.SDL_AUDIO_ISLITTLEENDIAN(
             self.value,
         );
-        return ret != 0;
+        return ret;
     }
 
     /// If the format represents signed data.
@@ -341,7 +367,7 @@ pub const Format = struct {
         const ret = C.SDL_AUDIO_ISUNSIGNED(
             self.value,
         );
-        return ret != 0;
+        return ret;
     }
 };
 
@@ -490,7 +516,7 @@ pub const Device = packed struct {
             &buffer_size_frames,
         );
         try errors.wrapCallBool(ret);
-        return .{ .spec = Spec.fromSdl(spec), .device_sample_frames = @intCast(buffer_size_frames) };
+        return .{ .spec = Spec.fromSdl(spec), .buffer_size_frames = @intCast(buffer_size_frames) };
     }
 
     /// Get the current channel map of an audio device.
@@ -605,90 +631,329 @@ pub const Device = packed struct {
         return ret;
     }
 
+    /// Determine if an audio device is physical (instead of logical).
+    ///
+    /// ## Function Parameters
+    /// * `self`: The device ID to query.
+    ///
+    /// ## Return Value
+    /// Returns true if this is a physical device, false if it is logical.
+    ///
+    /// ## Remarks
+    /// An `audio.Device` that represents physical hardware is a physical device; there is one for each piece of hardware that SDL can see.
+    /// Logical devices are created by calling `audio.Device.open()` or `audio.Device.openStream()`, and while each is associated with a physical device,
+    /// there can be any number of logical devices on one physical device.
+    ///
+    /// For the most part, logical and physical IDs are interchangeable--if you try to open a logical device,
+    /// SDL understands to assign that effort to the underlying physical device, etc.
+    /// However, it might be useful to know if an arbitrary device ID is physical or logical.
+    /// This function reports which.
+    ///
+    /// This function may return either true or false for invalid device IDs.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn isPhysical(
+        self: Device,
+    ) bool {
+        return C.SDL_IsAudioDevicePhysical(self.value);
+    }
+
+    /// Determine if an audio device is a playback device (instead of recording).
+    ///
+    /// ## Function Parameters
+    /// * `self`: The device ID to query.
+    ///
+    /// ## Return Value
+    /// Returns true if this is a playback device, false if it is recording.
+    ///
+    /// ## Remarks
+    /// This function may return either true or false for invalid device IDs.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn isPlayback(
+        self: Device,
+    ) bool {
+        return C.SDL_IsAudioDevicePlayback(self.value);
+    }
+
     /// Open a specific audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio device to open.
+    /// * `spec`: The audio stream's data format.
+    ///
+    /// ## Return Value
+    /// Returns an audio device.
+    ///
+    /// ## Remarks
+    /// You can open both playback and recording devices through this function.
+    /// Playback devices will take data from bound audio streams, mix it, and send it to the hardware.
+    /// Recording devices will feed any bound audio streams with a copy of any incoming data.
+    ///
+    /// An opened audio device starts out with no audio streams bound.
+    /// To start audio playing, bind a stream and supply audio data to it.
+    /// Unlike SDL2, there is no audio callback; you only bind audio streams and make sure they have data flowing into them
+    /// (however, you can simulate SDL2's semantics fairly closely by using `audio.Device.openStream()` instead of this function).
+    ///
+    /// If you don't care about opening a specific device, pass a devid of either `audio.Device.default_playback` or `audio.Device.default_recording`.
+    /// In this case, SDL will try to pick the most reasonable default, and may also switch between physical devices seamlessly later,
+    /// if the most reasonable default changes during the lifetime of this opened device (user changed the default in the OS's system preferences,
+    /// the default got unplugged so the system jumped to a new default, the user plugged in headphones on a mobile device, etc).
+    /// Unless you have a good reason to choose a specific device, this is probably what you want.
+    ///
+    /// You may request a specific format for the audio device, but there is no promise the device will honor that request for several reasons.
+    /// As such, it's only meant to be a hint as to what data your app will provide.
+    /// Audio streams will accept data in whatever format you specify and manage conversion for you as appropriate.
+    /// `audio.Device.getFormat()` can tell you the preferred format for the device before opening and the actual format the device is using after opening.
+    ///
+    /// It's legal to open the same device ID more than once; each successful open will generate a new logical `audio.Device` that is managed separately
+    /// from others on the same physical device.
+    /// This allows libraries to open a device separately from the main app and bind its own streams without conflicting.
+    ///
+    /// It is also legal to open a device ID returned by a previous call to this function; doing so just creates another logical device on the same physical device.
+    /// This may be useful for making logical groupings of audio streams.
+    ///
+    /// This function returns the opened device ID on success.
+    /// This is a new, unique `audio.Device` that represents a logical device.
+    ///
+    /// Some backends might offer arbitrary devices (for example, a networked audio protocol that can connect to an arbitrary server).
+    /// For these, as a change from SDL2, you should open a default device ID and use an SDL hint to specify the target if you care,
+    /// or otherwise let the backend figure out a reasonable default.
+    /// Most backends don't offer anything like this, and often this would be an end user setting an environment variable for their custom need,
+    /// and not something an application should specifically manage.
+    ///
+    /// When done with an audio device, possibly at the end of the app's life, one should call `audio.Device.close()` on the returned device id.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    ///
+    /// ## Code Examples
+    /// TODO!!!
     pub fn open(
         self: Device,
         spec: ?Spec,
     ) !Device {
-        const spec_sdl: ?C.SDL_AudioSpec = if (spec == null) null else spec.?.toSdl();
+        const spec_sdl: C.SDL_AudioSpec = if (spec) |val| val.toSdl() else undefined;
         const ret = C.SDL_OpenAudioDevice(
             self.value,
-            if (spec_sdl == null) null else &(spec_sdl.?),
+            if (spec != null) &spec_sdl else null,
         );
-        if (ret == 0)
-            return error.SdlError;
-        return Device{ .value = ret };
+        return .{
+            .value = try errors.wrapCall(C.SDL_AudioDeviceID, ret, 0),
+        };
+    }
+
+    /// Convenience function for straightforward audio init for the common case.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio device to open.
+    /// * `spec`: The audio stream's data format.
+    /// * `callback`: A callback where the app will provide new data for playback, or receive new data for recording. Can be `null`, in which case the app will need to call `audio.Stream.putData()` or `audio.Stream.getData()` as necessary.
+    /// * `user_data`: App-controlled pointer passed to callback.
+    ///
+    /// ## Return Value
+    /// Returns an audio stream that must be freed with `audio.Stream.deinit()`.
+    ///
+    /// ## Remarks
+    /// If all your app intends to do is provide a single source of PCM audio, this function allows you to do all your audio setup in a single call.
+    ///
+    /// This is also intended to be a clean means to migrate apps from SDL2.
+    ///
+    /// This function will open an audio device, create a stream and bind it.
+    /// Unlike other methods of setup, the audio device will be closed when this stream is destroyed,
+    /// so the app can treat the returned `audio.Stream` as the only object needed to manage audio playback.
+    ///
+    /// Also unlike other functions, the audio device begins paused.
+    /// This is to map more closely to SDL2-style behavior, since there is no extra step here to bind a stream to begin audio flowing.
+    /// The audio device should be resumed with `audio.Device.resumeStream()`.
+    ///
+    /// This function works with both playback and recording devices.
+    ///
+    /// The spec parameter represents the app's side of the audio stream.
+    /// That is, for recording audio, this will be the output format, and for playing audio, this will be the input format.
+    /// If `spec` is `null`, the system will choose the format, and the app can use `audio.Stream.getFormat()` to obtain this information later.
+    ///
+    /// If you don't care about opening a specific audio device, you can (and probably should),
+    /// use `audio.Device.default_playback` for playback and `audio.Device.default_recording` for recording.
+    ///
+    /// One can optionally provide a callback function; if `null`, the app is expected to queue audio data for playback (or unqueue audio data if capturing).
+    /// Otherwise, the callback will begin to fire once the device is unpaused.
+    ///
+    /// Destroying the returned stream with `audio.Stream.deinit()` will also close the audio device associated with this stream.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn openStream(
+        self: Device,
+        spec: ?Spec,
+        callback: ?StreamCallback,
+        user_data: ?*anyopaque,
+    ) !Stream {
+        const spec_sdl: C.SDL_AudioSpec = if (spec) |val| val.toSdl() else undefined;
+        const ret = C.SDL_OpenAudioDeviceStream(
+            self.value,
+            if (spec != null) &spec_sdl else null,
+            callback orelse null,
+            user_data,
+        );
+        return .{
+            .value = try errors.wrapNull(*C.SDL_AudioStream, ret),
+        };
     }
 
     /// Use this function to pause audio playback on a specified device.
+    ///
+    /// ## Function Parameters:
+    /// * `self`: A device opened by `audio.Device.open()`.
+    ///
+    /// ## Remarks
+    /// This function pauses audio processing for a given device.
+    /// Any bound audio streams will not progress, and no audio will be generated.
+    /// Pausing one device does not prevent other unpaused devices from running.
+    ///
+    /// Unlike in SDL2, audio devices start in an unpaused state, since an app has to bind a stream before any audio will flow.
+    /// Pausing a paused device is a legal no-op.
+    ///
+    /// Pausing a device can be useful to halt all audio without unbinding all the audio streams.
+    /// This might be useful while a game is paused, or a level is loading, etc.
+    ///
+    /// Physical devices can not be paused or unpaused, only logical devices created through `audio.Device.open()` can be.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn pausePlayback(
         self: Device,
     ) !void {
         const ret = C.SDL_PauseAudioDevice(
             self.value,
         );
-        if (!ret)
-            return error.SdlError;
+        return errors.wrapCallBool(ret);
     }
 
     /// Use this function to unpause audio playback on a specified device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A device opened by `audio.Device.open()`.
+    ///
+    /// ## Remarks
+    /// This function unpauses audio processing for a given device that has previously been paused with `audio.Device.pausePlayback()`.
+    /// Once unpaused, any bound audio streams will begin to progress again, and audio can be generated.
+    ///
+    /// Unlike in SDL2, audio devices start in an unpaused state, since an app has to bind a stream before any audio will flow.
+    /// Unpausing an unpaused device is a legal no-op.
+    ///
+    /// Physical devices can not be paused or unpaused, only logical devices created through `audio.Device.open()` can be.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn resumePlayback(
         self: Device,
     ) !void {
         const ret = C.SDL_ResumeAudioDevice(
             self.value,
         );
-        if (!ret)
-            return error.SdlError;
+        return errors.wrapCallBool(ret);
     }
 
     /// Change the gain of an audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio device on which to change gain.
+    /// * `gain`: The gain. `1` is no change, `0` is silence.
+    ///
+    /// ## Remarks
+    /// The gain of a device is its volume; a larger gain means a louder output, with a gain of zero being silence.
+    ///
+    /// Audio devices default to a gain of `1` (no change in output).
+    ///
+    /// Physical devices may not have their gain changed, only logical devices, and this function will always return and error when used on physical devices.
+    /// While it might seem attractive to adjust several logical devices at once in this way,
+    /// it would allow an app or library to interfere with another portion of the program's otherwise-isolated devices.
+    ///
+    /// This is applied, along with any per-audiostream gain, during playback to the hardware, and can be continuously changed to create various effects.
+    /// On recording devices, this will adjust the gain before passing the data into an audiostream;
+    /// that recording audiostream can then adjust its gain further when outputting the data elsewhere,
+    /// if it likes, but that second gain is not applied until the data leaves the audiostream again.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn setGain(
         self: Device,
         gain: f32,
     ) !void {
         const ret = C.SDL_SetAudioDeviceGain(
             self.value,
-            @floatCast(gain),
+            gain,
         );
-        if (!ret)
-            return error.SdlError;
+        return errors.wrapCallBool(ret);
     }
 
-    /// Get a list of audio playback devices. Result must be freed.
-    pub fn getAllPlaybackDevices(
-        allocator: std.mem.Allocator,
-    ) ![]Device {
-        var count: c_int = undefined;
-        const ret = C.SDL_GetAudioPlaybackDevices(
-            &count,
-        );
-        if (ret == null)
-            return error.SdlError;
-        defer C.SDL_free(ret);
-        var converted_ret = try allocator.alloc(Device, @intCast(count));
-        for (0..count) |ind| {
-            converted_ret[ind].value = ret[ind];
-        }
-        return converted_ret;
-    }
-
-    /// Get a list of audio recording devices. Result must be freed.
-    pub fn getAllRecordingDevices(
-        allocator: std.mem.Allocator,
-    ) ![]Device {
-        var count: c_int = undefined;
-        const ret = C.SDL_GetAudioRecordingDevices(
-            &count,
-        );
-        if (ret == null)
-            return error.SdlError;
-        defer C.SDL_free(ret);
-        var converted_ret = try allocator.alloc(Device, @intCast(count));
-        for (0..count) |ind| {
-            converted_ret[ind].value = ret[ind];
-        }
-        return converted_ret;
+    /// Set a callback that fires when data is about to be fed to an audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The ID of an opened audio device.
+    /// * `callback`: A callback function to be called, can be `null`.
+    /// * `user_data`: App-controlled pointer passed to callback.
+    ///
+    /// ## Remarks
+    /// This is useful for accessing the final mix, perhaps for writing a visualizer or applying a final effect to the audio data before playback.
+    ///
+    /// The buffer is the final mix of all bound audio streams on an opened device; this callback will fire regularly for any device that is both opened and unpaused.
+    /// If there is no new data to mix, either because no streams are bound to the device or all the streams are empty,
+    /// this callback will still fire with the entire buffer set to silence.
+    ///
+    /// This callback is allowed to make changes to the data; the contents of the buffer after this call is what is ultimately passed along to the hardware.
+    ///
+    /// The callback is always provided the data in float format (values from `-1` to `1`),
+    /// but the number of channels or sample rate may be different than the format the app requested when opening the device;
+    /// SDL might have had to manage a conversion behind the scenes, or the playback might have jumped to new physical hardware when a system default changed, etc.
+    /// These details may change between calls. Accordingly, the size of the buffer might change between calls as well.
+    ///
+    /// This callback can run at any time, and from any thread; if you need to serialize access to your app's data,
+    /// you should provide and use a mutex or other synchronization device.
+    ///
+    /// All of this to say: there are specific needs this callback can fulfill, but it is not the simplest interface.
+    /// Apps should generally provide audio in their preferred format through an `audio.Stream` and let SDL handle the difference.
+    ///
+    /// This function is extremely time-sensitive; the callback should do the least amount of work possible and return as quickly as it can.
+    /// The longer the callback runs, the higher the risk of audio dropouts or other problems.
+    ///
+    /// This function will block until the audio device is in between iterations,
+    /// so any existing callback that might be running will finish before this function sets the new callback and returns.
+    ///
+    /// Setting a `null` callback function disables any previously-set callback.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setPostmixCallback(
+        self: Device,
+        callback: ?PostmixCallback,
+        user_data: ?*anyopaque,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_SetAudioPostmixCallback(self.value, callback orelse null, user_data));
     }
 };
 
@@ -856,6 +1121,186 @@ pub const Stream = packed struct {
         return C.SDL_AudioStreamDevicePaused(self.value);
     }
 
+    /// Query the current format of an audio stream.
+    ///
+    /// ## Function Parameaters
+    /// * `self`: The stream to query.
+    ///
+    /// ## Return Value
+    /// Returns the input and output formats of the stream.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFormat(
+        self: Stream,
+    ) !struct { input_format: Spec, output_format: Spec } {
+        var input_format: C.SDL_AudioSpec = undefined;
+        var output_format: C.SDL_AudioSpec = undefined;
+        try errors.wrapCallBool(C.SDL_GetAudioStreamFormat(self.value, &input_format, &output_format));
+        return .{
+            .input_format = Spec.fromSdl(input_format),
+            .output_format = Spec.fromSdl(output_format),
+        };
+    }
+
+    /// Get the frequency ratio of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream to query.
+    ///
+    /// ## Return Value
+    /// Returns the frequency ratio of the stream.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFrequencyRatio(
+        self: Stream,
+    ) !f32 {
+        return errors.wrapCall(f32, C.SDL_GetAudioStreamFrequencyRatio(self.value), 0);
+    }
+
+    /// Get the gain of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream to query.
+    ///
+    /// ## Return Value
+    /// Returns the gain of the stream.
+    ///
+    /// ## Remarks
+    /// The gain of a stream is its volume; a larger gain means a louder output, with a gain of zero being silence.
+    ///
+    /// Audio streams default to a gain of `1` (no change in output).
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getGain(
+        self: Stream,
+    ) !f32 {
+        return errors.wrapCall(f32, C.SDL_GetAudioStreamGain(self.value), -1);
+    }
+
+    /// Get the current input channel map of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream to query.
+    ///
+    /// ## Return Value
+    /// Returns an array of the current channel mapping, with as many elements as the current output spec's channels, or `null` if default.
+    /// This should be freed with `stdinc.free()` when it is no longer needed.
+    ///
+    /// ## Remarks
+    /// Channel maps are optional; most things do not need them, instead passing data in [the order that SDL expects](https://wiki.libsdl.org/SDL3/CategoryAudio#channel-layouts).
+    ///
+    /// Audio streams default to no remapping applied.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getInputChannelMap(
+        self: Stream,
+    ) ?[]c_int {
+        var count: c_int = undefined;
+        const ret = C.SDL_GetAudioStreamInputChannelMap(self.value, &count);
+        if (ret == null)
+            return null;
+        return ret[0..@intCast(count)];
+    }
+
+    /// Get the properties associated with an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream to query.
+    ///
+    /// ## Return Value
+    /// Returns a valid property ID.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getProperties(
+        self: Stream,
+    ) !properties.Group {
+        return .{
+            .value = try errors.wrapCall(C.SDL_PropertiesID, C.SDL_GetAudioStreamProperties(self.value), 0),
+        };
+    }
+
+    /// Get the number of bytes currently queued.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to query.
+    ///
+    /// ## Return Value
+    /// Returns the number of bytes queued.
+    ///
+    /// ## Remarks
+    /// This is the number of bytes put into a stream as input, not the number that can be retrieved as output.
+    /// Because of several details, it's not possible to calculate one number directly from the other.
+    /// If you need to know how much usable data can be retrieved right now, you should use `audio.Stream.getAvailable()` and not this function.
+    ///
+    /// Note that audio streams can change their input format at any time, even if there is still data queued in a different format,
+    /// so the returned byte count will not necessarily match the number of sample frames available.
+    /// Users of this API should be aware of format changes they make when feeding a stream and plan accordingly.
+    ///
+    /// Queued data is not converted until it is consumed by `audio.Stream.getData()`, so this value should be representative of the exact data that was put into the stream.
+    ///
+    /// If the stream has so much data that it would overflow an int, the return value is clamped to a maximum value, but no queued data is lost;
+    /// if there are gigabytes of data queued, the app might need to read some of it with `audio.Stream.getData()` before this function's return value is no longer clamped.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getQueued(
+        self: Stream,
+    ) !usize {
+        return @intCast(try errors.wrapCall(c_int, C.SDL_GetAudioStreamQueued(self.value), -1));
+    }
+
+    /// Get the current output channel map of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream to query.
+    ///
+    /// ## Return Value
+    /// Returns an array of the current channel mapping, with as many elements as the current output spec's channels, or `null` if default.
+    /// This should be freed with `stdinc.free()` when it is no longer needed.
+    ///
+    /// ## Remarks
+    /// Channel maps are optional; most things do not need them, instead passing data in [the order that SDL expects](https://wiki.libsdl.org/SDL3/CategoryAudio#channel-layouts).
+    ///
+    /// Audio streams default to no remapping applied.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getOutputChannelMap(
+        self: Stream,
+    ) ?[]c_int {
+        var count: c_int = undefined;
+        const ret = C.SDL_GetAudioStreamOutputChannelMap(self.value, &count);
+        if (ret == null)
+            return null;
+        return ret[0..@intCast(count)];
+    }
+
     /// Create a new audio stream.
     ///
     /// ## Function Parameters
@@ -877,7 +1322,7 @@ pub const Stream = packed struct {
         const src_spec_sdl = src_spec.toSdl();
         const dst_spec_sdl = dst_spec.toSdl();
         return .{
-            .value = errors.wrapNull(*C.SDL_AudioStream, C.SDL_CreateAudioStream(&src_spec_sdl, &dst_spec_sdl)),
+            .value = try errors.wrapNull(*C.SDL_AudioStream, C.SDL_CreateAudioStream(&src_spec_sdl, &dst_spec_sdl)),
         };
     }
 
@@ -905,6 +1350,371 @@ pub const Stream = packed struct {
         self: Stream,
     ) !void {
         return errors.wrapCallBool(C.SDL_LockAudioStream(self.value));
+    }
+
+    /// Use this function to pause audio playback on the audio device associated with an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream associated with the audio device to pause.
+    ///
+    /// ## Remarks
+    /// This function pauses audio processing for a given device.
+    /// Any bound audio streams will not progress, and no audio will be generated.
+    /// Pausing one device does not prevent other unpaused devices from running.
+    ///
+    /// Pausing a device can be useful to halt all audio without unbinding all the audio streams.
+    /// This might be useful while a game is paused, or a level is loading, etc.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn pauseDevice(
+        self: Stream,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_PauseAudioStreamDevice(self.value));
+    }
+
+    /// Add data to the stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream the audio data is being added to.
+    /// * `data`: Buffer of audio data to read.
+    ///
+    /// ## Remarks
+    /// This data must match the format/channels/samplerate specified in the latest call to `audio.Stream.setFormat()`,
+    /// or the format specified when creating the stream if it hasn't been changed.
+    ///
+    /// Note that this call simply copies the unconverted data for later.
+    /// This is different than SDL2, where data was converted during the Put call and the Get call would just dequeue the previously-converted data.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, but if the stream has a callback set, the caller might need to manage extra locking.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn putData(
+        self: Stream,
+        data: []const u8,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_PutAudioStreamData(
+            self.value,
+            data.ptr,
+            @intCast(data.len),
+        ));
+    }
+
+    /// Use this function to unpause audio playback on the audio device associated with an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream associated with the audio device to resume.
+    ///
+    /// ## Remarks
+    /// This function unpauses audio processing for a given device that has previously been paused.
+    /// Once unpaused, any bound audio streams will begin to progress again, and audio can be generated.
+    ///
+    /// `audio.Device.openStream()` opens audio devices in a paused state, so this function call is required for audio playback to begin on such devices.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn resumeDevice(
+        self: Stream,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_ResumeAudioStreamDevice(self.value));
+    }
+
+    /// Change the input and output formats of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream the format is being changed.
+    /// * `src_spec`: The new format of the audio input; if `null`, it is not changed.
+    /// * `dst_spec`: The new format of the audio output; if `null`, it is not changed.
+    ///
+    /// ## Remarks
+    /// Future calls to and `audio.Stream.getAvailable()` and `audio.Stream.getData()` will reflect the new format,
+    /// and future calls to `audio.Stream.putData()` must provide data in the new input formats.
+    ///
+    /// Data that was previously queued in the stream will still be operated on in the format that was current when it was added,
+    /// which is to say you can put the end of a sound file in one format to a stream, change formats for the next sound file,
+    /// and start putting that new data while the previous sound file is still queued, and everything will still play back correctly.
+    ///
+    /// If a stream is bound to a device, then the format of the side of the stream bound to a device cannot be changed
+    /// (`src_spec` for recording devices, `dst_spec` for playback devices).
+    /// Attempts to make a change to this side will be ignored, but this will not report an error.
+    /// The other side's format can be changed.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setFormat(
+        self: Stream,
+        src_spec: ?Spec,
+        dst_spec: ?Spec,
+    ) !void {
+        const src_spec_sdl: C.SDL_AudioSpec = if (src_spec) |val| val.toSdl() else undefined;
+        const dst_spec_sdl: C.SDL_AudioSpec = if (dst_spec) |val| val.toSdl() else undefined;
+        return errors.wrapCallBool(C.SDL_SetAudioStreamFormat(
+            self.value,
+            if (src_spec != null) &src_spec_sdl else null,
+            if (dst_spec != null) &dst_spec_sdl else null,
+        ));
+    }
+
+    /// Change the frequency ratio of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream on which the gain is being changed.
+    /// * `frequency_ratio`: The frequency ratio. `1` is normal speed. Must be between `0.01` and `100`.
+    ///
+    /// ## Remarks
+    /// The frequency ratio is used to adjust the rate at which input data is consumed.
+    /// Changing this effectively modifies the speed and pitch of the audio.
+    /// A value greater than `1` will play the audio faster, and at a higher pitch.
+    /// A value less than `1` will play the audio slower, and at a lower pitch.
+    ///
+    /// This is applied during `audio.Stream.getData()`, and can be continuously changed to create various effects.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setFrequencyRatio(
+        self: Stream,
+        frequency_ratio: f32,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_SetAudioStreamFrequencyRatio(self.value, frequency_ratio));
+    }
+
+    /// Change the gain of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream on which the gain is being changed.
+    /// * `gain`: The gain. `1` is no change, `0` is silence.
+    ///
+    /// ## Remarks
+    /// The gain of a stream is its volume; a larger gain means a louder output, with a gain of zero being silence.
+    ///
+    /// Audio streams default to a gain of `1` (no change in output).
+    ///
+    /// This is applied during `audio.Stream.getData()`, and can be continuously changed to create various effects.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setGain(
+        self: Stream,
+        gain: f32,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_SetAudioStreamGain(self.value, gain));
+    }
+
+    /// Set a callback that runs when data is requested from an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to set the new callback on.
+    /// * `callback`: The new callback function to call when data is requested from the stream.
+    /// * `user_data`: An opaque pointer provided to the callback for its own personal use.
+    ///
+    /// ## Remarks
+    /// This callback is called before data is obtained from the stream, giving the callback the chance to add more on-demand.
+    ///
+    /// The callback can (optionally) call `audio.Stream.putData()` to add more audio to the stream during this call; if needed,
+    /// the request that triggered this callback will obtain the new data immediately.
+    ///
+    /// The callback's additional_amount argument is roughly how many bytes of unconverted data (in the stream's input format) is needed by the caller,
+    /// although this may overestimate a little for safety.
+    /// This takes into account how much is already in the stream and only asks for any extra necessary to resolve the request,
+    /// which means the callback may be asked for zero bytes, and a different amount on each call.
+    ///
+    /// The callback is not required to supply exact amounts; it is allowed to supply too much or too little or none at all.
+    /// The caller will get what's available, up to the amount they requested, regardless of this callback's outcome.
+    ///
+    /// Clearing or flushing an audio stream does not call this callback.
+    ///
+    /// This function obtains the stream's lock, which means any existing callback (get or put) in progress will finish running before setting the new callback.
+    ///
+    /// Setting a `null` function turns off the callback.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setGetCallback(
+        self: Stream,
+        callback: ?StreamCallback,
+        user_data: ?*anyopaque,
+    ) void {
+        _ = C.SDL_SetAudioStreamGetCallback(
+            self.value,
+            if (callback) |val| val else null,
+            user_data,
+        );
+    }
+
+    /// Set the current output channel map of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream to change.
+    /// * `channel_map`: Set the current input channel map of an audio stream.
+    ///
+    /// ## Remarks
+    /// Channel maps are optional; most things do not need them, instead passing data in the order that SDL expects.
+    ///
+    /// The input channel map reorders data that is added to a stream via `audio.Stream.putData()`.
+    /// Future calls to `audio.Stream.putData()` must provide data in the new channel order.
+    ///
+    /// Each item in the slice represents an input channel, and its value is the channel that it should be remapped to.
+    /// To reverse a stereo signal's left and right values, you'd have a slice of `&.{ 1, 0 }`.
+    /// It is legal to remap multiple channels to the same thing, so `&.{ 1, 1 }` would duplicate the right channel to both channels of a stereo signal.
+    /// An element in the channel map set to `-1` instead of a valid channel will mute that channel, setting it to a silence value.
+    ///
+    /// You cannot change the number of channels through a channel map, just reorder/mute them.
+    ///
+    /// The output channel map can be changed at any time, as output remapping is applied during `audio.Stream.getData()`.
+    ///
+    /// Audio streams default to no remapping applied.
+    /// Passing a `null` channel map is legal, and turns off remapping.
+    ///
+    /// SDL will copy the channel map; the caller does not have to save this array after this call.
+    ///
+    /// Unlike attempting to change the stream's format, the output channel map on a stream bound to a recording device is permitted to change at any time;
+    /// any data added to the stream after this call will have the new mapping, but previously-added data will still have the prior mapping.
+    /// When the channel map doesn't match the hardware's channel layout, SDL will convert the data before feeding it to the device for playback.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    /// Don't change the stream's format to have a different number of channels from a a different thread at the same time, though!
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setInputChannelMap(
+        self: Stream,
+        channel_map: ?[]const c_int,
+    ) !void {
+        return errors.wrapCallBool(
+            C.SDL_SetAudioStreamInputChannelMap(self.value, if (channel_map) |val| val.ptr else null, @intCast(if (channel_map) |val| val.len else 0)),
+        );
+    }
+
+    /// Set the current output channel map of an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The stream to change.
+    /// * `channel_map`: The new channel map, or `null` to reset to default.
+    ///
+    /// ## Remarks
+    /// Channel maps are optional; most things do not need them, instead passing data in the order that SDL expects.
+    ///
+    /// The output channel map reorders data that leaving a stream via `audio.Stream.getData()`.
+    ///
+    /// Each item in the slice represents an input channel, and its value is the channel that it should be remapped to.
+    /// To reverse a stereo signal's left and right values, you'd have a slice of `&.{ 1, 0 }`.
+    /// It is legal to remap multiple channels to the same thing, so `&.{ 1, 1 }` would duplicate the right channel to both channels of a stereo signal.
+    /// An element in the channel map set to `-1` instead of a valid channel will mute that channel, setting it to a silence value.
+    ///
+    /// You cannot change the number of channels through a channel map, just reorder/mute them.
+    ///
+    /// The output channel map can be changed at any time, as output remapping is applied during `audio.Stream.getData()`.
+    ///
+    /// Audio streams default to no remapping applied.
+    /// Passing a `null` channel map is legal, and turns off remapping.
+    ///
+    /// SDL will copy the channel map; the caller does not have to save this array after this call.
+    ///
+    /// Unlike attempting to change the stream's format, the output channel map on a stream bound to a recording device is permitted to change at any time;
+    /// any data added to the stream after this call will have the new mapping, but previously-added data will still have the prior mapping.
+    /// When the channel map doesn't match the hardware's channel layout, SDL will convert the data before feeding it to the device for playback.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread, as it holds a stream-specific mutex while running.
+    /// Don't change the stream's format to have a different number of channels from a a different thread at the same time, though!
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setOutputChannelMap(
+        self: Stream,
+        channel_map: ?[]const c_int,
+    ) !void {
+        return errors.wrapCallBool(
+            C.SDL_SetAudioStreamOutputChannelMap(self.value, if (channel_map) |val| val.ptr else null, @intCast(if (channel_map) |val| val.len else 0)),
+        );
+    }
+
+    /// Set a callback that runs when data is added to an audio stream.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to set the new callback on.
+    /// * `callback`: The new callback function to call when data is added to the stream.
+    /// * `user_data`: An opaque pointer provided to the callback for its own personal use.
+    ///
+    /// ## Remarks
+    /// This callback is called after the data is added to the stream, giving the callback the chance to obtain it immediately.
+    ///
+    /// The callback can (optionally) call `audio.Stream.getData()` to obtain audio from the stream during this call.
+    ///
+    /// The callback's additional_amount argument is how many bytes of converted data (in the stream's output format) was provided by the caller,
+    /// although this may underestimate a little for safety.
+    /// This value might be less than what is currently available in the stream, if data was already there,
+    /// and might be less than the caller provided if the stream needs to keep a buffer to aid in resampling.
+    /// Which means the callback may be provided with zero bytes, and a different amount on each call.
+    ///
+    /// The callback may call `audio.Stream.getAvailable()` to see the total amount currently available to read from the stream,
+    /// instead of the total provided by the current call.
+    ///
+    /// The callback is not required to obtain all data.
+    /// It is allowed to read less or none at all.
+    /// Anything not read now simply remains in the stream for later access.
+    ///
+    /// Clearing or flushing an audio stream does not call this callback.
+    ///
+    /// This function obtains the stream's lock, which means any existing callback (get or put) in progress will finish running before setting the new callback.
+    ///
+    /// Setting a `null` function turns off the callback.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setPutCallback(
+        self: Stream,
+        callback: ?StreamCallback,
+        user_data: ?*anyopaque,
+    ) void {
+        _ = C.SDL_SetAudioStreamPutCallback(
+            self.value,
+            if (callback) |val| val else null,
+            user_data,
+        );
+    }
+
+    /// Unbind a single audio stream from its audio device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: An audio stream to unbind from a device.
+    ///
+    /// ## Remarks
+    /// This is a convenience function, equivalent to calling `audio.unbindStreams(&.{stream})`.
+    ///
+    /// ## Thread
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn unbind(
+        self: Stream,
+    ) void {
+        C.SDL_UnbindAudioStream(self.value);
     }
 
     /// Unlock an audio stream for serialized access.
@@ -989,7 +1799,7 @@ pub const Spec = struct {
     ) ![]u8 {
         const src_spec_sdl = self.toSdl();
         const dst_spec_sdl = dst_spec.toSdl();
-        var dst_data: *u8 = undefined;
+        var dst_data: [*c]u8 = undefined;
         var dst_len: c_int = undefined;
         try errors.wrapCallBool(C.SDL_ConvertAudioSamples(
             &src_spec_sdl,
@@ -1050,10 +1860,7 @@ pub const Spec = struct {
     pub fn getFrameSize(
         self: Spec,
     ) usize {
-        const ret = C.SDL_AUDIO_FRAMESIZE(
-            self.toSdl(),
-        );
-        return @intCast(ret);
+        return @as(usize, @intCast(self.format.getByteSize())) * self.num_channels;
     }
 };
 
@@ -1178,7 +1985,169 @@ pub fn getRecordingDevices() ![]Device {
     return ret[0..@intCast(count)];
 }
 
+/// Loads a WAV from a file path.
+///
+/// ## Function Parameters
+/// * `path`: The file path for the WAV to open.
+///
+/// ## Return Value
+/// Returns the audio spec of the WAV along with its data.
+/// The `data` must be freed with `stdinc.free()`.
+///
+/// ## Remarks
+/// This is a convenience function that is effectively the same as:
+/// TODO!!!
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn loadWav(
+    path: [:0]const u8,
+) !struct { spec: Spec, data: []u8 } {
+    var data: [*c]u8 = undefined;
+    var len: u32 = undefined;
+    var spec: C.SDL_AudioSpec = undefined;
+    try errors.wrapCallBool(C.SDL_LoadWAV(
+        path.ptr,
+        &spec,
+        &data,
+        &len,
+    ));
+    return .{
+        .spec = Spec.fromSdl(spec),
+        .data = data[0..@intCast(len)],
+    };
+}
+
+/// Load the audio data of a WAV file into memory.
+///
+/// ## Function Parameters
+/// * `src`: The data source for the WAV data.
+/// * `close_io`: Will close the `src` before returning, even on error.
+///
+/// ## Return Value
+/// Returns the audio spec of the WAV along with its data.
+/// The `data` must be freed with `stdinc.free()`.
+///
+/// ## Remarks
+/// The entire data portion of the file is then loaded into memory and decoded if necessary.
+///
+/// Supported formats are RIFF WAVE files with the formats PCM (8, 16, 24, and 32 bits), IEEE Float (32 bits), Microsoft ADPCM and IMA ADPCM (4 bits),
+/// and A-law and mu-law (8 bits). Other formats are currently unsupported and cause an error.
+///
+/// If this function succeeds, the return value is zero and the pointer to the audio data allocated by the function is written to audio_buf and its length in bytes to audio_len.
+/// The SDL_AudioSpec members freq, channels, and format are set to the values of the audio data in the buffer.
+///
+/// It's necessary to use SDL_free() to free the audio data returned in audio_buf when it is no longer used.
+///
+/// Because of the underspecification of the .WAV format, there are many problematic files in the wild that cause issues with strict decoders.
+/// To provide compatibility with these files, this decoder is lenient in regards to the truncation of the file, the fact chunk, and the size of the RIFF chunk.
+/// The hints `hints.Type.wave_riff_chunk_size`, `hints.Type.wave_truncation`, and `hints.Type.wave_fact_chunk` can be used to tune the behavior of the loading process.
+///
+/// Any file that is invalid (due to truncation, corruption, or wrong values in the headers), too big, or unsupported causes an error.
+/// Additionally, any critical I/O error from the data source will terminate the loading process with an error.
+///
+/// It is required that the data source supports seeking.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+///
+/// ## Code Examples
+/// TODO!!!
+pub fn loadWavIo(
+    src: io_stream.Stream,
+    close_io: bool,
+) !struct { spec: Spec, data: []u8 } {
+    var data: [*c]u8 = undefined;
+    var len: u32 = undefined;
+    var spec: C.SDL_AudioSpec = undefined;
+    try errors.wrapCallBool(C.SDL_LoadWAV_IO(
+        src.value,
+        close_io,
+        &spec,
+        &data,
+        &len,
+    ));
+    return .{
+        .spec = Spec.fromSdl(spec),
+        .data = data[0..@intCast(len)],
+    };
+}
+
+/// Mix audio data in a specified format.
+///
+/// ## Function Parameters
+/// * `dst`: The destination for the mixed audio. This should be the same length as `src`.
+/// * `src`: The source audio buffer to be mixed. This should be the same length as `dst`.
+/// * `format`: The structure representing the desired audio format.
+/// * `volume`: Ranges from `0` to `1`, and should be set to `1` for full audio volume.
+///
+/// ## Remarks
+/// This takes an audio buffer `src` of `len` bytes of format data and mixes it into dst, performing addition, volume adjustment, and overflow clipping.
+/// The buffer pointed to by `dst` must also be `len` bytes of format data.
+///
+/// This is provided for convenience -- you can mix your own audio data.
+///
+/// Do not use this function for mixing together more than two streams of sample data.
+/// The output from repeated application of this function may be distorted by clipping,
+/// because there is no accumulator with greater range than the input (not to mention this being an inefficient way of doing it).
+///
+/// It is a common misconception that this function is required to write audio data to an output stream in an audio callback.
+/// While you can do that, `audio.mix()` is really only needed when you're mixing a single audio stream with a volume adjustment.
+///
+/// Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// Version
+/// This function is available since SDL 3.2.0.
+pub fn mix(
+    dst: []u8,
+    src: []const u8,
+    format: Format,
+    volume: f32,
+) !void {
+    if (src.len != dst.len)
+        return errors.set("Source and destination audio length for mix do not match");
+    return errors.wrapCallBool(C.SDL_MixAudio(
+        dst.ptr,
+        src.ptr,
+        format.value,
+        @intCast(src.len),
+        volume,
+    ));
+}
+
+/// Unbind a list of audio streams from their audio devices.
+///
+/// ## Function Parameters
+/// `streams`: Slice of audio streams to unbind.
+///
+/// ## Remarks
+/// The streams being unbound do not all have to be on the same device.
+/// All streams on the same device will be unbound atomically (data will stop flowing through all unbound streams on the same device at the same time).
+///
+/// Unbinding a stream that isn't bound to a device is a legal no-op.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn unbindStreams(
+    streams: []const Stream,
+) void {
+    C.SDL_UnbindAudioStreams(
+        @ptrCast(streams.ptr),
+        @intCast(streams.len),
+    );
+}
+
 // Audio related tests.
 test "Audio" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 }

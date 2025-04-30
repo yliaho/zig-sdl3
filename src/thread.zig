@@ -455,7 +455,7 @@ fn tlsDestructor(value: ?*anyopaque) callconv(.C) void {
 
 // Thread testing.
 test "Thread" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     const t1 = try Thread.init(threadFunc, "Test", null);
     try std.testing.expectEqualStrings("Test", t1.getName().?);

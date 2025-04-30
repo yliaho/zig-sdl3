@@ -68,7 +68,7 @@ pub const GUID = struct {
 
 // GUID testing.
 test "GUID" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     const guid = GUID{
         .value = .{

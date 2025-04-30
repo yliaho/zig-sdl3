@@ -173,7 +173,7 @@ pub const Mode = struct {
 
 // Test blend mode creation.
 test "Blend Mode" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     try std.testing.expect(Mode.custom(
         .source_color,

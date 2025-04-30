@@ -198,7 +198,7 @@ fn testAssertCallback(assert_data: [*c]const C.SDL_AssertData, user_data: ?*anyo
 
 // Test asserting functionality.
 test "Assert" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     const handler = getHandler();
     try std.testing.expectEqual(getDefaultHandler(), handler.handler);

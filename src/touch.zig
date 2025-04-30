@@ -165,7 +165,7 @@ pub fn getDevices() ![]ID {
 
 // Touching tests.
 test "Touch" {
-    std.testing.refAllDecls(@This());
+    std.testing.refAllDeclsRecursive(@This());
 
     const devices = try getDevices();
     defer stdinc.free(devices);
