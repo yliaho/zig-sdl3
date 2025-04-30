@@ -476,6 +476,8 @@ pub const KeyModifier = struct {
 
 // Keycode testing.
 test "Keycode" {
+    std.testing.refAllDecls(@This());
+
     const code = Keycode.fromScancode(.a).?;
     try std.testing.expect(code.isScancode());
     try std.testing.expect(!code.isExtended());

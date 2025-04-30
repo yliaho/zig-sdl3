@@ -289,6 +289,8 @@ fn data_cb(
 
 // Test the clipboard. Yes it needs video.
 test "Clipboard" {
+    std.testing.refAllDecls(@This());
+
     defer init.shutdown();
     const flags = init.Flags{ .video = true };
     try init.init(flags);

@@ -33,3 +33,8 @@ pub fn openURL(
     );
     return errors.wrapCallBool(ret);
 }
+
+// Misc tests.
+test "Misc" {
+    std.testing.refAllDecls(@This());
+}

@@ -622,3 +622,8 @@ pub const Tray = struct {
 pub fn update() void {
     C.SDL_UpdateTrays();
 }
+
+// Tray tests.
+test "Tray" {
+    std.testing.refAllDecls(@This());
+}

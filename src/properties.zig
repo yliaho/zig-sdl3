@@ -445,6 +445,8 @@ fn testEnumeratePropertiesCb(user_data: ?*anyopaque, id: C.SDL_PropertiesID, nam
 
 // Test out properties.
 test "Properties" {
+    std.testing.refAllDecls(@This());
+
     _ = try getGlobal();
     const group = try Group.init();
     defer group.deinit();

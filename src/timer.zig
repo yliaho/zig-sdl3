@@ -535,6 +535,8 @@ fn dummyNsCallback(
 
 // Test timer related functionality.
 test "Timer" {
+    std.testing.refAllDecls(@This());
+
     comptime try std.testing.expectEqual(milliseconds_per_second, nanoseconds_per_second / millisecondsToNanoseconds(1));
     comptime try std.testing.expectEqual(nanoseconds_per_millisecond, millisecondsToNanoseconds(1));
     comptime try std.testing.expectEqual(nanoseconds_per_second, secondsToNanoseconds(1));

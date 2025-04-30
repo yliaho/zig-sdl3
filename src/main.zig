@@ -186,6 +186,7 @@ fn dummyQuit(
 
 // Test main-related functions.
 test "Main" {
+    std.testing.refAllDecls(@This());
     var args = [_:null]?[*:0]u8{
         @constCast("Hello"),
         @constCast("World"),

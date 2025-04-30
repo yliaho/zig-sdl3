@@ -1,5 +1,3 @@
-// This file was generated using `zig build bindings`. Do not manually edit!
-
 const C = @import("c.zig").C;
 const std = @import("std");
 
@@ -175,6 +173,8 @@ pub const Mode = struct {
 
 // Test blend mode creation.
 test "Blend Mode" {
+    std.testing.refAllDecls(@This());
+
     try std.testing.expect(Mode.custom(
         .source_color,
         .destination_color,

@@ -1,4 +1,5 @@
 const C = @import("c.zig").C;
+const std = @import("std");
 
 /// A guess for the cacheline size used for padding.
 ///
@@ -320,6 +321,8 @@ pub fn hasSse42() bool {
 
 // CPU testing.
 test "CPU Info" {
+    std.testing.refAllDecls(@This());
+
     _ = cacheline_size;
     _ = getCacheLineSize();
     _ = getNumLogicalCores();

@@ -1,6 +1,7 @@
 const C = @import("c.zig").C;
 const init = @import("init.zig");
 const errors = @import("errors.zig");
+const std = @import("std");
 const video = @import("video.zig");
 
 /// Allocation callbacks.
@@ -219,6 +220,8 @@ pub fn unloadLibrary() void {
 
 // Vulkan related testing.
 test "Vulkan" {
+    std.testing.refAllDecls(@This());
+
     defer init.shutdown();
     const flags = init.Flags{ .video = true };
     try init.init(flags);

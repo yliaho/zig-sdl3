@@ -169,6 +169,8 @@ pub const Version = packed struct {
 
 // Test version functionality.
 test "Version" {
+    std.testing.refAllDecls(@This());
+
     try std.testing.expectEqual(true, Version.getRevision() != null);
     try std.testing.expectEqual(true, Version.atLeast(3, 0, 1));
     try std.testing.expectEqual(false, Version.atLeast(4, 0, 0));

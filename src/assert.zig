@@ -121,9 +121,7 @@ pub fn getReport() ?*const C.SDL_AssertData {
 ///
 /// ## Function Parameters
 /// * `data`: Assert data structure. Should be unique for this call.
-/// * `func`: Function name.
-/// * `file`: File name.
-/// * `line`: Line number.
+/// * `location`: Source location from `@src()`.
 ///
 /// ## Return Value
 /// Returns assert state.
@@ -135,47 +133,14 @@ pub fn getReport() ?*const C.SDL_AssertData {
 /// This function is available since SDL 3.2.0.
 pub fn report(
     data: *C.SDL_AssertData,
-    func: [:0]const u8,
-    file: [:0]const u8,
-    line: isize,
-) State {
-    return @enumFromInt(C.SDL_ReportAssertion(data, func, file, @intCast(line)));
-}
-
-/// Helper function for reporting an assertion.
-///
-/// ## Function Parameters
-/// * `data`: Assert data structure. Should be unique for this call.
-/// * `location`: Result of `@src()`.
-/// * `allocator`: Memory allocator.
-///
-/// ## Return Value
-/// Returns assert state and an owned buffer.
-///
-/// ## Remarks
-/// Because of required null-termination in the SDL library, using @src() requires an intermediate buffer to copy data to in order to null-terminate.
-/// Resulting buffer must be freed manually after all work with reports is over.
-///
-/// ## Thread Safety
-/// It is safe to call this function from any thread, as long as calling the `allocator` is thread-safe.
-///
-/// ## Version
-/// This function is provided by the wrapper.
-pub fn reportWithAlloc(
-    data: *C.SDL_AssertData,
     location: std.builtin.SourceLocation,
-    allocator: std.mem.Allocator,
-) !struct { state: State, buffer: []const u8 } {
-    const total_len = location.fn_name.len + 1 + location.file.len + 1;
-    const buffer = try allocator.alloc(u8, total_len);
-    const func: [*c]u8 = @ptrCast(buffer.ptr);
-    const file: [*c]u8 = @ptrFromInt(@intFromPtr(buffer.ptr) + total_len);
-    const state: State = @enumFromInt(C.SDL_ReportAssertion(data, func, file, @intCast(location.line)));
-    std.mem.copyForwards(u8, func[0..location.fn_name.len], location.fn_name);
-    func[location.fn_name.len] = 0;
-    std.mem.copyForwards(u8, file[0..location.file.len], location.file);
-    file[location.file.len] = 0;
-    return .{ .state = state, .buffer = buffer };
+) State {
+    return @enumFromInt(C.SDL_ReportAssertion(
+        data,
+        location.fn_name,
+        location.file,
+        @intCast(location.line),
+    ));
 }
 
 /// Clear the list of all assertion failures.
@@ -233,6 +198,8 @@ fn testAssertCallback(assert_data: [*c]const C.SDL_AssertData, user_data: ?*anyo
 
 // Test asserting functionality.
 test "Assert" {
+    std.testing.refAllDecls(@This());
+
     const handler = getHandler();
     try std.testing.expectEqual(getDefaultHandler(), handler.handler);
     try std.testing.expectEqual(null, handler.user_data);
@@ -244,17 +211,16 @@ test "Assert" {
 
     var assert_data1 = C.SDL_AssertData{};
     var assert_data2 = C.SDL_AssertData{};
-    _ = report(&assert_data1, "assertionTests", "assert.zig", 247);
-    const allocated_report = try reportWithAlloc(&assert_data2, @src(), std.testing.allocator);
-    defer std.testing.allocator.free(allocated_report.buffer);
+    _ = report(&assert_data1, @src());
+    _ = report(&assert_data2, @src());
 
     const report2: *const C.SDL_AssertData = getReport().?;
     const report1: *const C.SDL_AssertData = report2.next.?;
     try std.testing.expectEqual(null, report1.next);
-    try std.testing.expectEqual(247, report1.linenum);
-    try std.testing.expectEqualStrings("assertionTests", std.mem.span(report1.function));
+    try std.testing.expectEqual(214, report1.linenum);
+    try std.testing.expectEqualStrings("test.Assert", std.mem.span(report1.function));
     try std.testing.expectEqualStrings("assert.zig", std.mem.span(report1.filename));
-    try std.testing.expectEqual(248, report2.linenum);
+    try std.testing.expectEqual(215, report2.linenum);
     try std.testing.expectEqualStrings("test.Assert", std.mem.span(report2.function));
     try std.testing.expectEqualStrings("assert.zig", std.mem.span(report2.filename));
 

@@ -452,6 +452,8 @@ fn testGetLastMessage(data: TestLogCallbackData) []const u8 {
 
 // Test logging functionality.
 test "Log" {
+    std.testing.refAllDecls(@This());
+
     const backup = getLogOutputFunction();
     try std.testing.expectEqual(getDefaultLogOutputFunction(), backup.callback);
 

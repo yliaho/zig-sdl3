@@ -295,6 +295,8 @@ pub fn wrapNull(
 
 // Make sure error getting and setting works properly.
 test "Error" {
+    std.testing.refAllDecls(@This());
+
     clear();
     callErrorCallback();
     try std.testing.expectEqual(null, get());

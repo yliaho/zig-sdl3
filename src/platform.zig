@@ -240,6 +240,8 @@ pub fn get() [:0]const u8 {
 
 // Test platform.
 test "Platform" {
+    std.testing.refAllDecls(@This());
+
     _ = aix;
     _ = android;
     _ = apple;

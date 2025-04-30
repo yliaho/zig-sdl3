@@ -165,6 +165,8 @@ pub fn getDevices() ![]ID {
 
 // Touching tests.
 test "Touch" {
+    std.testing.refAllDecls(@This());
+
     const devices = try getDevices();
     defer stdinc.free(devices);
     for (devices) |device| {

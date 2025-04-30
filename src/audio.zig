@@ -714,7 +714,7 @@ pub const Stream = packed struct {
 
     // Size tests.
     comptime {
-        std.debug.assert(@sizeOf(*C.SDL_AudioStream), @sizeOf(Stream));
+        std.debug.assert(@sizeOf(*C.SDL_AudioStream) == @sizeOf(Stream));
     }
 
     /// Clear any pending data in the stream.
@@ -803,6 +803,35 @@ pub const Stream = packed struct {
         self: Stream,
     ) usize {
         return @intCast(C.SDL_GetAudioStreamAvailable(self.value));
+    }
+
+    /// Query an audio stream for its currently-bound device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The audio stream to query.
+    ///
+    /// ## Return Value
+    /// Returns the bound audio device if bound and valid, `null` otherwise.
+    ///
+    /// ## Remarks
+    /// This reports the audio device that an audio stream is currently bound to.
+    ///
+    /// If not bound, or invalid, this returns `null`.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getDevice(
+        self: Stream,
+    ) ?Device {
+        const ret = C.SDL_GetAudioStreamDevice(
+            self.value,
+        );
+        if (ret == 0)
+            return null;
+        return .{ .value = ret };
     }
 
     /// Use this function to query if an audio device associated with a stream is paused.
@@ -1122,7 +1151,7 @@ pub fn getNumDrivers() usize {
 /// This function is available since SDL 3.2.0.
 pub fn getPlaybackDevices() ![]Device {
     var count: c_int = undefined;
-    const ret = try errors.wrapCallCPtr(C.SDL_AudioDeviceID, C.SDL_GetAudioPlaybackDevices(&count));
+    const ret = @as([*]Device, @ptrCast(try errors.wrapCallCPtr(C.SDL_AudioDeviceID, C.SDL_GetAudioPlaybackDevices(&count))));
     return ret[0..@intCast(count)];
 }
 
@@ -1145,6 +1174,11 @@ pub fn getPlaybackDevices() ![]Device {
 /// This function is available since SDL 3.2.0.
 pub fn getRecordingDevices() ![]Device {
     var count: c_int = undefined;
-    const ret = try errors.wrapCallCPtr(C.SDL_AudioDeviceID, C.SDL_GetAudioRecordingDevices(&count));
+    const ret = @as([*]Device, @ptrCast(try errors.wrapCallCPtr(C.SDL_AudioDeviceID, C.SDL_GetAudioRecordingDevices(&count))));
     return ret[0..@intCast(count)];
+}
+
+// Audio related tests.
+test "Audio" {
+    std.testing.refAllDecls(@This());
 }

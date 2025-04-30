@@ -443,3 +443,8 @@ pub const Scancode = enum(C.SDL_Scancode) {
         return @enumFromInt(key_code);
     }
 };
+
+// Scancode tests.
+test "Scancode" {
+    std.testing.refAllDecls(@This());
+}

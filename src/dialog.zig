@@ -351,3 +351,8 @@ pub fn showWithProperties(
     );
     return ret;
 }
+
+// Dialog tests.
+test "Dialog" {
+    std.testing.refAllDecls(@This());
+}

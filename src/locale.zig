@@ -65,6 +65,8 @@ pub const Locale = extern struct {
 
 // Test fetching locale.
 test "Locale" {
+    std.testing.refAllDecls(@This());
+
     const locales = Locale.getPreferred() catch return;
     defer stdinc.free(locales);
 }

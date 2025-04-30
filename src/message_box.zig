@@ -300,3 +300,8 @@ pub fn showSimple(
     );
     return errors.wrapCallBool(ret);
 }
+
+// Message box tests.
+test "Message Box" {
+    std.testing.refAllDecls(@This());
+}

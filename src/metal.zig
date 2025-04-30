@@ -64,6 +64,8 @@ pub const View = packed struct {
 
 // Metal glue layer tests.
 test "Metal" {
+    std.testing.refAllDecls(@This());
+
     defer init.shutdown();
     const flags = init.Flags{ .video = true };
     try init.init(flags);

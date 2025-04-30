@@ -93,3 +93,8 @@ pub const InputFlags = struct {
             0;
     }
 };
+
+// Pen tests.
+test "Pen" {
+    std.testing.refAllDecls(@This());
+}
