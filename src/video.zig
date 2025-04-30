@@ -678,6 +678,409 @@ pub const egl = struct {
     }
 };
 
+/// Wrapper for GL related functions.
+///
+/// ## Version
+/// Provided by zig-sdl3.
+pub const gl = struct {
+
+    /// An enumeration of OpenGL configuration attributes.
+    ///
+    /// ## Remarks
+    /// While you can set most OpenGL attributes normally, the attributes listed above must be known before SDL creates the window that will be used with the OpenGL context.
+    /// These attributes are set and read with `video.gl.setAttribute()` and `video.gl.getAttribute()`.
+    ///
+    /// In some cases, these attributes are minimum requests; the GL does not promise to give you exactly what you asked for.
+    /// It's possible to ask for a 16-bit depth buffer and get a 24-bit one instead, for example, or to ask for no stencil buffer and still have one available.
+    /// Context creation should fail if the GL can't provide your requested attributes at a minimum, but you should check to see exactly what you got.
+    ///
+    /// ## Version
+    /// This enum is available since SDL 3.2.0.
+    pub const Attribute = enum(c_int) {
+        /// The minimum number of bits for the red channel of the color buffer; defaults to 8.
+        red_size = C.SDL_GL_RED_SIZE,
+        /// The minimum number of bits for the green channel of the color buffer; defaults to 8.
+        green_size = C.SDL_GL_GREEN_SIZE,
+        /// The minimum number of bits for the blue channel of the color buffer; defaults to 8.
+        blue_size = C.SDL_GL_BLUE_SIZE,
+        /// The minimum number of bits for the alpha channel of the color buffer; defaults to 8.
+        alpha_size = C.SDL_GL_ALPHA_SIZE,
+        /// The minimum number of bits for frame buffer size; defaults to 0.
+        buffer_size = C.SDL_GL_BUFFER_SIZE,
+        /// Whether the output is single or double buffered; defaults to double buffering on.
+        double_buffer = C.SDL_GL_DOUBLEBUFFER,
+        /// The minimum number of bits in the depth buffer; defaults to 16.
+        depth_size = C.SDL_GL_DEPTH_SIZE,
+        /// The minimum number of bits in the stencil buffer; defaults to 0.
+        stencil_size = C.SDL_GL_STENCIL_SIZE,
+        /// The minimum number of bits for the red channel of the accumulation buffer; defaults to 0.
+        accum_red_size = C.SDL_GL_ACCUM_RED_SIZE,
+        /// The minimum number of bits for the green channel of the accumulation buffer; defaults to 0.
+        accum_green_size = C.SDL_GL_ACCUM_GREEN_SIZE,
+        /// The minimum number of bits for the blue channel of the accumulation buffer; defaults to 0.
+        accum_blue_size = C.SDL_GL_ACCUM_BLUE_SIZE,
+        /// The minimum number of bits for the alpha channel of the accumulation buffer; defaults to 0.
+        accum_alpha_size = C.SDL_GL_ACCUM_ALPHA_SIZE,
+        /// Whether the output is stereo 3D; defaults to off.
+        stereo = C.SDL_GL_STEREO,
+        /// The number of buffers used for multisample anti-aliasing; defaults to 0.
+        multi_sample_buffers = C.SDL_GL_MULTISAMPLEBUFFERS,
+        /// The number of samples used around the current pixel used for multisample anti-aliasing.
+        multi_sample_samples = C.SDL_GL_MULTISAMPLESAMPLES,
+        /// Set to 1 to require hardware acceleration, set to 0 to force software rendering; defaults to allow either.
+        accelerated_visual = C.SDL_GL_ACCELERATED_VISUAL,
+        /// Not used (deprecated).
+        retained_backing = C.SDL_GL_RETAINED_BACKING,
+        /// OpenGL context major version.
+        context_major_version = C.SDL_GL_CONTEXT_MAJOR_VERSION,
+        /// OpenGL context minor version.
+        context_minor_version = C.SDL_GL_CONTEXT_MINOR_VERSION,
+        /// Some combination of 0 or more of elements of the `video.gl.ContextFlag` enumeration; defaults to 0.
+        context_flags = C.SDL_GL_CONTEXT_FLAGS,
+        /// Type of GL context (Core, Compatibility, ES). See `video.gl.Profile`; default value depends on platform.
+        context_profile_mask = C.SDL_GL_CONTEXT_PROFILE_MASK,
+        /// OpenGL context sharing; defaults to 0.
+        share_with_current_context = C.SDL_GL_SHARE_WITH_CURRENT_CONTEXT,
+        /// Requests sRGB capable visual; defaults to 0.
+        framebuffer_srgb_capable = C.SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,
+        /// Sets context the release behavior. See `video.gl.ContextReleaseFlag`; defaults to flush.
+        context_release_behavior = C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR,
+        /// Set context reset notification. See `video.gl.ContextResetNotification`; defaults to no_notification.
+        context_reset_notification = C.SDL_GL_CONTEXT_RESET_NOTIFICATION,
+        context_no_error = C.SDL_GL_CONTEXT_NO_ERROR,
+        float_buffers = C.SDL_GL_FLOATBUFFERS,
+        egl_platform = C.SDL_GL_EGL_PLATFORM
+    };
+
+    /// Possible values to be set for the `video.gl.Attribute.context_profile_mask`.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const Profile = enum(u32) {
+        /// OpenGL core profile - deprecated functions are disabled.
+        core = @intCast(C.SDL_GL_CONTEXT_PROFILE_CORE),
+        /// OpenGL compatibility profile - deprecated functions are allowed.
+        compatibility = @intCast(C.SDL_GL_CONTEXT_PROFILE_COMPATIBILITY),
+        /// OpenGL ES profile - only a subset of the base OpenGL functionality is available.
+        es = @intCast(C.SDL_GL_CONTEXT_PROFILE_ES)
+    };
+
+    /// Swap interval.
+    ///
+    /// ## Version
+    /// Provided by zig-sdl3.
+    pub const SwapInterval = enum(c_int) {
+        /// Immediate updates.
+        immediate = 0,
+        /// Updates synchronized with the vertical retrace.
+        synchronized = 1,
+        /// Adaptive vsync.
+        vsync = -1
+    };
+
+    /// An opaque handle to an OpenGL context.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const Context = struct {
+        value: *C.SDL_GLContextState,
+
+        /// Create an OpenGL context for an OpenGL window, and make it current.
+        ///
+        /// ## Return Value
+        /// Returns the OpenGL context associated with window.
+        ///
+        /// ## Remarks
+        /// Windows users new to OpenGL should note that, for historical reasons, GL functions added after OpenGL version 1.1 are not available by default.
+        /// Those functions must be loaded at run-time, either with an OpenGL extension-handling library or with `video.sdl.getProcAddress()` and its related functions.
+        ///
+        /// ## Thread Safety
+        /// This function should only be called on the main thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        ///
+        /// ## Code Examples
+        /// TODO!!!
+        pub fn init(
+            window: Window
+        ) !gl.Context { 
+            const ret = C.SDL_GL_CreateContext(window.value);
+            return .{
+                .value = try errors.wrapNull(*C.SDL_GLContextState, ret)
+            };
+        }
+
+        /// Delete an OpenGL context.
+        ///
+        /// ## Return Value
+        /// Returns true on success or false on failure; call `errors.get()` for more information.
+        ///
+        /// ## Thread Safety
+        /// This function should only be called on the main thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn deinit(
+            self: gl.Context
+        ) bool {
+           return C.SDL_GL_DestroyContext(self.value);
+        }
+
+        /// Set up an OpenGL context for rendering into an OpenGL window.
+        ///
+        /// ## Remarks
+        /// The context must have been created with a compatible window.
+        ///
+        /// ## Thread Safety
+        /// This function should only be called on the main thread.
+        ///
+        /// ## Version
+        /// This function is available since SDL 3.2.0.
+        pub fn makeCurrent(
+            self: gl.Context,
+            window: Window
+        ) !void {
+            const ret = C.SDL_GL_MakeCurrent(
+                window.value,
+                self.value
+            );
+            try errors.wrapCallBool(ret);
+        }
+    };
+
+    /// Possible flags to be set for the `video.gl.Attribute.context_flags` attribute.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const ContextFlag = enum(u32) {
+        debug = @intCast(C.SDL_GL_CONTEXT_DEBUG_FLAG),
+        forward_compatible = @intCast(C.SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG),
+        robust_access = @intCast(C.SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG),
+        reset_isolation = @intCast(C.SDL_GL_CONTEXT_RESET_ISOLATION_FLAG) 
+    };
+
+    /// Possible values to be set for the `video.gl.Attribute.context_release_behavior` attribute.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const ContextReleaseFlag = enum(u32) {
+        none = @intCast(C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR_NONE),
+        flush = @intCast(C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR_FLUSH)
+    };
+
+    /// Possible values to be set `video.gl.Attribute.context_reset_notification` attribute.
+    ///
+    /// ## Version
+    /// This datatype is available since SDL 3.2.0.
+    pub const ContextResetNotification = enum(u32) {
+        no_notification = @intCast(C.SDL_GL_CONTEXT_RESET_NO_NOTIFICATION),
+        lose_context = @intCast(C.SDL_GL_CONTEXT_RESET_LOSE_CONTEXT)
+    };
+
+    /// Get the actual value for an attribute from the current context.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getAttribute(
+        attr: gl.Attribute
+    ) !u32 {
+        var value: c_int = undefined;
+        const ret = C.SDL_GL_GetAttribute(@intFromEnum(attr), &value);
+        try errors.wrapCallBool(ret); 
+        return @intCast(value);
+    }
+
+    /// Get the currently active OpenGL context.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getCurrentContext() !gl.Context {
+        const ret = C.SDL_GL_GetCurrentContext();
+        return .{
+            .value = try errors.wrapNull(*C.SDL_GLContextState, ret)
+        };
+    }
+
+    /// Get the currently active OpenGL window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getCurrentWindow() !Window {
+        const ret = C.SDL_GL_GetCurrentWindow();
+        return Window{
+            .value = try errors.wrapNull(*C.SDL_Window, ret)
+        };
+    }
+
+    /// Get an OpenGL function by name.
+    ///
+    /// ## Return Value
+    /// Returns a pointer to the named OpenGL function. The returned pointer should be cast to the appropriate function signature.
+    ///
+    /// # Remarks
+    /// If the GL library is loaded at runtime with `video.gl.loadLibrary()`, then all GL functions must be retrieved this way.
+    /// Usually this is used to retrieve function pointers to OpenGL extensions.
+    ///
+    /// There are some quirks to looking up OpenGL functions that require some extra care from the application.
+    /// If you code carefully, you can handle these quirks without any platform-specific code, though:
+    ///
+    /// * On Windows, function pointers are specific to the current GL context; this means you need to have created a GL context and made it current before calling `video.gl.getProcAddress()`.
+    /// If you recreate your context or create a second context, you should assume that any existing function pointers aren't valid to use with it.
+    /// This is (currently) a Windows-specific limitation, and in practice lots of drivers don't suffer this limitation,
+    /// but it is still the way the wgl API is documented to work and you should expect crashes if you don't respect it.
+    /// Store a copy of the function pointers that comes and goes with context lifespan.
+    /// * On X11, function pointers returned by this function are valid for any context, and can even be looked up before a context is created at all.
+    /// This means that, for at least some common OpenGL implementations, if you look up a function that doesn't exist, you'll get a non-null result that is NOT safe to call.
+    /// You must always make sure the function is actually available for a given GL context before calling it,
+    /// by checking for the existence of the appropriate extension with `video.gl.extensionSupported()`,
+    /// or verifying that the version of OpenGL you're using offers the function as core functionality.
+    /// * Some OpenGL drivers, on all platforms, will return null if a function isn't supported, but you can't count on this behavior.
+    /// Check for extensions you use, and if you get a null anyway, act as if that extension wasn't available.
+    /// This is probably a bug in the driver, but you can code defensively for this scenario anyhow.
+    /// * Just because you're on Linux/Unix, don't assume you'll be using X11.
+    /// Next-gen display servers are waiting to replace it, and may or may not make the same promises about function pointers.
+    /// * OpenGL function pointers must be declared APIENTRY as in the example code.
+    /// This will ensure the proper calling convention is followed on platforms where this matters (Win32) thereby avoiding stack corruption.
+    pub fn getProcAddress(
+        proc: [:0]const u8
+    ) *C.SDL_FunctionPointer {
+        return C.SDL_GL_GetProcAddress(proc);
+    }
+
+    /// Get the swap interval for the current OpenGL context.
+    ///
+    /// ## Remarks
+    /// If the system can't determine the swap interval, or there isn't a valid current context, this function will set *interval to 0 as a safe default.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSwapInterval() !SwapInterval {
+        var interval: c_int = undefined;
+        const ret = C.SDL_GL_GetSwapInterval(&interval);
+        try errors.wrapCallBool(ret);
+        return @enumFromInt(interval);
+    }
+
+    /// Dynamically load an OpenGL library.
+    ///
+    /// ## Remarks
+    /// This should be done after initializing the video driver, but before creating any OpenGL windows.
+    /// If no OpenGL library is loaded, the default library will be loaded upon creation of the first OpenGL window.
+    ///
+    /// If you do this, you need to retrieve all of the GL functions used in your program from the dynamic library using `video.gl.getProcAddress()`.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn loadLibrary(
+        path: [:0]const u8
+    ) !void {
+        const ret = C.SDL_GL_LoadLibrary(path);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Reset all previously set OpenGL context attributes to their default values.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn resetAttributes() void {
+        C.SDL_GL_ResetAttributes();
+    }
+
+    /// Set an OpenGL window attribute before window creation.
+    ///
+    /// ## Remarks
+    /// This function sets the OpenGL attribute attr to value. The requested attributes should be set before creating an OpenGL window.
+    /// You should use `video.gl.getAttribute()` to check the values after creating the OpenGL context, since the values obtained can differ from the requested ones.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setAttribute(
+        attr: gl.Attribute,
+        value: u32
+    ) !void {
+        const ret = C.SDL_GL_SetAttribute(@intFromEnum(attr), value);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Set the swap interval for the current OpenGL context.
+    ///
+    /// ## Remarks
+    /// Some systems allow specifying -1 for the interval, to enable adaptive vsync.
+    /// Adaptive vsync works the same as vsync, but if you've already missed the vertical retrace for a given frame,
+    /// it swaps buffers immediately, which might be less jarring for the user during occasional framerate drops.
+    /// If an application requests adaptive vsync and the system does not support it, this function will fail and return false.
+    /// In such a case, you should probably retry the call with 1 for the interval.
+    ///
+    /// Adaptive vsync is implemented for some glX drivers with GLX_EXT_swap_control_tear, and for some Windows drivers with WGL_EXT_swap_control_tear.
+    ///
+    /// Read more on the Khronos wiki: https://www.khronos.org/opengl/wiki/Swap_Interval#Adaptive_Vsync
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setSwapInterval(
+        interval: SwapInterval
+    ) !void {
+        const ret = C.SDL_GL_SetSwapInterval(@intFromEnum(interval));
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Update a window with OpenGL rendering.
+    ///
+    /// ## Remarks
+    /// This is used with double-buffered OpenGL contexts, which are the default.
+    ///
+    /// On macOS, make sure you bind 0 to the draw framebuffer before swapping the window, otherwise nothing will happen.
+    /// If you aren't using `glBindFramebuffer()`, this is the default and you won't have to do anything extra.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn swapWindow(
+        window: Window
+    ) !void {
+        const ret = C.SDL_GL_SwapWindow(window.value);
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Unload the OpenGL library previously loaded by `video.gl.loadLibrary()`.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn unloadLibrary() void {
+        C.SDL_GL_UnloadLibrary();
+    }
+};
+
 /// Window flash operation.
 ///
 /// ## Version
@@ -967,112 +1370,6 @@ pub const Window = packed struct {
         };
     }
 
-    /// Destroy a window.
-    ///
-    /// ## Function Parameters
-    /// * `self`: The window to destroy.
-    ///
-    /// ## Remarks
-    /// Any child windows owned by the window will be recursively destroyed as well.
-    ///
-    /// Note that on some platforms, the visible window may not actually be removed from the screen until the SDL event loop is pumped again,
-    /// even though the `video.Window` is no longer valid after this call.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn deinit(
-        self: Window,
-    ) void {
-        C.SDL_DestroyWindow(
-            self.value,
-        );
-    }
-
-    /// Destroy the surface associated with the window.
-    ///
-    /// ## Function Parameters
-    /// * `self`: The window to update.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn destroySurface(
-        self: Window,
-    ) !void {
-        const ret = C.SDL_DestroyWindowSurface(self.value);
-        return errors.wrapCallBool(ret);
-    }
-
-    /// Request a window to demand attention from the user.
-    ///
-    /// ## Function parameters
-    /// * `self`: The window to be flashed.
-    /// * `operation`: The operation to perform.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn flash(
-        self: Window,
-        operation: FlashOperation,
-    ) !void {
-        const ret = C.SDL_FlashWindow(self.value, operation.toSdl());
-        return errors.wrapCallBool(ret);
-    }
-
-    /// Get a window from a stored ID.
-    ///
-    /// ## Function Parameters
-    /// * `id`: The ID of the window.
-    ///
-    /// ## Return Value
-    /// Returns the window associated with `id`.
-    ///
-    /// ## Remarks
-    /// The numeric ID is what `event.Window` references, and is necessary to map these events to specific `video.Window` objects.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn fromID(
-        id: WindowID,
-    ) !Window {
-        const ret = C.SDL_GetWindowFromID(id);
-        return .{ .value = try errors.wrapNull(*C.SDL_Window, ret) };
-    }
-
-    /// Query the display mode to use when a window is visible at fullscreen.
-    ///
-    /// ## Function Parameters
-    /// * `self`: The window to query.
-    ///
-    /// ## Return Value
-    /// Returns a pointer to the exclusive fullscreen mode or `null` for borderless fullscreen desktop mode.
-    ///
-    /// ## Thread Safety
-    /// This function should only be called on the main thread.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn getFullscreenMode(
-        self: Window,
-    ) !DisplayMode {
-        const ret = C.SDL_GetWindowFullscreenMode(self.value);
-        if (ret) |val| {
-            return DisplayMode.fromSdl(val.*);
-        }
-        return null;
-    }
-
     /// Create a window with the specified dimensions and flags.
     ///
     /// ## Function Parameters
@@ -1139,7 +1436,13 @@ pub const Window = packed struct {
     ///     try surface.fillRect(null, surface.mapRgb(128, 30, 255));
     ///     try window.updateSurface();
     ///
-    ///     sdl3.timer.delayMilliseconds(5000);
+    ///     while (true) {
+    ///         switch ((try sdl3.events.wait(true)).?) {
+    ///             .quit => break,
+    ///             .terminating => break,
+    ///             else => {}
+    ///         }
+    ///     }
     /// }
     /// ```
     ///
@@ -1196,6 +1499,80 @@ pub const Window = packed struct {
 
         const window = try errors.wrapNull(*C.SDL_Window, C.SDL_CreateWindowWithProperties(group.value));
         return .{ .window = window, .properties = group };
+    }
+
+    /// Destroy a window.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to destroy.
+    ///
+    /// ## Remarks
+    /// Any child windows owned by the window will be recursively destroyed as well.
+    ///
+    /// Note that on some platforms, the visible window may not actually be removed from the screen until the SDL event loop is pumped again,
+    /// even though the `video.Window` is no longer valid after this call.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinit(
+        self: Window,
+    ) void {
+        C.SDL_DestroyWindow(
+            self.value,
+        );
+    }
+
+    /// Destroy the surface associated with the window.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to update.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn destroySurface(
+        self: Window,
+    ) !void {
+        const ret = C.SDL_DestroyWindowSurface(self.value);
+        return errors.wrapCallBool(ret);
+    }
+
+    /// Request a window to demand attention from the user.
+    ///
+    /// ## Function parameters
+    /// * `self`: The window to be flashed.
+    /// * `operation`: The operation to perform.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn flash(
+        self: Window,
+        operation: FlashOperation,
+    ) !void {
+        const ret = C.SDL_FlashWindow(self.value, operation.toSdl());
+        return errors.wrapCallBool(ret);
+    }
+
+    /// Get the window that currently has an input grab enabled.
+    ///
+    /// ## Return Value
+    /// Returns the window if input is grabbed or `null` otherwise.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getGrabbed() ?Window {
+        return .{ .value = C.SDL_GetGrabbedWindow() orelse return null };
     }
 
     /// Get the size of a window's client area.
@@ -1310,44 +1687,155 @@ pub const Window = packed struct {
         return WindowFlags.fromSdl(C.SDL_GetWindowFlags(self.value));
     }
 
-    /// Get the window that currently has an input grab enabled.
+    /// Get a window from a stored ID.
+    ///
+    /// ## Function Parameters
+    /// * `id`: The ID of the window.
     ///
     /// ## Return Value
-    /// Returns the window if input is grabbed or `null` otherwise.
+    /// Returns the window associated with `id`.
+    ///
+    /// ## Remarks
+    /// The numeric ID is what `event.Window` references, and is necessary to map these events to specific `video.Window` objects.
     ///
     /// ## Thread Safety
     /// This function should only be called on the main thread.
     ///
     /// ## Version
     /// This function is available since SDL 3.2.0.
-    pub fn getGrabbed() ?Window {
-        return .{ .value = C.SDL_GetGrabbedWindow() orelse return null };
+    pub fn fromID(
+        id: WindowID,
+    ) !Window {
+        const ret = C.SDL_GetWindowFromID(id);
+        return .{ .value = try errors.wrapNull(*C.SDL_Window, ret) };
+    }
+
+    /// Query the display mode to use when a window is visible at fullscreen.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The window to query.
+    ///
+    /// ## Return Value
+    /// Returns a pointer to the exclusive fullscreen mode or `null` for borderless fullscreen desktop mode.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFullscreenMode(
+        self: Window,
+    ) !DisplayMode {
+        const ret = C.SDL_GetWindowFullscreenMode(self.value);
+        if (ret) |val| {
+            return DisplayMode.fromSdl(val.*);
+        }
+        return null;
+    }
+
+    /// Get the size of the window's client area.
+    /// 
+    /// ## Return Value
+    /// Returns the size of the window's client area.
+    ///
+    /// ## Remarks
+    /// The window pixel size may differ from its window coordinate size if the window is on a high pixel density display.
+    /// Use `video.Window.getWindowSizeInPixels()` or `video.render.Renderer.getOutputSize()` to get the real client area size in pixels.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSize(
+        self: Window
+    ) !struct{ width: u32, height: u32 } {
+        var width: c_int = undefined;
+        var height: c_int = undefined;
+        const ret = C.SDL_GetWindowSize(self.value, &width, &height);
+        try errors.wrapCallBool(ret);
+        return .{ .width = @intCast(width), .height = @intCast(height) };
+    }
+
+    /// Get the size of the window's client area in pixels.
+    ///
+    /// ## Return Value
+    /// Returns the size of the window's client area in pixels.
+    ///
+    /// ## Remarks
+    /// The window pixel size may differ from its window coordinate size if the window is on a high pixel density display.
+    /// Use `video.Window.getSizeInPixels()` or `video.render.Renderer.getOutputSize()` to get the real client area size in pixels.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSizeInPixels(
+        self: Window
+    ) !struct{ width: u32, height: u32 } {
+        var width: c_int = undefined;
+        var height: c_int = undefined;
+        const ret = C.SDL_GetWindowSizeInPixels(self.value, &width, &height);
+        try errors.wrapCallBool(ret);
+        return .{ .width = @intCast(width), .height = @intCast(height) };
     }
 
     /// Get the SDL surface associated with the window.
+    ///
+    /// ## Remarks
+    /// A new surface will be created with the optimal format for the window, if necessary.
+    /// This surface will be freed when the window is destroyed. Do not free this surface.
+    ///
+    /// This surface will be invalidated if the window is resized.
+    /// After resizing a window this function must be called again to return a valid surface.
+    ///
+    /// You may not combine this with 3D or the rendering API on this window.
+    ///
+    /// This function is affected by SDL_HINT_FRAMEBUFFER_ACCELERATION.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn getSurface(
         self: Window,
     ) !surface.Surface {
-        const ret = C.SDL_GetWindowSurface(
-            self.value,
-        );
+        const ret = C.SDL_GetWindowSurface(self.value);
         if (ret == null)
             return error.SdlError;
         return surface.Surface{ .value = ret };
     }
 
-    /// Copy the window surface to the screen.
-    pub fn updateSurface(
+    /// Set a window's mouse grab mode.
+    ///
+    /// ## Remarks
+    /// Mouse grab confines the mouse cursor to the window.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setMouseGrab(
         self: Window,
+        grabbed: bool
     ) !void {
-        const ret = C.SDL_UpdateWindowSurface(
-            self.value,
-        );
-        if (!ret)
-            return error.SdlError;
+        const ret = C.SDL_SetWindowMouseGrab(self.value, grabbed);
+        try errors.wrapCallBool(ret);
     }
 
     /// Confines the cursor to the specified area of a window.
+    ///
+    /// ## Remarks
+    /// Note that this does NOT grab the cursor, it only defines the area a cursor is restricted to when the window has mouse focus.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn setMouseRect(
         self: Window,
         area: ?rect.IRect,
@@ -1357,8 +1845,26 @@ pub const Window = packed struct {
             self.value,
             if (area_sdl == null) null else &(area_sdl.?),
         );
-        if (!ret)
-            return error.SdlError;
+        try errors.wrapCallBool(ret);
+    }
+
+    /// Copy the window surface to the screen.
+    ///
+    /// ## Remarks
+    /// This is the function you use to reflect any changes to the surface on the screen.
+    ///
+    /// This function is equivalent to the SDL 1.2 API SDL_Flip().
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn updateSurface(
+        self: Window,
+    ) !void {
+        const ret = C.SDL_UpdateWindowSurface(self.value);
+        try errors.wrapCallBool(ret);
     }
 };
 
