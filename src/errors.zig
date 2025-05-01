@@ -269,6 +269,28 @@ pub fn wrapCallCString(
     return error.SdlError;
 }
 
+/// Unwrap a C string that is not constant.
+///
+/// ## Function Parameters
+/// * `result`: Raw C pointer to a string. If this is `null`, an error is returned.
+///
+/// ## Return Value
+/// Returns an unwrapped C string.
+///
+/// ## Thread Safety
+/// It is safe to call this function from any thread.
+///
+/// ## Version
+/// This is provided by zig-sdl3.
+pub fn wrapCallCStringMut(
+    result: [*c]u8,
+) ![:0]u8 {
+    if (result != null)
+        return std.mem.span(result);
+    callErrorCallback();
+    return error.SdlError;
+}
+
 /// Wrap an SDL call that returns success if not null.
 ///
 /// ## Function Parameters
@@ -321,6 +343,11 @@ test "Error" {
     const c_str: [*c]const u8 = "C string unwrap test";
     try std.testing.expectEqualStrings("C string unwrap test", try wrapCallCString(c_str));
     try std.testing.expectError(error.SdlError, wrapCallCString(null));
+
+    var c_str_mut: [*c]u8 = null;
+    c_str_mut = @constCast("C mut string unwrap test");
+    try std.testing.expectEqualStrings("C mut string unwrap test", try wrapCallCStringMut(c_str_mut));
+    try std.testing.expectError(error.SdlError, wrapCallCStringMut(null));
 
     try std.testing.expectEqual(0, try wrapCall(u8, 0, 1));
     try std.testing.expectError(error.SdlError, wrapCall(u8, 1, 1));

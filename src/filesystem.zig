@@ -3,14 +3,28 @@ const errors = @import("errors.zig");
 const std = @import("std");
 const time = @import("time.zig");
 
-// TODO: MAKE ENUMERATION ITERATOR AS WELL AS OTHER CONVENIENCE FUNCTIONS!!! Some good ones would be to get the path separator, join paths, etc.
-
 /// Helper for filesystem paths.
 ///
 /// ## Provided by zig-sdl3.
 pub const Path = struct {
     data: std.ArrayList(u8),
     separator: u8,
+
+    /// Get the current base name of the path.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn baseName(
+        self: Path,
+    ) ?[:0]const u8 {
+        if (self.data.items.len <= 1)
+            return null;
+        const start = if (std.mem.lastIndexOf(u8, self.data.items, &.{self.separator})) |val| val + 1 else 0;
+        return self.data.items[start .. self.data.items.len - 1 :0];
+    }
 
     /// Deinitialize the path.
     ///
@@ -35,7 +49,7 @@ pub const Path = struct {
     pub fn get(
         self: Path,
     ) [:0]const u8 {
-        return @as([*:0]const u8, @ptrCast(self.data.items.ptr))[0..self.data.items.len];
+        return @as([*:0]const u8, @ptrCast(self.data.items.ptr))[0 .. self.data.items.len - 1 :0];
     }
 
     /// Get the path separator.
@@ -64,8 +78,8 @@ pub const Path = struct {
     ) !Path {
         if (path) |val| {
             var data = try std.ArrayList(u8).initCapacity(allocator, val.len + 1);
-            @memcpy(data.items.ptr, val.ptr);
-            data.items[data.items.len - 1] = 0;
+            data.appendSliceAssumeCapacity(val[0 .. val.len - 1]);
+            data.appendAssumeCapacity(0);
             return .{
                 .data = data,
                 .separator = val[val.len - 1],
@@ -73,7 +87,7 @@ pub const Path = struct {
         } else {
             var data = try std.ArrayList(u8).initCapacity(allocator, 1);
             const separator = try getSeparator();
-            data[0] = 0;
+            data.appendAssumeCapacity(0);
             return .{
                 .data = data,
                 .separator = separator,
@@ -93,7 +107,7 @@ pub const Path = struct {
     /// ## Version
     /// This function is provided by zig-sdl3.
     pub fn join(
-        self: Path,
+        self: *Path,
         path: []const u8,
     ) !void {
         try self.data.resize(self.data.items.len - 1);
@@ -102,20 +116,30 @@ pub const Path = struct {
         try self.data.append(0);
     }
 
-    // /// Get the parent path.
-    // ///
-    // /// ## Function Parameters
-    // /// * `self`: The path to get the parent of.
-    // ///
-    // /// ## Remarks
-    // /// If there is no parent, this will return `null`.
-    // /// This will also make the path represent the parent as well.
-    // ///
-    // /// ## Version
-    // /// This function is provided by zig-sdl3.
-    // pub fn parent(
-    //     self: Path,
-    // ) !?[]const u8 {}
+    /// Go up to the parent path.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path to get the parent of.
+    ///
+    /// ## Return Value
+    /// Returns if any going up was done.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn parent(
+        self: *Path,
+    ) bool {
+        if (self.data.items.len <= 1)
+            return false;
+        if (std.mem.lastIndexOf(u8, self.data.items, &.{self.separator})) |val| {
+            self.data.shrinkRetainingCapacity(val + 1);
+            self.data.items[val] = 0;
+            return true;
+        }
+        self.data.shrinkRetainingCapacity(1);
+        self.data.items[0] = 1;
+        return true;
+    }
 };
 
 /// Callback for directory enumeration.
@@ -264,10 +288,10 @@ pub const PathInfo = struct {
     pub fn toSdl(self: PathInfo) C.SDL_PathInfo {
         return .{
             .type = PathType.toSdl(self.path_type),
-            .file_size = self.file_size,
-            .create_time = self.create_time,
-            .modify_time = self.modify_time,
-            .access_time = self.access_time,
+            .size = self.file_size,
+            .create_time = self.create_time.value,
+            .modify_time = self.modify_time.value,
+            .access_time = self.access_time.value,
         };
     }
 };
@@ -381,6 +405,74 @@ pub fn enumerateDirectory(
     return errors.wrapCallBool(C.SDL_EnumerateDirectory(path.ptr, callback, user_data));
 }
 
+/// Data for getting all properties.
+const GetAllData = struct {
+    allocator: std.mem.Allocator,
+    arr: *std.ArrayList([:0]const u8),
+    err: ?std.mem.Allocator.Error,
+};
+
+/// Callback for getting all directory items.
+fn getAllDirectoryItemsCb(user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.C) C.SDL_EnumerationResult {
+    _ = dir_name;
+    const data_ptr: *GetAllData = @ptrCast(@alignCast(user_data));
+    const name_str = std.mem.span(name);
+    const copy = data_ptr.allocator.allocSentinel(u8, name_str.len, 0) catch |err| {
+        data_ptr.err = err;
+        return C.SDL_ENUM_FAILURE;
+    };
+    @memcpy(copy, name_str);
+    data_ptr.arr.append(copy) catch |err| {
+        data_ptr.err = err;
+        return C.SDL_ENUM_FAILURE;
+    };
+    return C.SDL_ENUM_CONTINUE;
+}
+
+/// Free all directory items obtained through `filesystem.getAllDirectoryItems()`.
+///
+/// ## Function Parameters
+/// * `allocator`: Memory allocator originally used to allocate storage for items.
+/// * `items`: Items to free.
+///
+/// ## Version
+/// This function is provided by zig-sdl3.
+pub fn freeAllDirectoryItems(
+    allocator: std.mem.Allocator,
+    items: std.ArrayList([:0]const u8),
+) void {
+    for (items.items) |item| {
+        allocator.free(item);
+    }
+    items.deinit();
+}
+
+/// Get all the items in a directory.
+///
+/// ## Function Parameters
+/// * `allocator`: Memory allocator to use to allocate storage for items.
+/// * `path`: Path to iterate over.
+///
+/// ## Return Value
+/// Returns a list of all the items in the directory.
+/// This should be freed by `filesystem.freeAllDirectoryItems()`.
+///
+/// ## Version
+/// This function is provided by zig-sdl3.
+pub fn getAllDirectoryItems(
+    allocator: std.mem.Allocator,
+    path: [:0]const u8,
+) !std.ArrayList([:0]const u8) {
+    var arr = std.ArrayList([:0]const u8).init(allocator);
+    var data = GetAllData{
+        .allocator = allocator,
+        .arr = &arr,
+        .err = null,
+    };
+    try enumerateDirectory(path, getAllDirectoryItemsCb, &data);
+    return arr;
+}
+
 /// Get the directory where the application was run from.
 ///
 /// ## Return Value
@@ -463,13 +555,7 @@ pub fn getPathInfo(
 ) !PathInfo {
     var info: C.SDL_PathInfo = undefined;
     try errors.wrapCallBool(C.SDL_GetPathInfo(path.ptr, &info));
-    return PathInfo{
-        .path_type = PathType.fromSdl(info.type),
-        .file_size = info.size,
-        .create_time = .{ .value = info.create_time },
-        .modify_time = .{ .value = info.modify_time },
-        .access_time = .{ .value = info.access_time },
-    };
+    return PathInfo.fromSdl(info);
 }
 
 /// Get the user-and-app-specific path where files can be written.
@@ -515,7 +601,7 @@ pub fn getPrefPath(
     org: [:0]const u8,
     app: [:0]const u8,
 ) ![:0]u8 {
-    return errors.wrapCallCString(u8, C.SDL_GetPrefPath(org.ptr, app.ptr));
+    return errors.wrapCallCStringMut(C.SDL_GetPrefPath(org.ptr, app.ptr));
 }
 
 /// Finds the most suitable user folder for a specific purpose.
@@ -619,12 +705,37 @@ pub fn renamePath(
 
 // Filesystem related tests.
 test "Filesystem" {
-    // copyFile
-    // createDirectory
-    // enumerateDirectory
-    // getPathInfo
-    // getPrefPath
-    // globDirectory
-    // removePath
-    // renamePath
+    std.testing.refAllDeclsRecursive(@This());
+
+    // Test path helper.
+    var path = try Path.init(std.testing.allocator, "/home/gota/test/");
+    defer path.deinit();
+    try std.testing.expectEqual('/', try Path.getSeparator());
+    try std.testing.expectEqualStrings("/home/gota/test", path.get());
+    try std.testing.expectEqualStrings("test", path.baseName().?);
+    try path.join("file.txt");
+    try std.testing.expectEqualStrings("/home/gota/test/file.txt", path.get());
+    try std.testing.expectEqualStrings("file.txt", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("/home/gota/test", path.get());
+    try std.testing.expectEqualStrings("test", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("/home/gota", path.get());
+    try std.testing.expectEqualStrings("gota", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("/home", path.get());
+    try std.testing.expectEqualStrings("home", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("", path.get());
+    try std.testing.expectEqual(null, path.baseName());
+    try std.testing.expectEqual(false, path.parent());
+    try std.testing.expectEqualStrings("", path.get());
+    try std.testing.expectEqual(null, path.baseName());
+
+    // Test path 2.
+    var path2 = try Path.init(std.testing.allocator, null);
+    defer path2.deinit();
+    try std.testing.expectEqual(false, path.parent());
+    try std.testing.expectEqualStrings("", path.get());
+    try std.testing.expectEqual(null, path.baseName());
 }
