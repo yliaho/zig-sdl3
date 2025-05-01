@@ -463,8 +463,10 @@ pub const Scancode = @import("scancode.zig").Scancode;
 pub const sensor = @import("sensor.zig");
 pub const stdinc = @import("stdinc.zig");
 
-/// TODO: DESCRIPTION AND SAMPLE CODE!!!
-pub const Storage = @import("storage.zig").Storage;
+/// The storage API is a high-level API designed to abstract away the portability issues that come up when using something lower-level.
+///
+/// See https://wiki.libsdl.org/SDL3/CategoryStorage for more details.
+pub const storage = @import("storage.zig");
 pub const surface = @import("surface.zig");
 
 /// SDL offers cross-platform thread management functions.

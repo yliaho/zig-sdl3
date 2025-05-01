@@ -4,7 +4,129 @@ const filesystem = @import("filesystem.zig");
 const properties = @import("properties.zig");
 const std = @import("std");
 
-// TODO: ADJUST DOCS!!!
+/// Helper for storage paths.
+///
+/// ## Provided by zig-sdl3.
+pub const Path = struct {
+    data: std.ArrayList(u8),
+    const separator: u8 = '/';
+
+    /// Get the current base name of the path.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn baseName(
+        self: Path,
+    ) ?[:0]const u8 {
+        if (self.data.items.len <= 1)
+            return null;
+        const start = if (std.mem.lastIndexOf(u8, self.data.items, &.{separator})) |val| val + 1 else 0;
+        return self.data.items[start .. self.data.items.len - 1 :0];
+    }
+
+    /// Deinitialize the path.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn deinit(
+        self: Path,
+    ) void {
+        self.data.deinit();
+    }
+
+    /// Get the current path.
+    ///
+    /// ## Return Value
+    /// Returns the current path as a string.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn get(
+        self: Path,
+    ) [:0]const u8 {
+        return @as([*:0]const u8, @ptrCast(self.data.items.ptr))[0 .. self.data.items.len - 1 :0];
+    }
+
+    /// Initialize a path.
+    ///
+    /// ## Function Parameters
+    /// * `allocator`: The memory allocator to use.
+    /// * `path`: Optional path to start out with. This must use the proper path separators and end with a path separator.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn init(
+        allocator: std.mem.Allocator,
+        path: ?[:0]const u8,
+    ) !Path {
+        if (path) |val| {
+            var data = try std.ArrayList(u8).initCapacity(allocator, val.len + 1);
+            data.appendSliceAssumeCapacity(val[0 .. val.len - 1]);
+            data.appendAssumeCapacity(0);
+            return .{
+                .data = data,
+            };
+        } else {
+            var data = try std.ArrayList(u8).initCapacity(allocator, 1);
+            data.appendAssumeCapacity(0);
+            return .{
+                .data = data,
+            };
+        }
+    }
+
+    /// Join this path with a new one.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path to join to.
+    /// * `path`: The child path to join with. This should not have any path separators in it.
+    ///
+    /// ## Remarks
+    /// This function can be undone by `Path.parent()`.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn join(
+        self: *Path,
+        path: []const u8,
+    ) !void {
+        try self.data.resize(self.data.items.len - 1);
+        try self.data.append(separator);
+        try self.data.appendSlice(path);
+        try self.data.append(0);
+    }
+
+    /// Go up to the parent path.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The path to get the parent of.
+    ///
+    /// ## Return Value
+    /// Returns if any going up was done.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn parent(
+        self: *Path,
+    ) bool {
+        if (self.data.items.len <= 1)
+            return false;
+        if (std.mem.lastIndexOf(u8, self.data.items, &.{separator})) |val| {
+            self.data.shrinkRetainingCapacity(val + 1);
+            self.data.items[val] = 0;
+            return true;
+        }
+        self.data.shrinkRetainingCapacity(1);
+        self.data.items[0] = 1;
+        return true;
+    }
+};
 
 /// Function interface for `Storage`.
 ///
@@ -22,7 +144,7 @@ pub const Interface = struct {
     /// Returns whether the storage is currently ready for access.
     ready: ?*const fn (user_data: ?*anyopaque) callconv(.C) bool,
     /// Enumerate a directory, optional for write-only storage.
-    enumerate: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, callback: filesystem.EnumerateDirectoryCallback, callback_user_data: ?*anyopaque) callconv(.C) bool,
+    enumerate: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, callback: ?filesystem.EnumerateDirectoryCallback, callback_user_data: ?*anyopaque) callconv(.C) bool,
     /// Get path information, optional for write-only storage.
     info: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, info: [*c]C.SDL_PathInfo) callconv(.C) bool,
     /// Read a file from storage, optional for write-only storage.
@@ -229,6 +351,76 @@ pub const Storage = packed struct {
         return errors.wrapCallBool(C.SDL_EnumerateStorageDirectory(storage.value, if (path) |val| val.ptr else null, callback, user_data));
     }
 
+    /// Data for getting all properties.
+    const GetAllData = struct {
+        allocator: std.mem.Allocator,
+        arr: *std.ArrayList([:0]const u8),
+        err: ?std.mem.Allocator.Error,
+    };
+
+    /// Callback for getting all directory items.
+    fn getAllDirectoryItemsCb(user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.C) C.SDL_EnumerationResult {
+        _ = dir_name;
+        const data_ptr: *GetAllData = @ptrCast(@alignCast(user_data));
+        const name_str = std.mem.span(name);
+        const copy = data_ptr.allocator.allocSentinel(u8, name_str.len, 0) catch |err| {
+            data_ptr.err = err;
+            return C.SDL_ENUM_FAILURE;
+        };
+        @memcpy(copy, name_str);
+        data_ptr.arr.append(copy) catch |err| {
+            data_ptr.err = err;
+            return C.SDL_ENUM_FAILURE;
+        };
+        return C.SDL_ENUM_CONTINUE;
+    }
+
+    /// Free all directory items obtained through `filesystem.getAllDirectoryItems()`.
+    ///
+    /// ## Function Parameters
+    /// * `allocator`: Memory allocator originally used to allocate storage for items.
+    /// * `items`: Items to free.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn freeAllDirectoryItems(
+        allocator: std.mem.Allocator,
+        items: std.ArrayList([:0]const u8),
+    ) void {
+        for (items.items) |item| {
+            allocator.free(item);
+        }
+        items.deinit();
+    }
+
+    /// Get all the items in a directory.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The storage to get all.
+    /// * `allocator`: Memory allocator to use to allocate storage for items.
+    /// * `path`: Path to iterate over.
+    ///
+    /// ## Return Value
+    /// Returns a list of all the items in the directory.
+    /// This should be freed by `filesystem.freeAllDirectoryItems()`.
+    ///
+    /// ## Version
+    /// This function is provided by zig-sdl3.
+    pub fn getAllDirectoryItems(
+        self: Storage,
+        allocator: std.mem.Allocator,
+        path: [:0]const u8,
+    ) !std.ArrayList([:0]const u8) {
+        var arr = std.ArrayList([:0]const u8).init(allocator);
+        var data = GetAllData{
+            .allocator = allocator,
+            .arr = &arr,
+            .err = null,
+        };
+        try self.enumerateDirectory(path, getAllDirectoryItemsCb, &data);
+        return arr;
+    }
+
     /// Query the size of a file within a storage container.
     ///
     /// ## Function Parameters
@@ -282,15 +474,9 @@ pub const Storage = packed struct {
         self: Storage,
         path: [:0]const u8,
     ) !filesystem.PathInfo {
-        var info: filesystem.PathInfo = undefined;
+        var info: C.SDL_PathInfo = undefined;
         try errors.wrapCallBool(C.SDL_GetStoragePathInfo(self.value, path.ptr, &info));
-        return .{
-            .path_type = filesystem.PathType.fromSdl(info.type),
-            .file_size = info.size,
-            .create_time = .{ .value = info.create_time },
-            .modify_time = .{ .value = info.modify_time },
-            .access_time = .{ .value = info.access_time },
-        };
+        return filesystem.PathInfo.fromSdl(info);
     }
 
     /// Queries the remaining space in a storage container.
@@ -448,22 +634,36 @@ pub const Storage = packed struct {
 
 // Storage testing.
 test "Storage" {
-    // Storage.deinit
-    // Storage.copyFile
-    // Storage.createDirectory
-    // Storage.enumerateDirectory
-    // Storage.getFileSize
-    // Storage.getPathExists
-    // Storage.getPathInfo
-    // Storage.getSpaceRemaining
-    // Storage.globDirectory
-    // Storage.init
-    // Storage.initFile
-    // Storage.initTitle
-    // Storage.initUser
-    // Storage.readFile
-    // Storage.removePath
-    // Storage.renamePath
-    // Storage.ready
-    // Storage.writeFile
+    std.testing.refAllDeclsRecursive(@This());
+
+    // Test path helper.
+    var path = try Path.init(std.testing.allocator, "/home/gota/test/");
+    defer path.deinit();
+    try std.testing.expectEqualStrings("/home/gota/test", path.get());
+    try std.testing.expectEqualStrings("test", path.baseName().?);
+    try path.join("file.txt");
+    try std.testing.expectEqualStrings("/home/gota/test/file.txt", path.get());
+    try std.testing.expectEqualStrings("file.txt", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("/home/gota/test", path.get());
+    try std.testing.expectEqualStrings("test", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("/home/gota", path.get());
+    try std.testing.expectEqualStrings("gota", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("/home", path.get());
+    try std.testing.expectEqualStrings("home", path.baseName().?);
+    try std.testing.expectEqual(true, path.parent());
+    try std.testing.expectEqualStrings("", path.get());
+    try std.testing.expectEqual(null, path.baseName());
+    try std.testing.expectEqual(false, path.parent());
+    try std.testing.expectEqualStrings("", path.get());
+    try std.testing.expectEqual(null, path.baseName());
+
+    // Test path 2.
+    var path2 = try Path.init(std.testing.allocator, null);
+    defer path2.deinit();
+    try std.testing.expectEqual(false, path.parent());
+    try std.testing.expectEqualStrings("", path.get());
+    try std.testing.expectEqual(null, path.baseName());
 }

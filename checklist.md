@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (38/57)
+## Done (39/57)
 
 ### Basics
 * Main
@@ -41,6 +41,7 @@ For monitoring how close various subsystems are to completion.
 
 ### File IO
 * Filesystem
+* Storage
 
 ### Platform
 * Platform
@@ -59,7 +60,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (13/57)
+## In Progress (12/57)
 
 ### Basics
 * Hints
@@ -79,7 +80,6 @@ For monitoring how close various subsystems are to completion.
 * GPU
 
 ### File IO
-* Storage
 * IO Streams
 
 ### Additional Functionality
