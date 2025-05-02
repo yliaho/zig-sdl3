@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (39/57)
+## Done (40/57)
 
 ### Basics
 * Main
@@ -42,6 +42,7 @@ For monitoring how close various subsystems are to completion.
 ### File IO
 * Filesystem
 * Storage
+* Async
 
 ### Platform
 * Platform
@@ -86,7 +87,7 @@ For monitoring how close various subsystems are to completion.
 * Process Control
 * Standard Lib
 
-## Not Started (6/57)
+## Not Started (5/57)
 
 ### Input
 * HIDAPI
@@ -97,9 +98,6 @@ For monitoring how close various subsystems are to completion.
 ### Threads
 * Mutex
 * Atomic
-
-### File IO
-* Async
 
 ### Additional Functionality
 * System
