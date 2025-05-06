@@ -241,7 +241,7 @@ pub fn Rect(comptime Type: type) type {
         pub fn empty(
             self: Self,
         ) bool {
-            return self.w <= 0 and self.h <= 0;
+            return self.w <= 0 or self.h <= 0;
         }
 
         /// Determine whether two rectangles are equal.
