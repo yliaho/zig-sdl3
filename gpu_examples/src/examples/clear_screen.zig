@@ -1,11 +1,10 @@
 const common = @import("../common.zig");
 const sdl3 = @import("sdl3");
 
-const example_name = "Clear Screen";
+pub const example_name = "Clear Screen";
 
 pub fn init() !common.Context {
     const ctx = try common.init(example_name, .{});
-    sdl3.log.log("Loaded \"" ++ example_name ++ "\"");
     return ctx;
 }
 

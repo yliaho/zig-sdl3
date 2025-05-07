@@ -10,7 +10,7 @@ const frag_shader_bin = @embedFile(frag_shader_name ++ ".spv");
 var pipeline: sdl3.gpu.GraphicsPipeline = undefined;
 var vertex_buffer: sdl3.gpu.Buffer = undefined;
 
-const example_name = "Basic Vertex Buffer";
+pub const example_name = "Basic Vertex Buffer";
 
 const PositionColorVertex = packed struct {
     position: @Vector(3, f32),
@@ -119,8 +119,6 @@ pub fn init() !common.Context {
     }, false);
     copy_pass.end();
     try upload_cmd_buf.submit();
-
-    sdl3.log.log("Loaded \"" ++ example_name ++ "\"");
 
     return ctx;
 }

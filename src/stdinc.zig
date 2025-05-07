@@ -2,6 +2,55 @@ const C = @import("c.zig").C;
 const errors = @import("errors.zig");
 const std = @import("std");
 
+/// Allocator that uses SDL's `stdinc.malloc()` and `stdinc.free()` functions.
+pub const allocator = std.mem.Allocator{
+    .ptr = undefined,
+    .vtable = &.{
+        .alloc = sdlAlloc,
+        .resize = sdlResize,
+        .remap = sdlRemap,
+        .free = sdlFree,
+    },
+};
+
+fn sdlAlloc(ptr: *anyopaque, len: usize, alignment: std.mem.Alignment, ret_addr: usize) ?[*]u8 {
+    _ = ptr;
+    _ = alignment;
+    _ = ret_addr;
+    const ret = C.SDL_malloc(len);
+    if (ret) |val| {
+        return @as([*]u8, @alignCast(@ptrCast(val)));
+    }
+    return null;
+}
+
+fn sdlResize(ptr: *anyopaque, memory: []u8, alignment: std.mem.Alignment, new_len: usize, ret_addr: usize) bool {
+    _ = ptr;
+    _ = memory;
+    _ = alignment;
+    _ = new_len;
+    _ = ret_addr;
+    return false;
+}
+
+fn sdlRemap(ptr: *anyopaque, memory: []u8, alignment: std.mem.Alignment, new_len: usize, ret_addr: usize) ?[*]u8 {
+    _ = ptr;
+    _ = alignment;
+    _ = ret_addr;
+    const ret = C.SDL_realloc(memory.ptr, new_len);
+    if (ret) |val| {
+        return @as([*]u8, @alignCast(@ptrCast(val)));
+    }
+    return null;
+}
+
+fn sdlFree(ptr: *anyopaque, memory: []u8, alignment: std.mem.Alignment, ret_addr: usize) void {
+    _ = ptr;
+    _ = alignment;
+    _ = ret_addr;
+    C.SDL_free(memory.ptr);
+}
+
 /// A callback used to implement `stdinc.calloc()`.
 ///
 /// ## Function Parameters
@@ -187,8 +236,8 @@ const Allocation = struct {
 };
 
 fn allocCalloc(num_members: usize, size: usize) callconv(.C) ?*anyopaque {
-    const allocator = custom_allocator orelse return null;
-    const total_buf = allocator.alloc(u8, size * num_members + @sizeOf(Allocation)) catch return null;
+    const custom_allocator_val = custom_allocator orelse return null;
+    const total_buf = custom_allocator_val.alloc(u8, size * num_members + @sizeOf(Allocation)) catch return null;
     const allocation: *Allocation = @ptrCast(@alignCast(total_buf.ptr));
     allocation.size = total_buf.len;
     return &allocation.buf;
@@ -196,14 +245,14 @@ fn allocCalloc(num_members: usize, size: usize) callconv(.C) ?*anyopaque {
 
 fn allocFree(mem: ?*anyopaque) callconv(.C) void {
     const raw_ptr = mem orelse return;
-    const allocator = custom_allocator orelse return;
+    const custom_allocator_val = custom_allocator orelse return;
     const allocation: *Allocation = @alignCast(@fieldParentPtr("buf", @as(*void, @ptrCast(raw_ptr))));
-    allocator.free(@as([*]u8, @ptrCast(raw_ptr))[0..allocation.size]);
+    custom_allocator_val.free(@as([*]u8, @ptrCast(raw_ptr))[0..allocation.size]);
 }
 
 fn allocMalloc(size: usize) callconv(.C) ?*anyopaque {
-    const allocator = custom_allocator orelse return null;
-    const total_buf = allocator.alloc(u8, size + @sizeOf(Allocation)) catch return null;
+    const custom_allocator_val = custom_allocator orelse return null;
+    const total_buf = custom_allocator_val.alloc(u8, size + @sizeOf(Allocation)) catch return null;
     const allocation: *Allocation = @ptrCast(@alignCast(total_buf.ptr));
     allocation.size = total_buf.len;
     return &allocation.buf;
@@ -211,9 +260,9 @@ fn allocMalloc(size: usize) callconv(.C) ?*anyopaque {
 
 fn allocRealloc(mem: ?*anyopaque, size: usize) callconv(.C) ?*anyopaque {
     const raw_ptr = mem orelse return null;
-    const allocator = custom_allocator orelse return null;
+    const custom_allocator_val = custom_allocator orelse return null;
     var allocation: *Allocation = @alignCast(@fieldParentPtr("buf", @as(*void, @ptrCast(raw_ptr))));
-    const total_buf = allocator.realloc(@as([*]u8, @ptrCast(raw_ptr))[0..allocation.size], size + @sizeOf(Allocation)) catch return null;
+    const total_buf = custom_allocator_val.realloc(@as([*]u8, @ptrCast(raw_ptr))[0..allocation.size], size + @sizeOf(Allocation)) catch return null;
     allocation = @ptrCast(@alignCast(total_buf.ptr));
     allocation.size = total_buf.len;
     return &allocation.buf;
@@ -235,6 +284,7 @@ pub fn setMemoryFunctionsByAllocator() !void {
 
 // Test C-library function wrappers.
 test "Stdinc" {
+    std.testing.refAllDeclsRecursive(@This());
     {
         custom_allocator = std.testing.allocator;
         defer custom_allocator = null;

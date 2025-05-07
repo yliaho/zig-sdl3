@@ -322,7 +322,7 @@ fn init(
     sdl3.log.setAllPriorities(.info);
     sdl3.log.setLogOutputFunction(&sdlLog, null);
 
-    log_app.logInfo("Starting application...");
+    try log_app.logInfo("Starting application...", .{});
 
     // Prepare app state.
     const state = try allocator.create(AppState);
@@ -357,7 +357,7 @@ fn init(
     };
     app_state.* = state;
 
-    log_app.logInfo("Finished initializing");
+    try log_app.logInfo("Finished initializing", .{});
     return .run;
 }
 

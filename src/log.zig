@@ -1,6 +1,10 @@
 const C = @import("c.zig").C;
 const errors = @import("errors.zig");
 const std = @import("std");
+const stdinc = @import("stdinc.zig");
+
+/// Maximum stack size to use for a log message.
+const max_log_message_stack = 1024;
 
 /// The prototype for the log output callback function.
 ///
@@ -127,7 +131,8 @@ pub const Category = packed struct {
     /// ## Function Parameters
     /// * `self`: The category of the message.
     /// * `priority`: The priority of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -137,13 +142,18 @@ pub const Category = packed struct {
     pub fn log(
         self: Category,
         priority: Priority,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogMessage(
             self.value,
             @intFromEnum(priority),
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -151,7 +161,8 @@ pub const Category = packed struct {
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -160,12 +171,17 @@ pub const Category = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn logCritical(
         self: Category,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogCritical(
             self.value,
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -173,7 +189,8 @@ pub const Category = packed struct {
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -182,12 +199,17 @@ pub const Category = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn logDebug(
         self: Category,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogDebug(
             self.value,
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -195,7 +217,8 @@ pub const Category = packed struct {
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -204,12 +227,17 @@ pub const Category = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn logError(
         self: Category,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogError(
             self.value,
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -217,7 +245,8 @@ pub const Category = packed struct {
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -226,12 +255,17 @@ pub const Category = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn logInfo(
         self: Category,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogInfo(
             self.value,
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -239,7 +273,8 @@ pub const Category = packed struct {
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -248,12 +283,17 @@ pub const Category = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn logTrace(
         self: Category,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogTrace(
             self.value,
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -261,7 +301,8 @@ pub const Category = packed struct {
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -270,12 +311,17 @@ pub const Category = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn logVerbose(
         self: Category,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogVerbose(
             self.value,
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -283,7 +329,8 @@ pub const Category = packed struct {
     ///
     /// ## Function Parameters
     /// * `self`: Category of the message.
-    /// * `str`: String to log.
+    /// * `fmt`: Print format to log the message.
+    /// * `args`: Arguments to the print format.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -292,12 +339,17 @@ pub const Category = packed struct {
     /// This function is available since SDL 3.2.0.
     pub fn logWarn(
         self: Category,
-        str: [:0]const u8,
-    ) void {
+        comptime fmt: []const u8,
+        args: anytype,
+    ) !void {
+        var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+        const allocator = fallback.get();
+        const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+        defer allocator.free(msg);
         C.SDL_LogWarn(
             self.value,
             "%s",
-            str.ptr,
+            msg.ptr,
         );
     }
 
@@ -362,7 +414,8 @@ pub fn getLogOutputFunction() struct { callback: LogOutputFunction, user_data: ?
 /// Log a message with `log.Category.application` and `log.Priority.info`.
 ///
 /// ## Function Parameters
-/// * `str`: The string to log.
+/// * `fmt`: Print format to log the message.
+/// * `args`: Arguments to the print format.
 ///
 /// ## Thread Safety
 /// It is safe to call this function from any thread.
@@ -370,11 +423,16 @@ pub fn getLogOutputFunction() struct { callback: LogOutputFunction, user_data: ?
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn log(
-    str: [:0]const u8,
-) void {
+    comptime fmt: []const u8,
+    args: anytype,
+) !void {
+    var fallback = std.heap.stackFallback(max_log_message_stack, stdinc.allocator);
+    const allocator = fallback.get();
+    const msg = try std.fmt.allocPrintZ(allocator, fmt, args);
+    defer allocator.free(msg);
     C.SDL_Log(
         "%s",
-        str.ptr,
+        msg.ptr,
     );
 }
 
@@ -467,8 +525,8 @@ test "Log" {
     };
 
     setLogOutputFunction(testLogCallback, &data);
-    log("Hello World!");
-    try std.testing.expectEqualStrings("Hello World!", testGetLastMessage(data));
+    try log("Hello World {d}!", .{0});
+    try std.testing.expectEqualStrings("Hello World 0!", testGetLastMessage(data));
     try std.testing.expectEqual(Category.application, data.last_category);
     try std.testing.expectEqual(.info, data.last_priority);
 
@@ -481,43 +539,43 @@ test "Log" {
     setAllPriorities(.trace);
     try std.testing.expectEqual(.trace, Category.application.getPriority());
 
-    category.log(.verbose, "a");
-    try std.testing.expectEqualStrings("a", testGetLastMessage(data));
+    try category.log(.verbose, "a{d}", .{1});
+    try std.testing.expectEqualStrings("a1", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.verbose, data.last_priority);
 
-    category.logCritical("b");
-    try std.testing.expectEqualStrings("b", testGetLastMessage(data));
+    try category.logCritical("b{d}", .{2});
+    try std.testing.expectEqualStrings("b2", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.critical, data.last_priority);
 
-    category.logDebug("c");
-    try std.testing.expectEqualStrings("c", testGetLastMessage(data));
+    try category.logDebug("c{d}", .{3});
+    try std.testing.expectEqualStrings("c3", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.debug, data.last_priority);
 
-    category.logError("d");
-    try std.testing.expectEqualStrings("d", testGetLastMessage(data));
+    try category.logError("d{d}", .{4});
+    try std.testing.expectEqualStrings("d4", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.err, data.last_priority);
 
-    category.logInfo("e");
-    try std.testing.expectEqualStrings("e", testGetLastMessage(data));
+    try category.logInfo("e{d}", .{5});
+    try std.testing.expectEqualStrings("e5", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.info, data.last_priority);
 
-    category.logTrace("f");
-    try std.testing.expectEqualStrings("f", testGetLastMessage(data));
+    try category.logTrace("f{d}", .{6});
+    try std.testing.expectEqualStrings("f6", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.trace, data.last_priority);
 
-    category.logVerbose("g");
-    try std.testing.expectEqualStrings("g", testGetLastMessage(data));
+    try category.logVerbose("g{d}", .{7});
+    try std.testing.expectEqualStrings("g7", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.verbose, data.last_priority);
 
-    category.logWarn("h");
-    try std.testing.expectEqualStrings("h", testGetLastMessage(data));
+    try category.logWarn("h{d}", .{8});
+    try std.testing.expectEqualStrings("h8", testGetLastMessage(data));
     try std.testing.expectEqual(category, data.last_category);
     try std.testing.expectEqual(.warn, data.last_priority);
 

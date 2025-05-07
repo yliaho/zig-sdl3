@@ -2,17 +2,19 @@ const common = @import("common.zig");
 const sdl3 = @import("sdl3");
 const std = @import("std");
 
-/// Example vtable.
+/// Example structure.
 const Example = struct {
+    name: []const u8,
     init: *const fn () anyerror!common.Context,
     update: *const fn (ctx: common.Context) anyerror!void,
     draw: *const fn (ctx: common.Context) anyerror!void,
     quit: *const fn (ctx: common.Context) void,
 };
 
-/// Automatically create an example vtable from an example file.
+/// Automatically create an example structure from an example file.
 fn makeExample(example: anytype) Example {
     return .{
+        .name = example.example_name,
         .init = &example.init,
         .update = &example.update,
         .draw = &example.draw,
@@ -117,6 +119,7 @@ pub fn main() !void {
     var example_index: usize = starting_example;
     var ctx = try examples[example_index].init();
     defer examples[example_index].quit(ctx);
+    try sdl3.log.log("Loaded \"{s}\" Example", .{examples[example_index].name});
 
     // Main loop.
     var quit = false;
@@ -143,6 +146,7 @@ pub fn main() !void {
             example_index = index;
             goto_index = null;
             ctx = try examples[index].init();
+            try sdl3.log.log("Loaded {s}", .{examples[example_index].name});
         }
 
         // Delta time calculation.

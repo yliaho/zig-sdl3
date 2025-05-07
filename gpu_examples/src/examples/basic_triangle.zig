@@ -10,7 +10,7 @@ var wire_frame: bool = undefined;
 var small_viewport: bool = undefined;
 var scissor_rect: bool = undefined;
 
-const example_name = "Basic Triangle";
+pub const example_name = "Basic Triangle";
 
 pub fn init() !common.Context {
     const ctx = try common.init(example_name, .{});
@@ -60,10 +60,9 @@ pub fn init() !common.Context {
     line_pipeline = try ctx.device.createGraphicsPipeline(pipeline_create_info);
     errdefer ctx.device.releaseGraphicsPipeline(line_pipeline);
 
-    sdl3.log.log("Loaded \"" ++ example_name ++ "\"");
-    sdl3.log.log("Press left to toggle wireframe");
-    sdl3.log.log("Press down to toggle small viewport");
-    sdl3.log.log("Press right to toggle scissor rect");
+    try sdl3.log.log("Press left to toggle wireframe", .{});
+    try sdl3.log.log("Press down to toggle small viewport", .{});
+    try sdl3.log.log("Press right to toggle scissor rect", .{});
 
     return ctx;
 }
