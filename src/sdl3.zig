@@ -312,7 +312,11 @@ pub const init = @import("init.zig");
 /// it will also `#include <emmintrin.h>` as well.
 pub const intrin = @import("intrin.zig");
 
-pub const Stream = @import("io_stream.zig").Stream;
+/// SDL provides an abstract interface for reading and writing data streams.
+/// It offers implementations for files, memory, etc, and the app can provide their own implementations, too.
+///
+/// `io_stream.Stream` is not related to the standard C++ iostream class, other than both are abstract interfaces to read/write data.
+pub const io_stream = @import("io_stream.zig");
 
 pub const joystick = @import("joystick.zig");
 

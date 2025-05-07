@@ -337,10 +337,9 @@ fn init(
     );
     errdefer window_renderer.renderer.deinit();
     errdefer window_renderer.window.deinit();
-    var stream_source: std.io.StreamSource = undefined;
     const tree_tex = try sdl3.image.loadTextureIo(
         window_renderer.renderer,
-        try sdl3.Stream.fromConstMemory(my_image, &stream_source),
+        try sdl3.io_stream.Stream.initFromConstMem(my_image),
         true,
     );
     errdefer tree_tex.deinit();
