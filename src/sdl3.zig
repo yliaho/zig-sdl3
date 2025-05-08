@@ -273,6 +273,26 @@ pub const gpu = @import("gpu.zig");
 /// SDL provides functions to convert a GUID to/from a stri
 pub const GUID = @import("guid.zig").GUID;
 
+/// File for SDL HID API functions.
+///
+/// This is an adaptation of the original HIDAPI interface by Alan Ott, and includes source code licensed under the following license:
+/// ```
+/// HIDAPI - Multi-Platform library for
+/// communication with HID devices.
+///
+/// Copyright 2009, Alan Ott, Signal 11 Software.
+/// All Rights Reserved.
+///
+/// This software may be used by anyone for any reason so
+/// long as the copyright notice in the source files
+/// remains intact.
+/// ```
+/// (Note that this license is the same as item three of SDL's zlib license, so it adds no new requirements on the user.)
+///
+/// If you would like a version of SDL without this code, you can build SDL with `SDL_HIDAPI_DISABLED` defined to `1`.
+/// You might want to do this for example on iOS or tvOS to avoid a dependency on the CoreBluetooth framework.
+pub const hid_api = @import("hid_api.zig");
+
 /// This file contains functions to set and get configuration hints, as well as listing each of them alphabetically.
 ///
 /// The convention for naming hints is "xy_z", where "XY_Z" is the environment variable that can be used to override the default.

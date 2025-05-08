@@ -16,6 +16,31 @@ pub const Error = error{
     SdlError,
 };
 
+/// Ensure two structs are equal in memory.
+///
+/// ## Function Parameters
+/// * `A`: First struct.
+/// * `B`: Second struct.
+///
+/// ## Version
+/// This is provided by zig-sdl3.
+pub inline fn assertStructsEqual(
+    comptime A: anytype,
+    comptime B: anytype,
+) void {
+    comptime {
+        std.debug.assert(@sizeOf(A) == @sizeOf(B));
+        const info_a = @typeInfo(A).@"struct";
+        const info_b = @typeInfo(B).@"struct";
+        const num_fields = info_a.fields.len;
+        std.debug.assert(info_b.fields.len == num_fields);
+        for (0..num_fields) |ind| {
+            std.debug.assert(@offsetOf(A, info_a.fields[ind].name) == @offsetOf(B, info_b.fields[ind].name));
+            std.debug.assert(@sizeOf(@FieldType(A, info_a.fields[ind].name)) == @sizeOf(@FieldType(B, info_b.fields[ind].name)));
+        }
+    }
+}
+
 /// Call the thread-local user-provided error callback function.
 ///
 /// ## Remarks

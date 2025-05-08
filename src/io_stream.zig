@@ -1937,16 +1937,14 @@ test "Stream" {
     var source: std.io.StreamSource = .{ .buffer = .{ .buffer = &buffer, .pos = 0 } };
     const stream = try Stream.initFromStreamSource(&source);
     defer stream.deinit() catch {};
-    try std.testing.expect(C.SDL_WriteU8(stream.value, 7));
+    try stream.writeU8(7);
     try std.testing.expect(buffer[0] == 7);
     buffer[1] = 3;
-    var val: u8 = undefined;
-    try std.testing.expect(C.SDL_ReadU8(stream.value, &val));
-    try std.testing.expect(val == 3);
-    try std.testing.expect(C.SDL_GetIOSize(stream.value) == 64);
-    try std.testing.expect(C.SDL_SeekIO(stream.value, 50, C.SDL_IO_SEEK_SET) == 50);
-    try std.testing.expect(C.SDL_SeekIO(stream.value, 23, C.SDL_IO_SEEK_END) == 41);
-    try std.testing.expect(C.SDL_SeekIO(stream.value, 2, C.SDL_IO_SEEK_CUR) == 43);
+    try std.testing.expectEqual(3, try stream.readU8());
+    try std.testing.expectEqual(64, try stream.getSize());
+    try std.testing.expectEqual(50, stream.seek(50, .set));
+    try std.testing.expectEqual(41, stream.seek(23, .end));
+    try std.testing.expectEqual(43, stream.seek(2, .cur));
 
     // Test writer/reader.
     _ = try stream.seek(0, .set);

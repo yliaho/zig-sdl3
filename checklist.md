@@ -62,7 +62,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (11/57)
+## In Progress (12/57)
 
 ### Basics
 * Hints
@@ -77,6 +77,7 @@ For monitoring how close various subsystems are to completion.
 * Events
 * Joystick
 * Gamepad
+* HIDAPI
 
 ### GPU
 * GPU
@@ -85,10 +86,7 @@ For monitoring how close various subsystems are to completion.
 * Process Control
 * Standard Lib
 
-## Not Started (5/57)
-
-### Input
-* HIDAPI
+## Not Started (4/57)
 
 ### Haptic
 * Haptic
