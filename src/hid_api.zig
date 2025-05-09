@@ -44,6 +44,50 @@ pub const Device = struct {
         }
     }
 
+    /// Get the device info from a HID device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The device handle.
+    ///
+    /// ## Return Value
+    /// Returns the device info.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getDeviceInfo(
+        self: Device,
+    ) !DeviceInfo {
+        return @as(*DeviceInfo, @ptrCast(try errors.wrapNull(*C.SDL_hid_device_info, C.SDL_hid_get_device_info(self.value)))).*;
+    }
+
+    /// Get a feature report from a HID device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A device handle.
+    /// * `data`: The buffer to read data into including the Report ID. Set the first byte of data to the Report ID of the report to be read, or set it to `0` if your device does not use numbered reports.
+    ///
+    /// ## Return Value
+    /// Returns the number of bytes read plus one for the report ID (which is still in the first byte).
+    ///
+    /// ## Remarks
+    /// Set the first byte of data to the Report ID of the report to be read.
+    /// Make sure to allow space for this extra byte in data.
+    /// Upon return, the first byte will still contain the Report ID, and the report data will start in `data[1]`.
+    ///
+    /// Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFeatureReport(
+        self: Device,
+        data: []u8,
+    ) ![]u8 {
+        const ret: usize = @intCast(try errors.wrapCall(c_int, C.SDL_hid_get_feature_report(
+            self.value,
+            data.ptr,
+            data.len,
+        ), -1));
+        return data.ptr[0..ret];
+    }
+
     /// Get a string from a HID device, based on its string index.
     ///
     /// ## Function Parameters
@@ -63,6 +107,34 @@ pub const Device = struct {
             errors.callErrorCallback();
             return error.SdlError;
         }
+    }
+
+    /// Get an input report from a HID device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A device handle.
+    /// * `data`: The buffer to read data into including the Report ID. Set the first byte of data to the Report ID of the report to be read, or set it to `0` if your device does not use numbered reports.
+    ///
+    /// ## Return Value
+    /// Returns the number of bytes read plus one for the report ID (which is still in the first byte).
+    ///
+    /// ## Remarks
+    /// Set the first byte of data to the Report ID of the report to be read.
+    /// Make sure to allow space for this extra byte in data.
+    /// Upon return, the first byte will still contain the Report ID, and the report data will start in `data[1]`.
+    ///
+    /// Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getInputReport(
+        self: Device,
+        data: []u8,
+    ) ![]u8 {
+        const ret: usize = @intCast(try errors.wrapCall(c_int, C.SDL_hid_get_input_report(
+            self.value,
+            data.ptr,
+            data.len,
+        ), -1));
+        return data.ptr[0..ret];
     }
 
     /// Get The Manufacturer String from a HID device.
@@ -101,6 +173,33 @@ pub const Device = struct {
             errors.callErrorCallback();
             return error.SdlError;
         }
+    }
+
+    /// Get a report descriptor from a HID device.
+    ///
+    /// ## Function Parameters
+    /// * `self`: A device handle.
+    /// * `data`: The buffer to copy descriptor into.
+    ///
+    /// ## Return Value
+    /// Returns the buffer of bytes actually read, re-using the pointer from `data`.
+    ///
+    /// ## Remarks
+    /// User has to provide a preallocated buffer where descriptor will be copied to.
+    /// The recommended size for a preallocated buffer is `4096` bytes.
+    ///
+    /// Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getReportDescriptor(
+        self: Device,
+        data: []u8,
+    ) ![]u8 {
+        const ret: usize = @intCast(try errors.wrapCall(c_int, C.SDL_hid_get_report_descriptor(
+            self.value,
+            data.ptr,
+            data.len,
+        ), -1));
+        return data.ptr[0..ret];
     }
 
     /// Get The Serial Number String from a HID device.
@@ -415,6 +514,53 @@ pub fn deinit() !void {
 /// This function is available since SDL 3.2.0.
 pub fn deviceChangeCount() usize {
     return @intCast(C.SDL_hid_device_change_count());
+}
+
+/// Enumerate the HID Devices.
+///
+/// ## Function Parameters
+/// * `vendor_id`: The Vendor ID (VID) of the types of device to open, or `null` or `0` to match any vendor.
+/// * `product_id`: The Product ID (PID) of the types of device to open, or `null` or `0` to match any product.
+///
+/// ## Return Value
+/// Returns a pointer to a linked list of type `hid_api.DeviceInfo`, containing information about the HID devices attached to the system.
+/// Free this with `hid_api.freeEnumeration()`.
+///
+/// ## Remarks
+/// This function returns a linked list of all the HID devices attached to the system which match vendor_id and product_id.
+/// If `vendor_id` is set to `null` or `0` then any vendor matches.
+/// If `product_id` is set to `null` or `0` then any product matches.
+/// If `vendor_id` and `product_id` are both set to `null` or `0`, then all HID devices will be returned.
+///
+/// By default SDL will only enumerate controllers, to reduce risk of hanging or crashing on bad drivers,
+/// but `hints.Type.enumerate_only_controllers` can be set to `0` to enumerate all HID devices.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn enumerate(
+    vendor_id: ?c_ushort,
+    product_id: ?c_ushort,
+) !*DeviceInfo {
+    return @ptrCast(try errors.wrapNull(*C.SDL_hid_device_info, C.SDL_hid_enumerate(
+        if (vendor_id) |val| val else 0,
+        if (product_id) |val| val else 0,
+    )));
+}
+
+/// Free an enumeration linked list.
+///
+/// ## Function Parameters
+/// * `devs`: Devices returned by `hid_api.enumerate()`.
+///
+/// ## Remarks
+/// This function frees a linked list created by `hid_api.enumerate()`.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn freeEnumeration(
+    devs: *DeviceInfo,
+) void {
+    C.SDL_hid_free_enumeration(@ptrCast(devs));
 }
 
 /// Initialize the HIDAPI library.

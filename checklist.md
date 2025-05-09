@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (41/57)
+## Done (42/57)
 
 ### Basics
 * Main
@@ -28,6 +28,7 @@ For monitoring how close various subsystems are to completion.
 * Touch
 * Pen
 * Sensor
+* HIDAPI
 
 ### Audio
 * Audio
@@ -62,7 +63,7 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (12/57)
+## In Progress (11/57)
 
 ### Basics
 * Hints
@@ -77,7 +78,6 @@ For monitoring how close various subsystems are to completion.
 * Events
 * Joystick
 * Gamepad
-* HIDAPI
 
 ### GPU
 * GPU
