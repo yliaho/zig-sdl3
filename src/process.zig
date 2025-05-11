@@ -1,8 +1,9 @@
 const C = @import("c.zig").C;
 const io_stream = @import("io_stream.zig");
 const errors = @import("errors.zig");
-
-// TODO: UPDATE IO DOCS!!!
+const properties = @import("properties.zig");
+const std = @import("std");
+const stdinc = @import("stdinc.zig");
 
 /// An opaque handle representing a system process.
 ///
@@ -20,29 +21,29 @@ pub const Process = packed struct {
     /// This is the default for standard input.
     ///
     /// If a standard I/O stream is set to `process.IO.App`, it is connected to a new `io_stream.Stream` that is available to the application.
-    /// Standard input will be available as SDL_PROP_PROCESS_STDIN_POINTER and allows SDL_GetProcessInput(),
-    /// standard output will be available as SDL_PROP_PROCESS_STDOUT_POINTER and allows SDL_ReadProcess() and SDL_GetProcessOutput(),
-    /// and standard error will be available as SDL_PROP_PROCESS_STDERR_POINTER in the properties for the created process.
+    /// Standard input will be available as `Process.CreateProperties.stdin_redirect` and allows `Process.getInput()`,
+    /// standard output will be available as `Process.CreateProperties.stdout_redirect` and allows `Process.read()` and `process.getOutput()`.
+    /// and standard error will be available as `Process.CreateProperties.stderr_redirect` in the properties for the created process.
     ///
-    /// If a standard I/O stream is set to SDL_PROCESS_STDIO_REDIRECT, it is connected to an existing SDL_IOStream provided by the application.
-    /// Standard input is provided using SDL_PROP_PROCESS_CREATE_STDIN_POINTER, standard output is provided using SDL_PROP_PROCESS_CREATE_STDOUT_POINTER,
-    /// and standard error is provided using SDL_PROP_PROCESS_CREATE_STDERR_POINTER in the creation properties.
+    /// If a standard I/O stream is set to `Process.Io.redirect`, it is connected to an existing stream provided by the application.
+    /// Standard input is provided using `Process.CreateProperties.stdin_redirect`, standard output is provided using `Process.CreateProperties.stdout_redirect`,
+    /// and standard error is provided using `Process.CreateProperties.stderr_redirect` in the creation properties.
     /// These existing streams should be closed by the application once the new process is created.
     ///
-    /// In order to use an SDL_IOStream with `process.IO.Redirect`, it must have SDL_PROP_IOSTREAM_WINDOWS_HANDLE_POINTER or SDL_PROP_IOSTREAM_FILE_DESCRIPTOR_NUMBER set.
+    /// In order to use a stream with `Process.Io.redirect`, it must have `io_stream.Properties.window_handle` or `io_stream.Properties.file_descriptor` set.
     /// This is true for streams representing files and process I/O.
     ///
     /// ## Version
     /// This enum is available since SDL 3.2.0.
-    pub const IO = enum(c_uint) {
+    pub const Io = enum(c_uint) {
         /// The I/O stream is inherited from the application.
-        Inherited = C.SDL_PROCESS_STDIO_INHERITED,
+        inherited = C.SDL_PROCESS_STDIO_INHERITED,
         /// The I/O stream is ignored.
-        Ignored = C.SDL_PROCESS_STDIO_NULL,
+        ignored = C.SDL_PROCESS_STDIO_NULL,
         /// The I/O stream is connected to a new `io_stream.Stream` that the application can read or write.
-        App = C.SDL_PROCESS_STDIO_APP,
+        app = C.SDL_PROCESS_STDIO_APP,
         /// The I/O stream is redirected to an existing `io_stream.Stream`.
-        Redirect = C.SDL_PROCESS_STDIO_REDIRECT,
+        redirect = C.SDL_PROCESS_STDIO_REDIRECT,
     };
 
     /// Process creation properties.
@@ -50,9 +51,55 @@ pub const Process = packed struct {
     /// ## Version
     /// Provided by zig-sdl3.
     pub const CreateProperties = struct {
-        /// A slice of strings containing the program to run, any arguments, and a `null` pointer,
-        /// e.g. const char *args[] = { "myprogram", "argument", null }.
+        /// A slice of strings containing the program to run, any arguments, and a `null` pointer.
         args: [:null]const ?[*:0]const u8,
+        /// An environment pointer.
+        /// If this property is set, it will be the entire environment for the process, otherwise the current environment is used.
+        environment: ?stdinc.Environment = null,
+        // /// A UTF-8 encoded string representing the working directory for the process, defaults to the current working directory.
+        // working_directory: ?[:0]const u8,
+        /// A IO value describing where standard input for the process comes from, defaults to `Process.Io.ignored` if unspecified.
+        stdin: ?Io = null,
+        /// A stream pointer when `stdin` is set to `Process.Io.redirect`.
+        stdin_redirect: ?io_stream.Stream = null,
+        /// A IO value describing where standard output for the process comes goes to, defaults to `Process.Io.inherited` if unspecified.
+        stdout: ?Io = null,
+        /// A stream pointer when `stdout` is set to `Process.Io.redirect`.
+        stdout_redirect: ?io_stream.Stream = null,
+        /// A IO value describing where standard error for the process comes goes to, defaults to `Process.Io.inherited` if unspecified.
+        stderr: ?Io = null,
+        /// A stream pointer when `stderr` is set to `Process.Io.redirect`.
+        stderr_redirect: ?io_stream.Stream = null,
+        /// True if the error output of the process should be redirected into the standard output of the process. This property has no effect if `stderr` is set.
+        stderr_to_stdout: ?bool = null,
+        /// True if the process should run in the background.
+        /// In this case the default input and output is `Process.Io.ignored` and the exitcode of the process is not available, and will always be `0`.
+        background: ?bool = null,
+
+        /// Convert to properties.
+        pub fn toProperties(self: CreateProperties) !properties.Group {
+            const ret = try properties.Group.init();
+            try ret.set(C.SDL_PROP_PROCESS_CREATE_ARGS_POINTER, .{ .pointer = @constCast(@ptrCast(self.args.ptr)) });
+            if (self.environment) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_ENVIRONMENT_POINTER, .{ .pointer = val.value });
+            if (self.stdin) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_STDIN_NUMBER, .{ .number = @intFromEnum(val) });
+            if (self.stdin_redirect) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_STDIN_POINTER, .{ .pointer = val.value });
+            if (self.stdout) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, .{ .number = @intFromEnum(val) });
+            if (self.stdout_redirect) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_STDOUT_POINTER, .{ .pointer = val.value });
+            if (self.stderr) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, .{ .number = @intFromEnum(val) });
+            if (self.stderr_redirect) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_STDERR_POINTER, .{ .pointer = val.value });
+            if (self.stderr_to_stdout) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN, .{ .boolean = val });
+            if (self.background) |val|
+                try ret.set(C.SDL_PROP_PROCESS_CREATE_BACKGROUND_BOOLEAN, .{ .boolean = val });
+            return ret;
+        }
     };
 
     /// Process properties.
@@ -60,8 +107,27 @@ pub const Process = packed struct {
     /// ## Version
     /// Provided by zig-sdl3.
     pub const Properties = struct {
-        pid: i64,
-        // TODO!!!
+        /// The process ID of the process.
+        pid: ?i64,
+        /// Stream that can be used to write input to the process, if `Process.CreateProperties.stdin` is set to `Process.Io.app`.
+        stdin: ?*io_stream.Stream,
+        /// Non-blocking stream that can be used to read output from the process, if `Process.CreateProperties.stdout` is set to `Process.Io.app`.
+        stdout: ?*io_stream.Stream,
+        /// Non-blocking stream that can be used to read error output from the process, if `Process.CreateProperties.stderr` is set to `Process.Io.app`.
+        stderr: ?*io_stream.Stream,
+        /// True if the process is running in the background.
+        background: ?bool,
+
+        /// Convert from an SDL value.
+        pub fn fromSdl(value: properties.Group) Properties {
+            return .{
+                .pid = if (value.get(C.SDL_PROP_PROCESS_PID_NUMBER)) |val| val.number else null,
+                .stdin = if (value.get(C.SDL_PROP_PROCESS_STDIN_POINTER)) |val| @alignCast(@ptrCast(val.pointer)) else null,
+                .stdout = if (value.get(C.SDL_PROP_PROCESS_STDOUT_POINTER)) |val| @alignCast(@ptrCast(val.pointer)) else null,
+                .stderr = if (value.get(C.SDL_PROP_PROCESS_STDERR_POINTER)) |val| @alignCast(@ptrCast(val.pointer)) else null,
+                .background = if (value.get(C.SDL_PROP_PROCESS_BACKGROUND_BOOLEAN)) |val| val.boolean else null,
+            };
+        }
     };
 
     /// Destroy a previously created process object.
@@ -94,12 +160,12 @@ pub const Process = packed struct {
     /// Returns the newly created and running process.
     ///
     /// ## Remarks
-    /// The path to the executable is supplied in args[0]. args[1..N] are additional arguments passed on the command line of the new process, and the argument list should be terminated with a NULL, e.g.:
+    /// The path to the executable is supplied in `args[0]`.
     ///
-    /// const char *args[] = { "myprogram", "argument", NULL };
-    /// Setting pipe_stdio to true is equivalent to setting SDL_PROP_PROCESS_CREATE_STDIN_NUMBER and SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER to SDL_PROCESS_STDIO_APP, and will allow the use of SDL_ReadProcess() or SDL_GetProcessInput() and SDL_GetProcessOutput().
+    /// Setting `pipe_stdio` to true is equivalent to setting `Process.CreateProperties.stdin` and `Process.CreateProperties.stdout` to `Process.Io.app`,
+    /// and will allow the use of `Process.read()` or `Process.getInput()` and `process.getOutput()`.
     ///
-    /// See SDL_CreateProcessWithProperties() for more details.
+    /// See `Process.initWithProperties()` for more details.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -115,6 +181,36 @@ pub const Process = packed struct {
             pipe_stdio,
         );
         return .{ .value = try errors.wrapNull(*C.SDL_Process, ret) };
+    }
+
+    /// Create a new process with the specified properties.
+    ///
+    /// ## Function Parameters
+    /// * `props`: The properties to use.
+    ///
+    /// ## Return Value
+    /// Returns the newly created and running process, or `null` if the process couldn't be created.
+    ///
+    /// ## Remarks
+    /// On POSIX platforms, `wait()` and `waitpid(-1, ...)` should not be called,
+    /// and `SIGCHLD` should not be ignored or handled because those would prevent SDL from properly tracking the lifetime of the underlying process.
+    /// You should use `Process.wait()` instead.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn initWithProperties(
+        props: CreateProperties,
+    ) !?Process {
+        const vals = try props.toProperties();
+        defer vals.deinit();
+        const ret = C.SDL_CreateProcessWithProperties(vals.value);
+        if (ret) |val| {
+            return .{ .value = val };
+        }
+        return null;
     }
 
     /// Get the `io_stream.Stream` associated with process standard input.
@@ -153,9 +249,9 @@ pub const Process = packed struct {
     ///
     /// ## Remarks
     /// The process must have been created with `Process.init()` and `pipe_stdio` set to true,
-    /// or with `Process.initWithProperties()` and `stdout` set to `Process.Stdio.app`.
+    /// or with `Process.initWithProperties()` and `stdout` set to `Process.Io.app`.
     ///
-    /// Reading from this stream can return 0 with `io_stream.Stream.getStatus()` returning `io_stream.Status.not_ready` if no output is available yet.
+    /// Reading from this stream can return `null` with `io_stream.Stream.getStatus()` returning `io_stream.Status.not_ready` if no output is available yet.
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -166,6 +262,25 @@ pub const Process = packed struct {
         self: Process,
     ) !io_stream.Stream {
         return .{ .value = try errors.wrapNull(*C.SDL_IOStream, C.SDL_GetProcessOutput(self.value)) };
+    }
+
+    /// Get the properties associated with a process.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The process to query.
+    ///
+    /// ## Return Value
+    /// Returns read-only properties.
+    ///
+    /// ## Thread Safety
+    /// It is safe to call this function from any thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getProperties(
+        self: Process,
+    ) !Properties {
+        return Properties.fromSdl(.{ .value = try errors.wrapCall(C.SDL_PropertiesID, C.SDL_GetProcessProperties(self.value), 0) });
     }
 
     /// Stop a process.
@@ -216,7 +331,7 @@ pub const Process = packed struct {
         var exit_code: c_int = undefined;
         const ret = C.SDL_ReadProcess(self.value, &size, &exit_code);
         return .{
-            .data = @as([*]u8, @alignCast(@ptrCast(try errors.wrapCallNull(*anyopaque, ret))))[0..@intCast(size)],
+            .data = @as([*]u8, @alignCast(@ptrCast(try errors.wrapNull(*anyopaque, ret))))[0..@intCast(size)],
             .exit_code = exit_code,
         };
     }
@@ -243,13 +358,5 @@ pub const Process = packed struct {
 
 // Process creation and such.
 test "Process" {
-    // Process.init // TODO!!!
-    // Process.initWithProperties // TODO!!!
-    // Process.deinit()
-    // Process.getInput
-    // Process.getOutput
-    // Process.getProperties // TODO!!!
-    // Process.kill()
-    // Process.read()
-    // Process.wait()
+    std.testing.refAllDeclsRecursive(@This());
 }

@@ -2,6 +2,19 @@ const C = @import("c.zig").C;
 const errors = @import("errors.zig");
 const std = @import("std");
 
+/// A thread-safe set of environment variables.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const Environment = packed struct {
+    value: *C.SDL_Environment,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(*C.SDL_Environment) == @sizeOf(Environment));
+    }
+};
+
 /// Allocator that uses SDL's `stdinc.malloc()` and `stdinc.free()` functions.
 pub const allocator = std.mem.Allocator{
     .ptr = undefined,
