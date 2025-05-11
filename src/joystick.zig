@@ -1,72 +1,312 @@
-// This file was generated using `zig build bindings`. Do not manually edit!
-
 const C = @import("c.zig").C;
+const errors = @import("errors.zig");
+const guid = @import("guid.zig");
+const power = @import("power.zig");
+const properties = @import("properties.zig");
+const sensor = @import("sensor.zig");
 const std = @import("std");
 
-/// An enum of some common joystick types.
-pub const Type = enum(c_uint) {
-    Gamepad = C.SDL_JOYSTICK_TYPE_GAMEPAD,
-    Wheel = C.SDL_JOYSTICK_TYPE_WHEEL,
-    ArcadeStick = C.SDL_JOYSTICK_TYPE_ARCADE_STICK,
-    FlightStick = C.SDL_JOYSTICK_TYPE_FLIGHT_STICK,
-    DancePad = C.SDL_JOYSTICK_TYPE_DANCE_PAD,
-    Guitar = C.SDL_JOYSTICK_TYPE_GUITAR,
-    DrumKit = C.SDL_JOYSTICK_TYPE_DRUM_KIT,
-    ArcadePad = C.SDL_JOYSTICK_TYPE_ARCADE_PAD,
-    Throttle = C.SDL_JOYSTICK_TYPE_THROTTLE,
+/// The largest value a joystick axis can report.
+///
+/// ## Version
+/// This macro is available since SDL 3.2.0.
+pub const axis_max: i16 = @intCast(C.SDL_JOYSTICK_AXIS_MAX);
+
+/// The smallest value a joystick axis can report.
+///
+/// ## Remarks
+/// This is a negative number!
+///
+/// ## Version
+/// This macro is available since SDL 3.2.0.
+pub const axis_min: i16 = @intCast(C.SDL_JOYSTICK_AXIS_MIN);
+
+/// The list of axes available on a gamepad.
+///
+/// ## Remarks
+/// Thumbstick axis values range from `joystick.axis_min` to `joystick.axis_max`, and are centered within ~8000 of zero,
+/// though advanced UI will allow users to set or autodetect the dead zone, which varies between gamepads.
+///
+/// Trigger axis values range from `0` (released) to `joystick.axis_max` (fully pressed) when reported by `gamepad.Gamepad.getAxis()`.
+/// Note that this is not the same range that will be reported by the lower-level `joystick.Joystick.getAxis()`.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const AxisMask = packed struct(c_uint) {
+    left_x: bool = false,
+    left_y: bool = false,
+    right_x: bool = false,
+    right_y: bool = false,
+    left_trigger: bool = false,
+    right_trigger: bool = false,
+    _: u26 = 0,
+
+    // Struct tests.
+    comptime {
+        std.debug.assert(@as(c_int, @bitCast(AxisMask{ .left_x = true })) == 1 << C.SDL_GAMEPAD_AXIS_LEFTX);
+        std.debug.assert(@as(c_int, @bitCast(AxisMask{ .left_y = true })) == 1 << C.SDL_GAMEPAD_AXIS_LEFTY);
+        std.debug.assert(@as(c_int, @bitCast(AxisMask{ .right_x = true })) == 1 << C.SDL_GAMEPAD_AXIS_RIGHTX);
+        std.debug.assert(@as(c_int, @bitCast(AxisMask{ .right_y = true })) == 1 << C.SDL_GAMEPAD_AXIS_RIGHTY);
+        std.debug.assert(@as(c_int, @bitCast(AxisMask{ .left_trigger = true })) == 1 << C.SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+        std.debug.assert(@as(c_int, @bitCast(AxisMask{ .right_trigger = true })) == 1 << C.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+    }
+};
+
+/// The list of buttons available on a gamepad.
+///
+/// ## Remarks
+/// For controllers that use a diamond pattern for the face buttons, the south/east/west/north buttons below correspond to the locations in the diamond pattern.
+/// For Xbox controllers, this would be A/B/X/Y, for Nintendo Switch controllers, this would be B/A/Y/X, for GameCube controllers this would be A/X/B/Y,
+/// for PlayStation controllers this would be Cross/Circle/Square/Triangle.
+///
+/// For controllers that don't use a diamond pattern for the face buttons, the south/east/west/north buttons indicate the buttons labeled A, B, C, D, or 1, 2, 3, 4,
+/// or for controllers that aren't labeled, they are the primary, secondary, etc. buttons.
+///
+/// The activate action is often the south button and the cancel action is often the east button, but in some regions this is reversed,
+/// so your game should allow remapping actions based on user preferences.
+///
+/// You can query the labels for the face buttons using `gamepad.Gamepad.getButtonLabel()`.
+///
+/// ## Version
+/// This enum is available since SDL 3.2.0.
+pub const ButtonMask = packed struct(c_uint) {
+    /// Bottom face button (e.g. Xbox A button).
+    south: bool = false,
+    /// Right face button (e.g. Xbox B button).
+    east: bool = false,
+    /// Left face button (e.g. Xbox X button).
+    west: bool = false,
+    /// Top face button (e.g. Xbox Y button).
+    north: bool = false,
+    back: bool = false,
+    guide: bool = false,
+    start: bool = false,
+    left_stick: bool = false,
+    right_stick: bool = false,
+    left_shoulder: bool = false,
+    right_shoulder: bool = false,
+    dpad_up: bool = false,
+    dpad_down: bool = false,
+    dpad_left: bool = false,
+    dpad_right: bool = false,
+    /// Additional button (e.g. Xbox Series X share button, PS5 microphone button, Nintendo Switch Pro capture button, Amazon Luna microphone button, Google Stadia capture button).
+    misc1: bool = false,
+    /// Upper or primary paddle, under your right hand (e.g. Xbox Elite paddle P1).
+    right_paddle1: bool = false,
+    /// Upper or primary paddle, under your left hand (e.g. Xbox Elite paddle P3).
+    left_paddle1: bool = false,
+    /// Lower or secondary paddle, under your right hand (e.g. Xbox Elite paddle P2).
+    right_paddle2: bool = false,
+    /// Lower or secondary paddle, under your left hand (e.g. Xbox Elite paddle P4).
+    left_paddle2: bool = false,
+    /// PS4/PS5 touchpad button.
+    touchpad: bool = false,
+    /// Additional button.
+    misc2: bool = false,
+    /// Additional button.
+    misc3: bool = false,
+    /// Additional button.
+    misc4: bool = false,
+    /// Additional button.
+    misc5: bool = false,
+    /// Additional button.
+    misc6: bool = false,
+    _: u6 = 0,
+
+    // Struct tests.
+    comptime {
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .south = true })) == 1 << C.SDL_GAMEPAD_BUTTON_SOUTH);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .east = true })) == 1 << C.SDL_GAMEPAD_BUTTON_EAST);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .west = true })) == 1 << C.SDL_GAMEPAD_BUTTON_WEST);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .north = true })) == 1 << C.SDL_GAMEPAD_BUTTON_NORTH);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .back = true })) == 1 << C.SDL_GAMEPAD_BUTTON_BACK);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .guide = true })) == 1 << C.SDL_GAMEPAD_BUTTON_GUIDE);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .start = true })) == 1 << C.SDL_GAMEPAD_BUTTON_START);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .left_stick = true })) == 1 << C.SDL_GAMEPAD_BUTTON_LEFT_STICK);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .right_stick = true })) == 1 << C.SDL_GAMEPAD_BUTTON_RIGHT_STICK);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .left_shoulder = true })) == 1 << C.SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .right_shoulder = true })) == 1 << C.SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .dpad_up = true })) == 1 << C.SDL_GAMEPAD_BUTTON_DPAD_UP);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .dpad_down = true })) == 1 << C.SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .dpad_left = true })) == 1 << C.SDL_GAMEPAD_BUTTON_DPAD_LEFT);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .dpad_right = true })) == 1 << C.SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .misc1 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_MISC1);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .right_paddle1 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .left_paddle1 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_LEFT_PADDLE1);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .right_paddle2 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .left_paddle2 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_LEFT_PADDLE2);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .touchpad = true })) == 1 << C.SDL_GAMEPAD_BUTTON_TOUCHPAD);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .misc2 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_MISC2);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .misc3 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_MISC3);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .misc4 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_MISC4);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .misc5 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_MISC5);
+        std.debug.assert(@as(c_int, @bitCast(ButtonMask{ .misc6 = true })) == 1 << C.SDL_GAMEPAD_BUTTON_MISC6);
+    }
 };
 
 /// Possible connection states for a joystick device.
+///
+/// ## Remarks
+/// This is used by `joystick.Joystick.getConnectionState()` to report how a device is connected to the system.
+///
+/// ## Version
+/// This enum is available since SDL 3.2.0.
 pub const ConnectionState = enum(c_int) {
-    Wired = C.SDL_JOYSTICK_CONNECTION_WIRED,
-    Wireless = C.SDL_JOYSTICK_CONNECTION_WIRELESS,
-};
+    wired = C.SDL_JOYSTICK_CONNECTION_WIRED,
+    wireless = C.SDL_JOYSTICK_CONNECTION_WIRELESS,
 
-/// Get the current state of a POV hat on a joystick.
-pub const Hat = enum(u8) {
-    Centered = C.SDL_HAT_CENTERED,
-    Up = C.SDL_HAT_UP,
-    Right = C.SDL_HAT_RIGHT,
-    Down = C.SDL_HAT_DOWN,
-    Left = C.SDL_HAT_LEFT,
-    RightUp = C.SDL_HAT_RIGHTUP,
-    RightDown = C.SDL_HAT_RIGHTDOWN,
-    LeftUp = C.SDL_HAT_LEFTUP,
-    LeftDown = C.SDL_HAT_LEFTDOWN,
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_JoystickConnectionState) !?ConnectionState {
+        if (value == C.SDL_JOYSTICK_CONNECTION_INVALID) {
+            errors.callErrorCallback();
+            return error.SdlError;
+        }
+        if (value == C.SDL_JOYSTICK_CONNECTION_UNKNOWN)
+            return null;
+        return @enumFromInt(value);
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: errors.Error!?ConnectionState) C.SDL_JoystickConnectionState {
+        if (self) |val| {
+            if (val) |num| {
+                return @intFromEnum(num);
+            }
+            return C.SDL_JOYSTICK_CONNECTION_UNKNOWN;
+        } else |_| return C.SDL_JOYSTICK_CONNECTION_INVALID;
+    }
 };
 
 /// This is a unique ID for a joystick for the time it is connected to the system, and is never reused for the lifetime of the application.
-pub const ID = struct {
+///
+/// ## Remarks
+/// If the joystick is disconnected and reconnected, it will get a new ID.
+///
+/// ## Version
+/// This datatype is available since SDL 3.2.0.
+pub const ID = packed struct {
     value: C.SDL_JoystickID,
 
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(C.SDL_JoystickID) == @sizeOf(ID));
+    }
+
+    /// Detach a virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinitVirtual(
+        self: ID,
+    ) !void {
+        return errors.wrapCallBool(C.SDL_DetachVirtualJoystick(self.value));
+    }
+
+    /// Attach a new virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `virtual`: Joystick description.
+    ///
+    /// ## Return Value
+    /// Returns the joystick instance ID.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn initVirtual(
+        virtual: VirtualJoystickDescription,
+    ) !ID {
+        const virtual_sdl = virtual.toSdl();
+        return .{ .value = try errors.wrapCall(C.SDL_JoystickID, C.SDL_AttachVirtualJoystick(&virtual_sdl), 0) };
+    }
+
+    /// Get the implementation-dependent GUID of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the GUID of the selected joystick.
+    /// If called with an invalid `instance_id`, this function returns a zero GUID.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getGuid(
+        self: ID,
+    ) guid.GUID {
+        const ret = C.SDL_GetJoystickGUIDForID(
+            self.value,
+        );
+        return .{
+            .value = ret,
+        };
+    }
+
     /// Get the implementation dependent name of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the name of the selected joystick.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn getName(
         self: ID,
-    ) [:0]const u8 {
+    ) ![:0]const u8 {
         const ret = C.SDL_GetJoystickNameForID(
             self.value,
         );
-        if (ret == null)
-            return error.SdlError;
-        return std.mem.span(ret);
+        return errors.wrapCallCString(ret);
     }
 
     /// Get the implementation dependent path of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the path of the selected joystick.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn getPath(
         self: ID,
-    ) [:0]const u8 {
+    ) ![:0]const u8 {
         const ret = C.SDL_GetJoystickPathForID(
             self.value,
         );
-        if (ret == null)
-            return error.SdlError;
-        return std.mem.span(ret);
+        return errors.wrapCallCString(ret);
     }
 
     /// Get the player index of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the player index of a joystick, or `null` if it's not available.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn getPlayerIndex(
         self: ID,
-    ) ?u31 {
+    ) ?usize {
         const ret = C.SDL_GetJoystickPlayerIndexForID(
             self.value,
         );
@@ -75,83 +315,117 @@ pub const ID = struct {
         return @intCast(ret);
     }
 
-    /// Get the implementation-dependent GUID of a joystick.
-    pub fn getGUID(
-        self: ID,
-    ) guid.GUID {
-        const ret = C.SDL_GetJoystickGUIDForID(
-            self.value,
-        );
-        return guid.GUID{ .value = ret };
-    }
-
-    /// Get the USB vendor ID of a joystick, if available.
-    pub fn getVendor(
-        self: ID,
-    ) u16 {
-        const ret = C.SDL_GetJoystickVendorForID(
-            self.value,
-        );
-        return @intCast(ret);
-    }
-
     /// Get the USB product ID of a joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the USB product ID of the selected joystick.
+    /// If called with an invalid `instance_id`, this function returns `null`.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    /// If the product ID isn't available this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn getProduct(
         self: ID,
-    ) u16 {
+    ) ?u16 {
         const ret = C.SDL_GetJoystickProductForID(
             self.value,
         );
-        return @intCast(ret);
+        if (ret == 0)
+            return null;
+        return ret;
     }
 
-    /// Get the product version of a joystick, if available.
+    /// Get the USB product version of a joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the product version of the selected joystick.
+    /// If called with an invalid `instance_id`, this function returns `null`.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    /// If the product version isn't available this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn getProductVersion(
         self: ID,
-    ) u16 {
+    ) ?u16 {
         const ret = C.SDL_GetJoystickProductVersionForID(
             self.value,
         );
-        return @intCast(ret);
+        if (ret == 0)
+            return null;
+        return ret;
     }
 
     /// Get the type of a joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the USB type of the selected joystick.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    /// If called with an invalid `instance_id`, this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn getType(
         self: ID,
     ) ?Type {
         const ret = C.SDL_GetJoystickTypeForID(
             self.value,
         );
-        if (ret == C.SDL_JOYSTICK_TYPE_UNKNOWN)
+        return Type.fromSdl(ret);
+    }
+
+    /// Get the USB vendor ID of a joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns the USB vendor ID of the selected joystick.
+    /// If called with an invalid `instance_id`, this function returns `null`.
+    ///
+    /// ## Remarks
+    /// This can be called before any joysticks are opened.
+    /// If the vendor ID isn't available this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getVendor(
+        self: ID,
+    ) ?u16 {
+        const ret = C.SDL_GetJoystickVendorForID(
+            self.value,
+        );
+        if (ret == 0)
             return null;
-        return @enumFromInt(ret);
-    }
-
-    /// Get the SDL_Joystick associated with an instance ID, if it has been opened.
-    pub fn getJoystick(
-        self: ID,
-    ) Joystick {
-        const ret = C.SDL_GetJoystickFromID(
-            self.value,
-        );
-        if (ret == null)
-            return error.SdlError;
-        return Joystick{ .value = ret.? };
-    }
-
-    /// Detach a virtual joystick.
-    pub fn detachVirtual(
-        self: ID,
-    ) bool {
-        const ret = C.SDL_DetachVirtualJoystick(
-            self.value,
-        );
-        if (!ret)
-            return error.SdlError;
         return ret;
     }
 
     /// Query whether or not a joystick is virtual.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns true if the joystick is virtual, false otherwise.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn isVirtual(
         self: ID,
     ) bool {
@@ -160,136 +434,707 @@ pub const ID = struct {
         );
         return ret;
     }
+};
 
-    /// Get a list of currently connected joysticks.
-    pub fn getAll(allocator: std.mem.Allocator) ![]ID {
-        var count: c_int = undefined;
-        const ret = C.SDL_GetJoysticks(&count);
-        if (ret == null)
-            return error.SdlError;
-        defer C.SDL_free(ret);
-        var converted_ret = try allocator.alloc(ID, @intCast(count));
-        for (0..@intCast(count)) |ind| {
-            converted_ret[ind].value = ret[ind];
-        }
-        return converted_ret;
-    }
+/// Get the current state of a POV hat on a joystick.
+///
+/// ## Version
+/// This enum is provided by zig-sdl3.
+pub const Hat = enum(u8) {
+    centered = C.SDL_HAT_CENTERED,
+    up = C.SDL_HAT_UP,
+    right = C.SDL_HAT_RIGHT,
+    down = C.SDL_HAT_DOWN,
+    left = C.SDL_HAT_LEFT,
+    right_up = C.SDL_HAT_RIGHTUP,
+    right_down = C.SDL_HAT_RIGHTDOWN,
+    left_up = C.SDL_HAT_LEFTUP,
+    left_down = C.SDL_HAT_LEFTDOWN,
 };
 
 /// The joystick structure used to identify an SDL joystick.
+///
+/// ## Remarks
+/// This is opaque data.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
 pub const Joystick = struct {
     value: *C.SDL_Joystick,
 
+    /// Read only properties provided by SDL.
+    ///
+    /// ## Version
+    /// This struct is provided by zig-sdl3.
+    pub const Properties = struct {
+        /// True if this joystick has an LED that has adjustable brightness.
+        mono_led: ?bool,
+        /// True if this joystick has an LED that has adjustable color.
+        rgb_led: ?bool,
+        /// True if this joystick has a player LED.
+        player_led: ?bool,
+        /// True if this joystick has left/right rumble.
+        rumble: ?bool,
+        /// True if this joystick has simple trigger rumble.
+        trigger_rumble: ?bool,
+
+        /// Get properties from SDL.
+        pub fn fromSdl(value: properties.Group) Properties {
+            return .{
+                .mono_led = if (value.get(C.SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN)) |val| val.boolean else null,
+                .rgb_led = if (value.get(C.SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN)) |val| val.boolean else null,
+                .player_led = if (value.get(C.SDL_PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN)) |val| val.boolean else null,
+                .rumble = if (value.get(C.SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN)) |val| val.boolean else null,
+                .trigger_rumble = if (value.get(C.SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN)) |val| val.boolean else null,
+            };
+        }
+    };
+
+    /// Get the status of a specified joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick to query.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn connected(
+        self: Joystick,
+    ) !void {
+        const ret = C.SDL_JoystickConnected(
+            self.value,
+        );
+        return errors.wrapCallBool(ret);
+    }
+
+    /// Close a joystick previously opened.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick device to close.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn deinit(
+        self: Joystick,
+    ) void {
+        C.SDL_CloseJoystick(
+            self.value,
+        );
+    }
+
+    /// Get the current state of an axis control on a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    /// * `index`: The axis to query; the axis indices start at index `0`.
+    ///
+    /// ## Return Value
+    /// Returns a 16-bit signed integer representing the current position of the axis.
+    ///
+    /// ## Remarks
+    /// SDL makes no promises about what part of the joystick any given axis refers to.
+    /// Your game should have some sort of configuration UI to let users specify what each axis should be bound to.
+    /// Alternately, SDL's higher-level Game Controller API makes a great effort to apply order to this lower-level interface,
+    /// so you know that a specific axis is the "left thumb stick," etc.
+    ///
+    /// The value returned by this is a signed integer (`-32768` to `32767`) representing the current position of the axis.
+    /// It may be necessary to impose certain tolerances on these values to account for jitter.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getAxis(
+        self: Joystick,
+        index: usize,
+    ) !i16 {
+        return errors.wrapCall(i16, C.SDL_GetJoystickAxis(self.value, @intCast(index)), 0);
+    }
+
+    /// Get the initial state of an axis control on a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    /// * `index`: The axis to query; the axis indices start at index `0`.
+    ///
+    /// ## Return Value
+    /// Returns the axis initial value if it exists.
+    ///
+    /// ## Remarks
+    /// The state is a value ranging from `-32768` to `32767`.
+    /// The axis indices start at index `0`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getAxisInitialState(
+        self: Joystick,
+        index: usize,
+    ) ?i16 {
+        var state: i16 = undefined;
+        const ret = C.SDL_GetJoystickAxisInitialState(self.value, @intCast(index), &state);
+        if (ret)
+            return state;
+        return null;
+    }
+
+    /// Get the ball axis change since the last poll.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    /// * `index`: The ball index to query; ball indices start at index `0`.
+    ///
+    /// ## Return Value
+    /// Returns the difference in x and y position since the last poll.
+    ///
+    /// ## Remarks
+    /// Trackballs can only return relative motion since the last call to this, these motion deltas are returned.
+    ///
+    /// Most joysticks do not have trackballs.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getBall(
+        self: Joystick,
+        index: usize,
+    ) !struct { dx: isize, dy: isize } {
+        var dx: c_int = undefined;
+        var dy: c_int = undefined;
+        const ret = C.SDL_GetJoystickBall(self.value, @intCast(index), &dx, &dy);
+        try errors.wrapCallBool(ret);
+        return .{ .dx = @intCast(dx), .dy = @intCast(dy) };
+    }
+
+    /// Get the current state of a button on a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    /// * `index`: The button index to get the state from; the button indices start at index `0`.
+    ///
+    /// ## Return Value
+    /// Returns true if the button is pressed, false otherwise.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getButton(
+        self: Joystick,
+        index: usize,
+    ) bool {
+        return C.SDL_GetJoystickButton(self.value, @intCast(index));
+    }
+
+    /// Get the connection state of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the connection state.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getConnectionState(
+        self: Joystick,
+    ) !?ConnectionState {
+        return ConnectionState.fromSdl(C.SDL_GetJoystickConnectionState(self.value));
+    }
+
+    /// Get the firmware version of an opened joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the firmware version of the selected joystick, or `null` if unavailable.
+    ///
+    /// ## Remarks
+    /// If the firmware version isn't available this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getFirmwareVersion(
+        self: Joystick,
+    ) ?u16 {
+        const ret = C.SDL_GetJoystickFirmwareVersion(
+            self.value,
+        );
+        if (ret == 0)
+            return null;
+        return @intCast(ret);
+    }
+
+    /// Get the implementation-dependent GUID of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the GUID of the selected joystick.
+    /// If called with an invalid inedx, this function returns a zero GUID.
+    ///
+    /// ## Remarks
+    /// This function requires an open joystick.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getGuid(
+        self: Joystick,
+    ) guid.GUID {
+        const ret = C.SDL_GetJoystickGUID(
+            self.value,
+        );
+        return .{
+            .value = ret,
+        };
+    }
+
+    /// Get the current state of a POV hat on a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    /// * `hat_index`: The hat index to get the state from; indices start at index `0`.
+    ///
+    /// ## Return Value
+    /// Returns the current hat position.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getHat(
+        self: Joystick,
+        hat_index: usize,
+    ) Hat {
+        const ret = C.SDL_GetJoystickHat(
+            self.value,
+            @intCast(hat_index),
+        );
+        return @enumFromInt(ret);
+    }
+
+    /// Get the instance ID of an opened joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the instance ID of the specified joystick.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getId(
+        self: Joystick,
+    ) !ID {
+        const ret = C.SDL_GetJoystickID(
+            self.value,
+        );
+        return ID{ .value = try errors.wrapCall(C.SDL_JoystickID, ret, 0) };
+    }
+
+    /// Get the implementation dependent name of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the name of the selected joystick.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getName(
+        self: Joystick,
+    ) ![:0]const u8 {
+        const ret = C.SDL_GetJoystickName(
+            self.value,
+        );
+        return errors.wrapCallCString(ret);
+    }
+
+    /// Get the number of general axis controls on a joystick.
+    ///
+    /// ## Function Paramaters
+    /// * `self`: Structure containing joystick information.
+    ///
+    /// ## Return Value
+    /// Returns the number of axis controls/number of axes.
+    ///
+    /// ## Remarks
+    /// Often, the directional pad on a game controller will either look like 4 separate buttons or a POV hat, and not axes, but all of this is up to the device and platform.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getNumAxes(
+        self: Joystick,
+    ) !usize {
+        const ret = C.SDL_GetNumJoystickAxes(
+            self.value,
+        );
+        return @intCast(try errors.wrapCall(c_int, ret, -1));
+    }
+
+    /// Get the number of trackballs on a joystick.
+    ///
+    /// ## Function Paramaters
+    /// * `self`: Structure containing joystick information.
+    ///
+    /// ## Return Value
+    /// Returns the number of trackballs.
+    ///
+    /// ## Remarks
+    /// Joystick trackballs have only relative motion events associated with them and their state cannot be polled.
+    ///
+    /// Most joysticks do not have trackballs.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getNumBalls(
+        self: Joystick,
+    ) !usize {
+        const ret = C.SDL_GetNumJoystickBalls(
+            self.value,
+        );
+        return @intCast(try errors.wrapCall(c_int, ret, -1));
+    }
+
+    /// Get the number of buttons on a joystick.
+    ///
+    /// ## Function Paramaters
+    /// * `self`: Structure containing joystick information.
+    ///
+    /// ## Return Value
+    /// Returns the number of buttons.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getNumButtons(
+        self: Joystick,
+    ) !usize {
+        const ret = C.SDL_GetNumJoystickButtons(
+            self.value,
+        );
+        return @intCast(try errors.wrapCall(c_int, ret, -1));
+    }
+
+    /// Get the number of POV hats on a joystick.
+    ///
+    /// ## Function Paramaters
+    /// * `self`: Structure containing joystick information.
+    ///
+    /// ## Return Value
+    /// Returns the number of POV hats.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getNumHats(
+        self: Joystick,
+    ) !usize {
+        const ret = C.SDL_GetNumJoystickHats(
+            self.value,
+        );
+        return @intCast(try errors.wrapCall(c_int, ret, -1));
+    }
+
+    /// Get the implementation dependent path of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the path of the selected joystick.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getPath(
+        self: Joystick,
+    ) ![:0]const u8 {
+        const ret = C.SDL_GetJoystickPath(
+            self.value,
+        );
+        return errors.wrapCallCString(ret);
+    }
+
+    /// Get the player index of an opened joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the player index of a joystick, or `null` if it's not available.
+    ///
+    /// ## Remarks
+    /// For XInput controllers this returns the XInput user index.
+    /// Many joysticks will not be able to supply this information.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getPlayerIndex(
+        self: Joystick,
+    ) ?usize {
+        const ret = C.SDL_GetJoystickPlayerIndex(
+            self.value,
+        );
+        if (ret == -1)
+            return null;
+        return @intCast(ret);
+    }
+
+    /// Get the battery state of a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the power state and the percent 0 to 100 (if possible to get).
+    ///
+    /// ## Remarks
+    /// You should never take a battery status as absolute truth.
+    /// Batteries (especially failing batteries) are delicate hardware, and the values reported here are best estimates based on what that hardware reports.
+    /// It's not uncommon for older batteries to lose stored power much faster than it reports, or completely drain when reporting it has 20 percent left, etc.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getPowerInfo(
+        self: Joystick,
+    ) !struct { state: power.PowerState, percent: ?u7 } {
+        var percent: c_int = undefined;
+        const ret = C.SDL_GetJoystickPowerInfo(
+            self.value,
+            &percent,
+        );
+        return .{ .state = @enumFromInt(try errors.wrapCall(c_int, ret, C.SDL_POWERSTATE_ERROR)), .percent = if (percent == -1) null else @intCast(percent) };
+    }
+
+    /// Get the USB product ID of an opened joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the USB product ID of the selected joystick, or `null` if unavailable.
+    ///
+    /// ## Remarks
+    /// If the product ID isn't available this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getProduct(
+        self: Joystick,
+    ) ?u16 {
+        const ret = C.SDL_GetJoystickProduct(
+            self.value,
+        );
+        if (ret == 0)
+            return null;
+        return ret;
+    }
+
+    /// Get the product version of an opened joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the product version of the selected joystick, or `null` if unavailable.
+    ///
+    /// ## Remarks
+    /// If the product version isn't available this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getProductVersion(
+        self: Joystick,
+    ) ?u16 {
+        const ret = C.SDL_GetJoystickProductVersion(
+            self.value,
+        );
+        if (ret == 0)
+            return null;
+        return ret;
+    }
+
+    /// Get the properties associated with a joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns properties.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getProperties(
+        self: Joystick,
+    ) !Properties {
+        const ret = C.SDL_GetJoystickProperties(self.value);
+        return Properties.fromSdl(.{ .value = try errors.wrapCall(C.SDL_PropertiesID, ret, 0) });
+    }
+
+    /// Get the serial number of an opened joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the serial number of the selected joystick, or `null` if unavailable.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getSerial(
+        self: Joystick,
+    ) ?[:0]const u8 {
+        const ret = C.SDL_GetJoystickSerial(
+            self.value,
+        );
+        if (ret == null)
+            return null;
+        return std.mem.span(ret);
+    }
+
+    /// Get the type of an opened joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns type of the selected joystick.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getType(
+        self: Joystick,
+    ) ?Type {
+        const ret = C.SDL_GetJoystickType(
+            self.value,
+        );
+        return Type.fromSdl(ret);
+    }
+
+    /// Get the USB vendor ID of an opened joystick, if available.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick.
+    ///
+    /// ## Return Value
+    /// Returns the USB vendor ID of the selected joystick, or `null` if unavailable.
+    ///
+    /// ## Remarks
+    /// If the vendor ID isn't available this function returns `null`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn getVendor(
+        self: Joystick,
+    ) ?u16 {
+        const ret = C.SDL_GetJoystickVendor(
+            self.value,
+        );
+        if (ret == 0)
+            return null;
+        return ret;
+    }
+
     /// Open a joystick for use.
+    ///
+    /// ## Function Parameters
+    /// * `id`: The joystick instance ID.
+    ///
+    /// ## Return Value
+    /// Returns an opened joystick.
+    ///
+    /// ## Remarks
+    /// The joystick subsystem must be initialized before a joystick can be opened for use.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn init(
         id: ID,
     ) !Joystick {
         const ret = C.SDL_OpenJoystick(
             id.value,
         );
-        if (ret == null)
-            return error.SdlError;
-        return Joystick{ .value = ret.? };
+        return Joystick{ .value = try errors.wrapNull(*C.SDL_Joystick, ret) };
     }
 
-    /// Get the SDL_Joystick associated with a player index.
-    pub fn fromPlayerIndex(
-        index: u31,
-    ) !Joystick {
-        const ret = C.SDL_GetJoystickFromPlayerIndex(
-            @intCast(index),
-        );
-        if (ret == null)
-            return error.SdlError;
-        return Joystick{ .value = ret.? };
-    }
-
-    /// Set the state of an axis on an opened virtual joystick.
-    pub fn setVirtualAxis(
+    /// Start a rumble effect.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick to vibrate.
+    /// * `low_frequency_rumble`: The intensity of the low frequency (left) rumble motor.
+    /// * `high_frequency_rumble`: The intensity of the high frequency (right) rumble motor.
+    /// * `duration_milliseconds`: The duration of the rumble effect, in milliseconds.
+    ///
+    /// ## Return Value
+    /// Returns if rumble is supported.
+    ///
+    /// ## Remarks
+    /// Each call to this function cancels any previous trigger rumble effect, and calling it with `0` intensity stops any rumbling.
+    ///
+    /// Note that this is rumbling of the triggers and not the game controller as a whole.
+    /// This is currently only supported on Xbox One controllers.
+    /// If you want the (more common) whole-controller rumble, use `joystick.Joystick.rumble()` instead.
+    ///
+    /// This function requires you to process SDL events or call `joystick.update()` to update rumble state.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn rumble(
         self: Joystick,
-        axis_index: u31,
-        value: i16,
-    ) !void {
-        const ret = C.SDL_SetJoystickVirtualAxis(
+        low_frequency_rumble: u16,
+        high_frequency_rumble: u16,
+        duration_milliseconds: u32,
+    ) bool {
+        const ret = C.SDL_RumbleJoystick(
             self.value,
-            @intCast(axis_index),
-            @intCast(value),
+            low_frequency_rumble,
+            high_frequency_rumble,
+            duration_milliseconds,
         );
-        if (!ret)
-            return error.SdlError;
+        return ret;
     }
 
-    /// Generate ball motion on an opened virtual joystick.
-    pub fn setVirtualBall(
+    /// Start a rumble effect in the joystick's triggers.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick to vibrate.
+    /// * `left_rumble`: The intensity of the left trigger rumble motor.
+    /// * `right_rumble`: The intensity of the right trigger rumble motor.
+    /// * `duration_milliseconds`: The duration of the rumble effect, in milliseconds.
+    ///
+    /// ## Remarks
+    /// Each call to this function cancels any previous trigger rumble effect, and calling it with `0` intensity stops any rumbling.
+    ///
+    /// Note that this is rumbling of the triggers and not the game controller as a whole.
+    /// This is currently only supported on Xbox One controllers.
+    /// If you want the (more common) whole-controller rumble, use `joystick.Joystick.rumble()` instead.
+    ///
+    /// This function requires you to process SDL events or call `joystick.update()` to update rumble state.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn rumbleTriggers(
         self: Joystick,
-        ball_index: u31,
-        x_rel: i16,
-        y_rel: i16,
+        left_rumble: u16,
+        right_rumble: u16,
+        duration_milliseconds: u32,
     ) !void {
-        const ret = C.SDL_SetJoystickVirtualBall(
+        const ret = C.SDL_RumbleJoystickTriggers(
             self.value,
-            @intCast(ball_index),
-            @intCast(x_rel),
-            @intCast(y_rel),
+            left_rumble,
+            right_rumble,
+            duration_milliseconds,
         );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Set the state of a button on an opened virtual joystick.
-    pub fn setVirtualButton(
-        self: Joystick,
-        button_index: u31,
-        value: bool,
-    ) !void {
-        const ret = C.SDL_SetJoystickVirtualButton(
-            self.value,
-            @intCast(button_index),
-            value,
-        );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Set the state of a hat on an opened virtual joystick.
-    pub fn setVirtualHat(
-        self: Joystick,
-        hat_index: u31,
-        value: Hat,
-    ) !void {
-        const ret = C.SDL_SetJoystickVirtualHat(
-            self.value,
-            @intCast(hat_index),
-            @intFromEnum(value),
-        );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Set touchpad finger state on an opened virtual joystick.
-    pub fn setVirtualTouchpad(
-        self: Joystick,
-        touchpad_index: u31,
-        finger_index: u31,
-        down: bool,
-        x: f32,
-        y: f32,
-        pressure: f32,
-    ) !void {
-        const ret = C.SDL_SetJoystickVirtualTouchpad(
-            self.value,
-            @intCast(touchpad_index),
-            @intCast(finger_index),
-            down,
-            @floatCast(x),
-            @floatCast(y),
-            @floatCast(pressure),
-        );
-        if (!ret)
-            return error.SdlError;
+        return errors.wrapCallBool(ret);
     }
 
     /// Send a sensor update for an opened virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The virtual joystick on which to set state.
+    /// * `sensor_type`: The type of the sensor on the virtual joystick to update.
+    /// * `sensor_timestamp_nanoseconds`: A 64-bit timestamp in nanoseconds associated with the sensor reading.
+    /// * `data`: The data associated with the sensor reading.
+    ///
+    /// ## Remarks
+    /// Please note that values set here will not be applied until the next call to `joystick.update()`, which can either be called directly,
+    /// or can be called indirectly through various other SDL APIs, including, but not limited to the following:
+    /// `events.poll()`, `events.pump()`, `events.waitTimeout()`, `events.wait()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn sendVirtualSensorData(
         self: Joystick,
         sensor_type: sensor.Type,
@@ -303,374 +1148,24 @@ pub const Joystick = struct {
             data.ptr,
             @intCast(data.len),
         );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Get the properties associated with a joystick.
-    pub fn getProperties(
-        self: Joystick,
-    ) !properties.Group {
-        const ret = C.SDL_GetJoystickProperties(
-            self.value,
-        );
-        if (ret == 0)
-            return error.SdlError;
-        return properties.Group{ .value = ret };
-    }
-
-    /// Get the implementation dependent name of a joystick.
-    pub fn getName(
-        self: Joystick,
-    ) ![:0]const u8 {
-        const ret = C.SDL_GetJoystickName(
-            self.value,
-        );
-        if (ret == null)
-            return error.SdlError;
-        return std.mem.span(ret);
-    }
-
-    /// Get the implementation dependent path of a joystick.
-    pub fn getPath(
-        self: Joystick,
-    ) ![:0]const u8 {
-        const ret = C.SDL_GetJoystickPath(
-            self.value,
-        );
-        if (ret == null)
-            return error.SdlError;
-        return std.mem.span(ret);
-    }
-
-    /// Get the player index of an opened joystick.
-    pub fn getPlayerIndex(
-        self: Joystick,
-    ) ?u31 {
-        const ret = C.SDL_GetJoystickPlayerIndex(
-            self.value,
-        );
-        if (ret == -1)
-            return null;
-        return @intCast(ret);
-    }
-
-    /// Set the player index of an opened joystick.
-    pub fn setPlayerIndex(
-        self: Joystick,
-        player_index: ?u31,
-    ) !void {
-        const ret = C.SDL_SetJoystickPlayerIndex(
-            self.value,
-            if (player_index) |val| @intCast(val) else -1,
-        );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Get the implementation-dependent GUID for the joystick.
-    pub fn getGUID(
-        self: Joystick,
-    ) ?guid.GUID {
-        const ret = C.SDL_GetJoystickGUID(
-            self.value,
-        );
-        if (ret == std.mem.containsAtLeast(u8, ret.data, ret.data.len, [_]u8{0}))
-            return error.SdlError;
-        return guid.GUID{ .value = ret };
-    }
-
-    /// Get the USB vendor ID of an opened joystick, if available.
-    pub fn getVendorID(
-        self: Joystick,
-    ) ?u16 {
-        const ret = C.SDL_GetJoystickVendor(
-            self.value,
-        );
-        if (ret == 0)
-            return null;
-        return @intCast(ret);
-    }
-
-    /// Get the USB product ID of an opened joystick, if available.
-    pub fn getProductID(
-        self: Joystick,
-    ) ?u16 {
-        const ret = C.SDL_GetJoystickProduct(
-            self.value,
-        );
-        if (ret == 0)
-            return null;
-        return @intCast(ret);
-    }
-
-    /// Get the product version of an opened joystick, if available.
-    pub fn getProductVersion(
-        self: Joystick,
-    ) ?u16 {
-        const ret = C.SDL_GetJoystickProductVersion(
-            self.value,
-        );
-        if (ret == 0)
-            return null;
-        return @intCast(ret);
-    }
-
-    /// Get the firmware version of an opened joystick, if available.
-    pub fn getFirmwareVersion(
-        self: Joystick,
-    ) ?u16 {
-        const ret = C.SDL_GetJoystickFirmwareVersion(
-            self.value,
-        );
-        if (ret == 0)
-            return null;
-        return @intCast(ret);
-    }
-
-    /// Get the serial number of an opened joystick, if available.
-    pub fn getSerial(
-        self: Joystick,
-    ) ?[:0]const u8 {
-        const ret = C.SDL_GetJoystickSerial(
-            self.value,
-        );
-        if (ret == null)
-            return null;
-        return std.mem.span(ret);
-    }
-
-    /// Get the type of an opened joystick.
-    pub fn getType(
-        self: Joystick,
-    ) ?Type {
-        const ret = C.SDL_GetJoystickType(
-            self.value,
-        );
-        if (ret == C.SDL_JOYSTICK_TYPE_UNKNOWN)
-            return null;
-        return @enumFromInt(ret);
-    }
-
-    /// Get the device information encoded in a GUID structure.
-    pub fn getGUIDInfo(
-        guid_val: guid.GUID,
-    ) struct { vendor: ?u16, product: ?u16, version: ?u16, crc16: ?u16 } {
-        var vendor: u16 = undefined;
-        var product: u16 = undefined;
-        var version: u16 = undefined;
-        var crc16: u16 = undefined;
-        const ret = C.SDL_GetJoystickGUIDInfo(
-            guid_val.value,
-            &vendor,
-            &product,
-            &version,
-            &crc16,
-        );
-        _ = ret;
-        return .{ .vendor = if (vendor == 0) null else vendor, .product = if (product == 0) null else product, .version = if (version == 0) null else version, .crc16 = if (crc16 == 0) null else crc16 };
-    }
-
-    /// Get the status of a specified joystick.
-    pub fn connected(
-        self: Joystick,
-    ) !void {
-        const ret = C.SDL_JoystickConnected(
-            self.value,
-        );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Get the instance ID of an opened joystick.
-    pub fn getID(
-        self: Joystick,
-    ) !ID {
-        const ret = C.SDL_GetJoystickID(
-            self.value,
-        );
-        if (ret == 0)
-            return error.SdlError;
-        return ID{ .value = ret };
-    }
-
-    /// Get the number of general axis controls on a joystick.
-    pub fn getNumAxes(
-        self: Joystick,
-    ) !u31 {
-        const ret = C.SDL_GetNumJoystickAxes(
-            self.value,
-        );
-        if (ret == -1)
-            return error.SdlError;
-        return @intCast(ret);
-    }
-
-    /// Get the number of trackballs on a joystick.
-    pub fn getNumBalls(
-        self: Joystick,
-    ) !u31 {
-        const ret = C.SDL_GetNumJoystickBalls(
-            self.value,
-        );
-        if (ret == -1)
-            return error.SdlError;
-        return @intCast(ret);
-    }
-
-    /// Get the number of POV hats on a joystick.
-    pub fn getNumHats(
-        self: Joystick,
-    ) !u31 {
-        const ret = C.SDL_GetNumJoystickHats(
-            self.value,
-        );
-        if (ret == -1)
-            return error.SdlError;
-        return @intCast(ret);
-    }
-
-    /// Get the number of buttons on a joystick.
-    pub fn getNumButtons(
-        self: Joystick,
-    ) !u31 {
-        const ret = C.SDL_GetNumJoystickButtons(
-            self.value,
-        );
-        if (ret == -1)
-            return error.SdlError;
-        return @intCast(ret);
-    }
-
-    /// Set the state of joystick event processing.
-    pub fn setEventsEnabled(
-        events_enabled: bool,
-    ) void {
-        const ret = C.SDL_SetJoystickEventsEnabled(
-            events_enabled,
-        );
-        _ = ret;
-    }
-
-    /// Query the state of joystick event processing.
-    pub fn getEventsEnabled() bool {
-        const ret = C.SDL_JoystickEventsEnabled();
-        return ret;
-    }
-
-    /// Update the current state of the open joysticks.
-    pub fn update() void {
-        const ret = C.SDL_UpdateJoysticks();
-        _ = ret;
-    }
-
-    /// Get the current state of an axis control on a joystick.
-    pub fn getAxis(
-        self: Joystick,
-        axis_index: u31,
-    ) !i16 {
-        const ret = C.SDL_GetJoystickAxis(
-            self.value,
-            @intCast(axis_index),
-        );
-        if (ret == 0)
-            return error.SdlError;
-        return @intCast(ret);
-    }
-
-    /// Get the initial state of an axis control on a joystick.
-    pub fn getAxisInitialState(
-        self: Joystick,
-        axis_index: u31,
-    ) struct { has_initial_state: bool, state: i16 } {
-        var state: i16 = undefined;
-        const ret = C.SDL_GetJoystickAxisInitialState(
-            self.value,
-            @intCast(axis_index),
-            &state,
-        );
-        if (!ret)
-            return error.SdlError;
-        return .{ .has_initial_state = ret, .state = state };
-    }
-
-    /// Get the ball axis change since the last poll.
-    pub fn getBall(
-        self: Joystick,
-        ball_index: u31,
-    ) !struct { dx: i32, dy: i32 } {
-        var dx: i32 = undefined;
-        var dy: i32 = undefined;
-        const ret = C.SDL_GetJoystickBall(
-            self.value,
-            @intCast(ball_index),
-            &dx,
-            &dy,
-        );
-        if (!ret)
-            return error.SdlError;
-        return .{ .dx = @intCast(dx), .dy = @intCast(dy) };
-    }
-
-    /// Get the current state of a POV hat on a joystick.
-    pub fn getHat(
-        self: Joystick,
-        hat_index: u31,
-    ) Hat {
-        const ret = C.SDL_GetJoystickHat(
-            self.value,
-            @intCast(hat_index),
-        );
-        return @enumFromInt(ret);
-    }
-
-    /// Get the current state of a button on a joystick.
-    pub fn getButton(
-        self: Joystick,
-        button_index: u31,
-    ) bool {
-        const ret = C.SDL_GetJoystickButton(
-            self.value,
-            @intCast(button_index),
-        );
-        return ret;
-    }
-
-    /// Start a rumble effect.
-    pub fn rumble(
-        self: Joystick,
-        left_rumble: u16,
-        right_rumble: u16,
-        duration_milliseconds: u32,
-    ) !void {
-        const ret = C.SDL_RumbleJoystick(
-            self.value,
-            @intCast(left_rumble),
-            @intCast(right_rumble),
-            @intCast(duration_milliseconds),
-        );
-        if (!ret)
-            return error.SdlError;
-    }
-
-    /// Start a rumble effect in the joystick's triggers.
-    pub fn rumbleTriggers(
-        self: Joystick,
-        left_rumble: u16,
-        right_rumble: u16,
-        duration_milliseconds: u32,
-    ) !void {
-        const ret = C.SDL_RumbleJoystickTriggers(
-            self.value,
-            @intCast(left_rumble),
-            @intCast(right_rumble),
-            @intCast(duration_milliseconds),
-        );
-        if (!ret)
-            return error.SdlError;
+        return errors.wrapCallBool(ret);
     }
 
     /// Update a joystick's LED color.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick to update.
+    /// * `r`: The intensity of the red LED.
+    /// * `g`: The intensity of the green LED.
+    /// * `b`: The intensity of the blue LED.
+    ///
+    /// ## Remarks
+    /// An example of a joystick LED is the light on the back of a PlayStation 4's DualShock 4 controller.
+    ///
+    /// For joysticks with a single color LED, the maximum of the RGB values will be used as the LED brightness.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
     pub fn setLED(
         self: Joystick,
         r: u8,
@@ -683,141 +1178,889 @@ pub const Joystick = struct {
             @intCast(g),
             @intCast(b),
         );
-        if (!ret)
-            return error.SdlError;
+        return errors.wrapCallBool(ret);
     }
 
-    /// Send a joystick specific effect packet.
-    pub fn sendEffect(
+    /// Set the player index of an opened joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The joystick opened.
+    /// * `player_index`: Player index to assign to this joystick, or `null` to clear the player index and turn off player LEDs.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setPlayerIndex(
         self: Joystick,
-        data: []const u8,
+        player_index: ?usize,
     ) !void {
-        const ret = C.SDL_SendJoystickEffect(
+        const ret = C.SDL_SetJoystickPlayerIndex(
             self.value,
-            data.ptr,
-            @intCast(data.len),
+            if (player_index) |val| @intCast(val) else -1,
         );
-        if (!ret)
-            return error.SdlError;
+        return errors.wrapCallBool(ret);
     }
 
-    /// Close a joystick previously opened with init.
-    pub fn deinit(
+    /// Set the state of an axis on an opened virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The virtual joystick on which to set state.
+    /// * `axis_index`: The index of the axis on the virtual joystick to update.
+    /// * `value`: The new value for the specified axis.
+    ///
+    /// ## Remarks
+    /// Please note that values set here will not be applied until the next call to `joystick.update()`, which can either be called directly,
+    /// or can be called indirectly through various other SDL APIs, including, but not limited to the following:
+    /// `events.poll()`, `events.pump()`, `events.waitTimeout()`, `events.wait()`.
+    ///
+    /// Note that when sending trigger axes, you should scale the value to the full range of `i16`.
+    /// For example, a trigger at rest would have the value of `joystick.axis_min`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setVirtualAxis(
         self: Joystick,
-    ) void {
-        const ret = C.SDL_CloseJoystick(
+        axis_index: usize,
+        value: i16,
+    ) !void {
+        const ret = C.SDL_SetJoystickVirtualAxis(
             self.value,
+            @intCast(axis_index),
+            @intCast(value),
         );
-        _ = ret;
+        return errors.wrapCallBool(ret);
     }
 
-    /// Get the connection state of a joystick.
-    pub fn getConnectionState(
+    /// Generate ball motion on an opened virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The virtual joystick on which to set state.
+    /// * `ball_index`: The index of the ball on the virtual joystick to update.
+    /// * `x_rel`: The relative motion on the X axis.
+    /// * `y_rel`: The relative motion on the Y axis.
+    ///
+    /// ## Remarks
+    /// Please note that values set here will not be applied until the next call to `joystick.update()`, which can either be called directly,
+    /// or can be called indirectly through various other SDL APIs, including, but not limited to the following:
+    /// `events.poll()`, `events.pump()`, `events.waitTimeout()`, `events.wait()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setVirtualBall(
         self: Joystick,
-    ) !?ConnectionState {
-        const ret = C.SDL_GetJoystickConnectionState(
+        ball_index: u31,
+        x_rel: i16,
+        y_rel: i16,
+    ) !void {
+        const ret = C.SDL_SetJoystickVirtualBall(
             self.value,
+            @intCast(ball_index),
+            @intCast(x_rel),
+            @intCast(y_rel),
         );
-        if (ret == C.SDL_JOYSTICK_CONNECTION_INVALID)
-            return error.SdlError;
-        if (ret == C.SDL_JOYSTICK_CONNECTION_UNKNOWN)
-            return null;
-        return @enumFromInt(ret);
+        return errors.wrapCallBool(ret);
     }
 
-    /// Get the battery state of a joystick.
-    pub fn getPowerInfo(
+    /// Set the state of a button on an opened virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The virtual joystick on which to set state.
+    /// * `button_index`: The index of the button on the virtual joystick to update.
+    /// * `down`: True if the button is pressed, false otherwise.
+    ///
+    /// ## Remarks
+    /// Please note that values set here will not be applied until the next call to `joystick.update()`, which can either be called directly,
+    /// or can be called indirectly through various other SDL APIs, including, but not limited to the following:
+    /// `events.poll()`, `events.pump()`, `events.waitTimeout()`, `events.wait()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setVirtualButton(
         self: Joystick,
-    ) !struct { state: power.PowerState, percent: ?u7 } {
-        var percent: c_int = undefined;
-        const ret = C.SDL_GetJoystickPowerInfo(
+        button_index: usize,
+        down: bool,
+    ) !void {
+        const ret = C.SDL_SetJoystickVirtualButton(
             self.value,
-            &percent,
+            @intCast(button_index),
+            down,
         );
-        if (ret == C.SDL_POWERSTATE_ERROR)
-            return error.SdlError;
-        return .{ .state = @enumFromInt(ret), .percent = if (percent == -1) null else @intCast(percent) };
+        return errors.wrapCallBool(ret);
     }
 
-    /// Locking for atomic access to the joystick API.
-    pub fn lockAll() void {
-        const ret = C.SDL_LockJoysticks();
-        _ = ret;
+    /// Set the state of a hat on an opened virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The virtual joystick on which to set state.
+    /// * `hat_index`: The index of the hat on the virtual joystick to update.
+    /// * `value`: The new value for the specified hat.
+    ///
+    /// ## Remarks
+    /// Please note that values set here will not be applied until the next call to `joystick.update()`, which can either be called directly,
+    /// or can be called indirectly through various other SDL APIs, including, but not limited to the following:
+    /// `events.poll()`, `events.pump()`, `events.waitTimeout()`, `events.wait()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setVirtualHat(
+        self: Joystick,
+        hat_index: usize,
+        value: Hat,
+    ) !void {
+        const ret = C.SDL_SetJoystickVirtualHat(
+            self.value,
+            @intCast(hat_index),
+            @intFromEnum(value),
+        );
+        return errors.wrapCallBool(ret);
     }
 
-    /// Unlocking for atomic access to the joystick API.
-    pub fn unlockAll() void {
-        const ret = C.SDL_UnlockJoysticks();
-        _ = ret;
-    }
-
-    /// Return whether a joystick is currently connected.
-    pub fn hasAnyConnected() bool {
-        const ret = C.SDL_HasJoystick();
-        return ret;
+    /// Set touchpad finger state on an opened virtual joystick.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The virtual joystick on which to set state.
+    /// * `touchpad_index`: The index of the touchpad on the virtual joystick to update.
+    /// * `finger_index`: The index of the finger on the touchpad to set.
+    /// * `down`: True if the finger is pressed, false if the finger is released.
+    /// * `x`: The x coordinate of the finger on the touchpad, normalized `0` to `1`, with the origin in the upper left.
+    /// * `y`: The y coordinate of the finger on the touchpad, normalized `0` to `1`, with the origin in the upper left.
+    /// * `pressure`: The pressure of the finger.
+    ///
+    /// ## Remarks
+    /// Please note that values set here will not be applied until the next call to `joystick.update()`, which can either be called directly,
+    /// or can be called indirectly through various other SDL APIs, including, but not limited to the following:
+    /// `events.poll()`, `events.pump()`, `events.waitTimeout()`, `events.wait()`.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn setVirtualTouchpad(
+        self: Joystick,
+        touchpad_index: usize,
+        finger_index: usize,
+        down: bool,
+        x: f32,
+        y: f32,
+        pressure: f32,
+    ) !void {
+        const ret = C.SDL_SetJoystickVirtualTouchpad(
+            self.value,
+            @intCast(touchpad_index),
+            @intCast(finger_index),
+            down,
+            x,
+            y,
+            pressure,
+        );
+        return errors.wrapCallBool(ret);
     }
 };
 
-/// Virtual joystick user data.
-pub fn VirtualJoystickUserData(comptime UserData: type) type {
-    return struct {
-        update: *const fn (user_data: *UserData) void,
-        set_player_index: *const fn (user_data: *UserData, player_index: u31) void,
-        rumble: *const fn (user_data: *UserData, left_rumble: u16, right_rumble: u16) anyerror!void,
-        rumble_triggers: *const fn (user_data: *UserData, left_rumble: u16, right_rumble: u16) anyerror!void,
-        set_led: *const fn (user_data: *UserData, r: u8, g: u8, b: u8) anyerror!void,
-        send_effect: *const fn (user_data: *UserData, data: []const u8) anyerror!void,
-        set_sensors_enabled: *const fn (user_data: *UserData, enabled: bool) anyerror!void,
-        cleanup: *const fn (user_data: *UserData) void,
-        user_data: *UserData,
-    };
+/// An enum of some common joystick types.
+///
+/// ## Remarks
+/// In some cases, SDL can identify a low-level joystick as being a certain type of device,
+/// and will report it through `joystick.Joystick.getType()` (or `joystick.ID.getType()`).
+///
+/// This is by no means a complete list of everything that can be plugged into a computer.
+///
+/// You may refer to XInput Controller Types table for a general understanding of each joystick type.
+///
+/// ## Version
+/// This enum is available since SDL 3.2.0.
+pub const Type = enum(c_uint) {
+    gamepad = C.SDL_JOYSTICK_TYPE_GAMEPAD,
+    wheel = C.SDL_JOYSTICK_TYPE_WHEEL,
+    arcade_stick = C.SDL_JOYSTICK_TYPE_ARCADE_STICK,
+    flight_stick = C.SDL_JOYSTICK_TYPE_FLIGHT_STICK,
+    dance_pad = C.SDL_JOYSTICK_TYPE_DANCE_PAD,
+    guitar = C.SDL_JOYSTICK_TYPE_GUITAR,
+    drum_kit = C.SDL_JOYSTICK_TYPE_DRUM_KIT,
+    arcade_pad = C.SDL_JOYSTICK_TYPE_ARCADE_PAD,
+    throttle = C.SDL_JOYSTICK_TYPE_THROTTLE,
+
+    /// Convert from SDL value.
+    pub fn fromSdl(value: C.SDL_JoystickType) ?Type {
+        if (value == C.SDL_JOYSTICK_TYPE_UNKNOWN)
+            return null;
+        return @enumFromInt(value);
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: ?Type) C.SDL_JoystickType {
+        if (self) |val|
+            return @intFromEnum(val);
+        return C.SDL_JOYSTICK_TYPE_UNKNOWN;
+    }
+};
+
+/// The structure that describes a virtual joystick.
+///
+/// ## Remarks
+/// All elements of this structure are optional.
+///
+/// Version
+/// This struct is available since SDL 3.2.0.
+pub const VirtualJoystickDescription = struct {
+    /// Joystick type.
+    joystick_type: ?Type = null,
+    /// The USB vendor ID of this joystick.
+    vendor_id: u16 = 0,
+    /// The USB product ID of this joystick.
+    product_id: u16 = 0,
+    /// The number of axes on this joystick.
+    num_axes: u16 = 0,
+    /// The number of buttons on this joystick.
+    num_buttons: u16 = 0,
+    /// The number of balls on this joystick.
+    num_balls: u16 = 0,
+    /// The number of hats on this joystick.
+    num_hats: u16 = 0,
+    /// A mask of which buttons are valid for this controller.
+    buttons: ButtonMask = .{},
+    /// A mask of which axes are valid for this controller.
+    axes: AxisMask = .{},
+    /// The name of the joystick.
+    name: ?[:0]const u8 = null,
+    /// Touchpad descriptions.
+    touchpads: []const VirtualJoystickTouchpadDescription = &.{},
+    /// Sensor descriptions.
+    sensors: []const VirtualJoystickSensorDescription = &.{},
+    /// User data pointer passed to callbacks.
+    user_data: ?*anyopaque = null,
+
+    // TODO!!!
+    update: ?*const fn (user_data: ?*anyopaque) callconv(.C) void = null,
+    set_player_index: ?*const fn (user_data: ?*anyopaque, player_index: c_int) callconv(.C) void = null,
+    rumble: ?*const fn (user_data: ?*anyopaque, low_frequency_rumble: u16, high_frequency_rumble: u16) callconv(.C) bool = null,
+    rumble_triggers: ?*const fn (user_data: ?*anyopaque, left_rumble: u16, right_rumble: u16) callconv(.C) bool = null,
+    set_led: ?*const fn (user_data: ?*anyopaque, red: u8, green: u8, blue: u8) callconv(.C) bool = null,
+    send_effect: ?*const fn (user_data: ?*anyopaque, data: ?*const anyopaque, size: c_int) callconv(.C) bool = null,
+    set_sensors_enabled: ?*const fn (user_data: ?*anyopaque, enabled: bool) callconv(.C) bool = null,
+    cleanup: ?*const fn (user_data: ?*anyopaque) callconv(.C) void = null,
+
+    /// Convert from an SDL value.
+    pub fn fromSdl(value: C.SDL_VirtualJoystickDesc) VirtualJoystickDescription {
+        return .{
+            .joystick_type = Type.fromSdl(value.type),
+            .vendor_id = value.vendor_id,
+            .product_id = value.product_id,
+            .num_axes = value.naxes,
+            .num_buttons = value.nbuttons,
+            .num_balls = value.nballs,
+            .num_hats = value.nhats,
+            .buttons = @bitCast(value.button_mask),
+            .axes = @bitCast(value.axis_mask),
+            .name = if (value.name) |val| std.mem.span(val) else null,
+            .touchpads = @as([*]const VirtualJoystickTouchpadDescription, @ptrCast(value.touchpads))[0..@intCast(value.ntouchpads)],
+            .sensors = @as([*]const VirtualJoystickSensorDescription, @ptrCast(value.sensors))[0..@intCast(value.nsensors)],
+            .user_data = value.userdata,
+            .update = value.Update,
+            .set_player_index = value.SetPlayerIndex,
+            .rumble = value.Rumble,
+            .rumble_triggers = value.RumbleTriggers,
+            .set_led = value.SetLED,
+            .send_effect = value.SendEffect,
+            .set_sensors_enabled = value.SetSensorsEnabled,
+            .cleanup = value.Cleanup,
+        };
+    }
+
+    /// Convert to an SDL value.
+    pub fn toSdl(self: VirtualJoystickDescription) C.SDL_VirtualJoystickDesc {
+        return .{
+            .type = @intCast(Type.toSdl(self.joystick_type)),
+            .vendor_id = self.vendor_id,
+            .product_id = self.product_id,
+            .naxes = self.num_axes,
+            .nbuttons = self.num_buttons,
+            .nballs = self.num_balls,
+            .nhats = self.num_hats,
+            .button_mask = @bitCast(self.buttons),
+            .axis_mask = @bitCast(self.axes),
+            .name = if (self.name) |val| val.ptr else null,
+            .touchpads = @as([*c]const C.SDL_VirtualJoystickTouchpadDesc, @ptrCast(self.touchpads.ptr)),
+            .ntouchpads = @intCast(self.touchpads.len),
+            .sensors = @as([*c]const C.SDL_VirtualJoystickSensorDesc, @ptrCast(self.sensors.ptr)),
+            .nsensors = @intCast(self.sensors.len),
+            .userdata = self.user_data,
+            .Update = self.update,
+            .SetPlayerIndex = self.set_player_index,
+            .Rumble = self.rumble,
+            .RumbleTriggers = self.rumble_triggers,
+            .SetLED = self.set_led,
+            .SendEffect = self.send_effect,
+            .SetSensorsEnabled = self.set_sensors_enabled,
+            .Cleanup = self.cleanup,
+            .version = @sizeOf(C.SDL_VirtualJoystickDesc),
+        };
+    }
+};
+
+/// The structure that describes a virtual joystick sensor.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const VirtualJoystickSensorDescription = extern struct {
+    /// The type of this sensor.
+    sensor_type: sensor.Type,
+    /// The update frequency of this sensor, may be `0`s.
+    rate: f32,
+
+    // Size tests.
+    comptime {
+        errors.assertStructsEqual(C.SDL_VirtualJoystickSensorDesc, VirtualJoystickSensorDescription);
+    }
+};
+
+/// The structure that describes a virtual joystick touchpad.
+///
+/// ## Version
+/// This struct is available since SDL 3.2.0.
+pub const VirtualJoystickTouchpadDescription = extern struct {
+    /// The number of simultaneous fingers on this touchpad.
+    num_fingers: u16,
+    _: [3]u16 = .{ 0, 0, 0 },
+
+    // Size tests.
+    comptime {
+        errors.assertStructsEqual(C.SDL_VirtualJoystickTouchpadDesc, VirtualJoystickTouchpadDescription);
+    }
+};
+
+/// Query the state of joystick event processing.
+///
+/// ## Return Value
+/// Returns true if joystick events are being processed, false otherwise.
+///
+/// ## Remarks
+/// If joystick events are disabled, you must call `joystick.update()` yourself and check the state of the joystick when you want joystick information.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn eventsEnabled() bool {
+    return C.SDL_JoystickEventsEnabled();
 }
-fn virtualJoystickCleanup(user_data: ?*anyopaque) callconv(.C) void {
-    const data: VirtualJoystickUserData(anyopaque) = @ptrCast(@alignCast(user_data));
-    data.cleanup(data.user_data);
+
+/// Get a list of currently connected joysticks.
+///
+/// ## Return Value
+/// Returns an array of joystick instance IDs.
+/// This should be freed with `stdinc.free()` when it is no longer needed.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn get() ![]ID {
+    var count: c_int = undefined;
+    const ret = C.SDL_GetJoysticks(&count);
+    return @as([*]ID, @ptrCast(try errors.wrapNull([*]C.SDL_JoystickID, ret)))[0..@intCast(count)];
 }
-fn virtualJoystickRumble(user_data: ?*anyopaque, left_rumble: u16, right_rumble: u16) callconv(.C) bool {
-    const data: VirtualJoystickUserData(anyopaque) = @ptrCast(@alignCast(user_data));
-    data.rumble(data.user_data, left_rumble, right_rumble) catch return false;
-    return true;
+
+/// Get the joystick associated with an instance ID, if it has been opened.
+///
+/// ## Function Parameters
+/// * `id`: The instance ID.
+///
+/// ## Return Value
+/// Returns a joystick.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getFromId(
+    id: ID,
+) !Joystick {
+    const ret = C.SDL_GetJoystickFromID(
+        id.value,
+    );
+    return Joystick{ .value = try errors.wrapNull(*C.SDL_Joystick, ret) };
 }
-fn virtualJoystickRumbleTriggers(user_data: ?*anyopaque, left_rumble: u16, right_rumble: u16) callconv(.C) bool {
-    const data: VirtualJoystickUserData(anyopaque) = @ptrCast(@alignCast(user_data));
-    data.rumble_triggers(data.user_data, left_rumble, right_rumble) catch return false;
-    return true;
+
+/// Get the joystick with a player index.
+///
+/// ## Function Parameters
+/// * `index`: The player index.
+///
+/// ## Return Value
+/// Returns a joystick.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getFromIndex(
+    index: usize,
+) !Joystick {
+    const ret = C.SDL_GetJoystickFromPlayerIndex(
+        @intCast(index),
+    );
+    return Joystick{ .value = try errors.wrapNull(*C.SDL_Joystick, ret) };
 }
-/// Virtual joystick configuration.
-pub fn VirtualJoystick(comptime UserData: type) type {
-    return struct {
-        joystick_type: Type,
-        vendor_id: u16,
-        product_id: u16,
-        num_axes: u16,
-        num_buttons: u16,
-        num_balls: u16,
-        num_hats: u16,
-        // button_mask
-        // axis_mask
-        name: [:0]const u8,
-        touchpads: []const struct { num_fingers: u16 },
-        sensors: []const struct { sensor_type: sensor.Type, rate: f32 },
-        user_data: VirtualJoystickUserData(UserData),
-        /// Create a joystick.
-        pub fn create() !ID {
-            const desc = C.SDL_VirtualJoystickDesc{
-                .Cleanup = virtualJoystickCleanup,
-                .Rumble = virtualJoystickRumble,
-                .RumbleTriggers = virtualJoystickRumbleTriggers,
-            };
-            const ret = C.SDL_AttachVirtualJoystick(&desc);
-            if (ret == 0)
-                return error.SdlError;
-            return .{ .value = ret };
-        }
+
+/// Get the device information encoded in a GUID structure.
+///
+/// ## Function Parameters
+/// * `guid_val`: The GUID to get information about.
+///
+/// ## Return Value
+/// Returns the device VID, PID, version, and CRC to distinguish between devices with the same VID/PID.
+/// Any of these fields may not be available.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn getGuidInfo(
+    guid_val: guid.GUID,
+) struct { vendor: ?u16, product: ?u16, version: ?u16, crc16: ?u16 } {
+    var vendor: u16 = undefined;
+    var product: u16 = undefined;
+    var version: u16 = undefined;
+    var crc16: u16 = undefined;
+    C.SDL_GetJoystickGUIDInfo(
+        guid_val.value,
+        &vendor,
+        &product,
+        &version,
+        &crc16,
+    );
+    return .{
+        .vendor = if (vendor == 0) null else vendor,
+        .product = if (product == 0) null else product,
+        .version = if (version == 0) null else version,
+        .crc16 = if (crc16 == 0) null else crc16,
     };
 }
 
-const guid = @import("guid.zig");
-const sensor = @import("sensor.zig");
-const properties = @import("properties.zig");
-const power = @import("power.zig");
+/// Return whether a joystick is currently connected.
+///
+/// ## Return Value
+/// Returns true if a joystick is connected, false otherwise.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn has() bool {
+    return C.SDL_HasJoystick();
+}
+
+/// Locking for atomic access to the joystick API.
+///
+/// ## Remarks
+/// The SDL joystick functions are thread-safe, however you can lock the joysticks while processing to guarantee that the joystick list won't change and joystick
+/// and gamepad events will not be delivered.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn lock() void {
+    C.SDL_LockJoysticks();
+}
+
+/// Send a joystick specific effect packet.
+///
+/// ## Function Parameters
+/// * `self`: The joystick to affect.
+/// * `data`: The data to send to the joystick.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn sendEffect(
+    self: Joystick,
+    data: []const u8,
+) !void {
+    const ret = C.SDL_SendJoystickEffect(
+        self.value,
+        data.ptr,
+        @intCast(data.len),
+    );
+    return errors.wrapCallBool(ret);
+}
+
+/// Set the state of joystick event processing.
+///
+/// ## Function Parameters
+/// * `events_enabled`: Whether to process joystick events or not.
+///
+/// ## Remarks
+/// If joystick events are disabled, you must call `joystick.update()` yourself and check the state of the joystick when you want joystick information.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn setEventsEnabled(
+    events_enabled: bool,
+) void {
+    C.SDL_SetJoystickEventsEnabled(
+        events_enabled,
+    );
+}
+
+/// Unlocking for atomic access to the joystick API.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn unlock() void {
+    C.SDL_UnlockJoysticks();
+}
+
+/// Update the current state of the open joysticks.
+///
+/// ## Remarks
+/// This is called automatically by the event loop if any joystick events are enabled.
+///
+/// ## Version
+/// This function is available since SDL 3.2.0.
+pub fn update() void {
+    C.SDL_UpdateJoysticks();
+}
+
+// /// This is a unique ID for a joystick for the time it is connected to the system, and is never reused for the lifetime of the application.
+// pub const ID = struct {
+//     value: C.SDL_JoystickID,
+
+//     /// Get the implementation dependent name of a joystick.
+//     pub fn getName(
+//         self: ID,
+//     ) [:0]const u8 {
+//         const ret = C.SDL_GetJoystickNameForID(
+//             self.value,
+//         );
+//         if (ret == null)
+//             return error.SdlError;
+//         return std.mem.span(ret);
+//     }
+
+//     /// Get the implementation dependent path of a joystick.
+//     pub fn getPath(
+//         self: ID,
+//     ) [:0]const u8 {
+//         const ret = C.SDL_GetJoystickPathForID(
+//             self.value,
+//         );
+//         if (ret == null)
+//             return error.SdlError;
+//         return std.mem.span(ret);
+//     }
+
+//     /// Get the player index of a joystick.
+//     pub fn getPlayerIndex(
+//         self: ID,
+//     ) ?u31 {
+//         const ret = C.SDL_GetJoystickPlayerIndexForID(
+//             self.value,
+//         );
+//         if (ret == -1)
+//             return null;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the implementation-dependent GUID of a joystick.
+//     pub fn getGUID(
+//         self: ID,
+//     ) guid.GUID {
+//         const ret = C.SDL_GetJoystickGUIDForID(
+//             self.value,
+//         );
+//         return guid.GUID{ .value = ret };
+//     }
+
+//     /// Get the USB product ID of a joystick, if available.
+//     pub fn getProduct(
+//         self: ID,
+//     ) u16 {
+//         const ret = C.SDL_GetJoystickProductForID(
+//             self.value,
+//         );
+//         return @intCast(ret);
+//     }
+
+//     /// Get the product version of a joystick, if available.
+//     pub fn getProductVersion(
+//         self: ID,
+//     ) u16 {
+//         const ret = C.SDL_GetJoystickProductVersionForID(
+//             self.value,
+//         );
+//         return @intCast(ret);
+//     }
+
+//     /// Get the type of a joystick, if available.
+//     pub fn getType(
+//         self: ID,
+//     ) ?Type {
+//         const ret = C.SDL_GetJoystickTypeForID(
+//             self.value,
+//         );
+//         if (ret == C.SDL_JOYSTICK_TYPE_UNKNOWN)
+//             return null;
+//         return @enumFromInt(ret);
+//     }
+
+//     /// Get the SDL_Joystick associated with an instance ID, if it has been opened.
+//     pub fn getJoystick(
+//         self: ID,
+//     ) Joystick {
+//         const ret = C.SDL_GetJoystickFromID(
+//             self.value,
+//         );
+//         if (ret == null)
+//             return error.SdlError;
+//         return Joystick{ .value = ret.? };
+//     }
+
+//     /// Detach a virtual joystick.
+//     pub fn detachVirtual(
+//         self: ID,
+//     ) bool {
+//         const ret = C.SDL_DetachVirtualJoystick(
+//             self.value,
+//         );
+//         if (!ret)
+//             return error.SdlError;
+//         return ret;
+//     }
+
+//     /// Get a list of currently connected joysticks.
+//     pub fn getAll(allocator: std.mem.Allocator) ![]ID {
+//         var count: c_int = undefined;
+//         const ret = C.SDL_GetJoysticks(&count);
+//         if (ret == null)
+//             return error.SdlError;
+//         defer C.SDL_free(ret);
+//         var converted_ret = try allocator.alloc(ID, @intCast(count));
+//         for (0..@intCast(count)) |ind| {
+//             converted_ret[ind].value = ret[ind];
+//         }
+//         return converted_ret;
+//     }
+// };
+
+// /// The joystick structure used to identify an SDL joystick.
+// pub const Joystick = struct {
+//     value: *C.SDL_Joystick,
+
+//     /// Get the SDL_Joystick associated with a player index.
+//     pub fn fromPlayerIndex(
+//         index: u31,
+//     ) !Joystick {
+//         const ret = C.SDL_GetJoystickFromPlayerIndex(
+//             @intCast(index),
+//         );
+//         if (ret == null)
+//             return error.SdlError;
+//         return Joystick{ .value = ret.? };
+//     }
+
+//     /// Get the properties associated with a joystick.
+//     pub fn getProperties(
+//         self: Joystick,
+//     ) !properties.Group {
+//         const ret = C.SDL_GetJoystickProperties(
+//             self.value,
+//         );
+//         if (ret == 0)
+//             return error.SdlError;
+//         return properties.Group{ .value = ret };
+//     }
+
+//     /// Get the implementation dependent name of a joystick.
+//     pub fn getName(
+//         self: Joystick,
+//     ) ![:0]const u8 {
+//         const ret = C.SDL_GetJoystickName(
+//             self.value,
+//         );
+//         if (ret == null)
+//             return error.SdlError;
+//         return std.mem.span(ret);
+//     }
+
+//     /// Get the implementation dependent path of a joystick.
+//     pub fn getPath(
+//         self: Joystick,
+//     ) ![:0]const u8 {
+//         const ret = C.SDL_GetJoystickPath(
+//             self.value,
+//         );
+//         if (ret == null)
+//             return error.SdlError;
+//         return std.mem.span(ret);
+//     }
+
+//     /// Get the player index of an opened joystick.
+//     pub fn getPlayerIndex(
+//         self: Joystick,
+//     ) ?u31 {
+//         const ret = C.SDL_GetJoystickPlayerIndex(
+//             self.value,
+//         );
+//         if (ret == -1)
+//             return null;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the implementation-dependent GUID for the joystick.
+//     pub fn getGUID(
+//         self: Joystick,
+//     ) ?guid.GUID {
+//         const ret = C.SDL_GetJoystickGUID(
+//             self.value,
+//         );
+//         if (ret == std.mem.containsAtLeast(u8, ret.data, ret.data.len, [_]u8{0}))
+//             return error.SdlError;
+//         return guid.GUID{ .value = ret };
+//     }
+
+//     /// Get the USB vendor ID of an opened joystick, if available.
+//     pub fn getVendorID(
+//         self: Joystick,
+//     ) ?u16 {
+//         const ret = C.SDL_GetJoystickVendor(
+//             self.value,
+//         );
+//         if (ret == 0)
+//             return null;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the USB product ID of an opened joystick, if available.
+//     pub fn getProductID(
+//         self: Joystick,
+//     ) ?u16 {
+//         const ret = C.SDL_GetJoystickProduct(
+//             self.value,
+//         );
+//         if (ret == 0)
+//             return null;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the product version of an opened joystick, if available.
+//     pub fn getProductVersion(
+//         self: Joystick,
+//     ) ?u16 {
+//         const ret = C.SDL_GetJoystickProductVersion(
+//             self.value,
+//         );
+//         if (ret == 0)
+//             return null;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the type of an opened joystick.
+//     pub fn getType(
+//         self: Joystick,
+//     ) ?Type {
+//         const ret = C.SDL_GetJoystickType(
+//             self.value,
+//         );
+//         if (ret == C.SDL_JOYSTICK_TYPE_UNKNOWN)
+//             return null;
+//         return @enumFromInt(ret);
+//     }
+
+//     /// Get the number of general axis controls on a joystick.
+//     pub fn getNumAxes(
+//         self: Joystick,
+//     ) !u31 {
+//         const ret = C.SDL_GetNumJoystickAxes(
+//             self.value,
+//         );
+//         if (ret == -1)
+//             return error.SdlError;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the number of trackballs on a joystick.
+//     pub fn getNumBalls(
+//         self: Joystick,
+//     ) !u31 {
+//         const ret = C.SDL_GetNumJoystickBalls(
+//             self.value,
+//         );
+//         if (ret == -1)
+//             return error.SdlError;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the number of buttons on a joystick.
+//     pub fn getNumButtons(
+//         self: Joystick,
+//     ) !u31 {
+//         const ret = C.SDL_GetNumJoystickButtons(
+//             self.value,
+//         );
+//         if (ret == -1)
+//             return error.SdlError;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the current state of an axis control on a joystick.
+//     pub fn getAxis(
+//         self: Joystick,
+//         axis_index: u31,
+//     ) !i16 {
+//         const ret = C.SDL_GetJoystickAxis(
+//             self.value,
+//             @intCast(axis_index),
+//         );
+//         if (ret == 0)
+//             return error.SdlError;
+//         return @intCast(ret);
+//     }
+
+//     /// Get the initial state of an axis control on a joystick.
+//     pub fn getAxisInitialState(
+//         self: Joystick,
+//         axis_index: u31,
+//     ) struct { has_initial_state: bool, state: i16 } {
+//         var state: i16 = undefined;
+//         const ret = C.SDL_GetJoystickAxisInitialState(
+//             self.value,
+//             @intCast(axis_index),
+//             &state,
+//         );
+//         if (!ret)
+//             return error.SdlError;
+//         return .{ .has_initial_state = ret, .state = state };
+//     }
+
+//     /// Get the ball axis change since the last poll.
+//     pub fn getBall(
+//         self: Joystick,
+//         ball_index: u31,
+//     ) !struct { dx: i32, dy: i32 } {
+//         var dx: i32 = undefined;
+//         var dy: i32 = undefined;
+//         const ret = C.SDL_GetJoystickBall(
+//             self.value,
+//             @intCast(ball_index),
+//             &dx,
+//             &dy,
+//         );
+//         if (!ret)
+//             return error.SdlError;
+//         return .{ .dx = @intCast(dx), .dy = @intCast(dy) };
+//     }
+
+//     /// Get the current state of a button on a joystick.
+//     pub fn getButton(
+//         self: Joystick,
+//         button_index: u31,
+//     ) bool {
+//         const ret = C.SDL_GetJoystickButton(
+//             self.value,
+//             @intCast(button_index),
+//         );
+//         return ret;
+//     }
+
+//     /// Get the connection state of a joystick.
+//     pub fn getConnectionState(
+//         self: Joystick,
+//     ) !?ConnectionState {
+//         const ret = C.SDL_GetJoystickConnectionState(
+//             self.value,
+//         );
+//         if (ret == C.SDL_JOYSTICK_CONNECTION_INVALID)
+//             return error.SdlError;
+//         if (ret == C.SDL_JOYSTICK_CONNECTION_UNKNOWN)
+//             return null;
+//         return @enumFromInt(ret);
+//     }
+
+// Joystick tests.
+test "Joystick" {
+    std.testing.refAllDeclsRecursive(@This());
+}

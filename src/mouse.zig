@@ -884,9 +884,9 @@ test "Mouse" {
     _ = getDefault() catch {};
     _ = getGlobalState();
     _ = getFocus();
-    _ = getState();
+    const state = getState();
     _ = getRelativeState();
-    warpGlobal(0, 0) catch {};
+    warpGlobal(state.x, state.y) catch {};
 
     const window: ?video.Window = video.Window.init("Test", 100, 100, .{}) catch null;
     if (window) |val| {
@@ -902,7 +902,7 @@ test "Mouse" {
         setWindowGrab(val, false) catch {};
         setWindowRect(val, null) catch {};
         setWindowRelativeMode(val, false) catch {};
-        warpInWindow(val, 0, 0);
+        warpInWindow(val, state.x, state.y);
     }
 
     // setRelativeTransform TODO: Test when added!
