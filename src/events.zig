@@ -739,9 +739,9 @@ pub const Event = union(Type) {
                     .windowID = if (event.mouse_button_up.window_id) |id| id else 0,
                     .which = mouse.ID.toSdl(event.mouse_button_up.which),
                     .button = finder: {
-                        inline for (std.meta.fields(mouse.ButtonFlags)) |field| {
+                        inline for (std.meta.fields(mouse.ButtonFlags), 1..) |field, idx| {
                             if (@field(event.mouse_button_up.button, field.name)) {
-                                break :finder 1;
+                                break :finder idx;
                             }
                         }
                         @panic("mouse button not have a match");
@@ -759,9 +759,9 @@ pub const Event = union(Type) {
                     .windowID = if (event.mouse_button_down.window_id) |id| id else 0,
                     .which = mouse.ID.toSdl(event.mouse_button_down.which),
                     .button = finder: {
-                        inline for (std.meta.fields(mouse.ButtonFlags)) |field| {
+                        inline for (std.meta.fields(mouse.ButtonFlags), 1..) |field, idx| {
                             if (@field(event.mouse_button_down.button, field.name)) {
-                                break :finder 1;
+                                break :finder idx;
                             }
                         }
                         @panic("mouse button not have a match");
