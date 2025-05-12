@@ -269,9 +269,9 @@ pub const Type = enum(C.SDL_EventType) {
     // KeyboardRemoved,
     // TextEditingCandidates,
     // MouseMotion,
-    /// Mosue button pressed
+    /// Mouse button pressed.
     mouse_button_down = C.SDL_EVENT_MOUSE_BUTTON_DOWN,
-    /// Mosue button released
+    /// Mouse button released.
     mouse_button_up = C.SDL_EVENT_MOUSE_BUTTON_UP,
     // MouseWheel,
     // MouseAdded,
@@ -449,21 +449,16 @@ pub const Key = struct {
 ///
 /// ## Code Examples
 /// ```zig
-///                 see https://wiki.libsdl.org/SDL3/SDL_MouseButtonFlags
-///                                                              left button
-/// if (event.* == .mouse_button_down and event.mouse_button_down.button == 1) {
-///     pressing = true;
-/// }
-///                                                              left button
-/// if (event.* == .mouse_button_up and event.mouse_button_up.button == 1) {
-///     pressing = false;
-/// }
-/// if (pressing) {
-///     std.debug.print("pressing\n", .{});
-/// } else {
-///     std.debug.print("not pressing\n", .{});
-/// }
+///     const mouse_button =
+///     if (event.* == .mouse_button_down) event.mouse_button_down.button else return;
+///     if (mouse_button.left) {
+///         std.debug.print("left click\n", .{});
+///     } else if (mouse_button.right) {
+///         std.debug.print("right click\n", .{});
+///     }
 /// ```
+/// ## Remarks
+/// Only one button can be set to true per event
 pub const MouseButton = struct {
     /// Common event information.
     common: Common,
@@ -472,15 +467,14 @@ pub const MouseButton = struct {
     /// The mouse instance id in relative mode, or null.
     which: ?mouse.ID,
     /// The mouse button index.
-    button: u8,
+    button: mouse.ButtonFlags, //this is the one!!!!
     /// true if the button is pressed.
     down: bool,
     /// 1 for single-click, 2 for double-click, etc.
     clicks: u8,
-    padding: u8,
-    /// X coordinate, relative to window
+    /// X coordinate, relative to window.
     x: f32,
-    /// Y coordinate, relative to window
+    /// Y coordinate, relative to window.
     y: f32,
 };
 
@@ -592,10 +586,15 @@ pub const Event = union(Type) {
                     .which = .{
                         .value = event.button.which,
                     },
-                    .button = event.button.button,
+                    .button = mouse.ButtonFlags{
+                        .left = event.button.button == C.SDL_BUTTON_LEFT,
+                        .middle = event.button.button == C.SDL_BUTTON_MIDDLE,
+                        .right = event.button.button == C.SDL_BUTTON_RIGHT,
+                        .side1 = event.button.button == C.SDL_BUTTON_X1,
+                        .side2 = event.button.button == C.SDL_BUTTON_X2,
+                    },
                     .down = event.button.down,
                     .clicks = event.button.clicks,
-                    .padding = event.button.padding,
                     .x = event.button.x,
                     .y = event.button.y,
                 },
@@ -607,10 +606,15 @@ pub const Event = union(Type) {
                     .which = .{
                         .value = event.button.which,
                     },
-                    .button = event.button.button,
+                    .button = mouse.ButtonFlags{
+                        .left = event.button.button == C.SDL_BUTTON_LEFT,
+                        .middle = event.button.button == C.SDL_BUTTON_MIDDLE,
+                        .right = event.button.button == C.SDL_BUTTON_RIGHT,
+                        .side1 = event.button.button == C.SDL_BUTTON_X1,
+                        .side2 = event.button.button == C.SDL_BUTTON_X2,
+                    },
                     .down = event.button.down,
                     .clicks = event.button.clicks,
-                    .padding = event.button.padding,
                     .x = event.button.x,
                     .y = event.button.y,
                 },
@@ -728,30 +732,46 @@ pub const Event = union(Type) {
                 .down = val.down,
                 .repeat = val.repeat,
             } },
-            .mouse_button_up => .{ .button = .{
-                .type = C.SDL_EVENT_MOUSE_BUTTON_UP,
-                .timestamp = event.mouse_button_up.common.timestamp,
-                .windowID = if (event.mouse_button_up.window_id) |id| id else 0,
-                .which = mouse.ID.toSdl(event.mouse_button_up.which),
-                .button = event.mouse_button_up.button,
-                .down = event.mouse_button_up.down,
-                .clicks = event.mouse_button_up.clicks,
-                .padding = event.mouse_button_up.padding,
-                .x = event.mouse_button_up.x,
-                .y = event.mouse_button_up.y,
-            } },
-            .mouse_button_down => .{ .button = .{
-                .type = C.SDL_EVENT_MOUSE_BUTTON_DOWN,
-                .timestamp = event.mouse_button_down.common.timestamp,
-                .windowID = if (event.mouse_button_down.window_id) |id| id else 0,
-                .which = mouse.ID.toSdl(event.mouse_button_down.which),
-                .button = event.mouse_button_down.button,
-                .down = event.mouse_button_down.down,
-                .clicks = event.mouse_button_down.clicks,
-                .padding = event.mouse_button_down.padding,
-                .x = event.mouse_button_down.x,
-                .y = event.mouse_button_down.y,
-            } },
+            .mouse_button_up => .{
+                .button = .{
+                    .type = C.SDL_EVENT_MOUSE_BUTTON_UP,
+                    .timestamp = event.mouse_button_up.common.timestamp,
+                    .windowID = if (event.mouse_button_up.window_id) |id| id else 0,
+                    .which = mouse.ID.toSdl(event.mouse_button_up.which),
+                    .button = finder: {
+                        inline for (std.meta.fields(mouse.ButtonFlags)) |field| {
+                            if (@field(event.mouse_button_up.button, field.name)) {
+                                break :finder 1;
+                            }
+                        }
+                        @panic("mouse button not have a match");
+                    },
+                    .down = event.mouse_button_up.down,
+                    .clicks = event.mouse_button_up.clicks,
+                    .x = event.mouse_button_up.x,
+                    .y = event.mouse_button_up.y,
+                },
+            },
+            .mouse_button_down => .{
+                .button = .{
+                    .type = C.SDL_EVENT_MOUSE_BUTTON_DOWN,
+                    .timestamp = event.mouse_button_down.common.timestamp,
+                    .windowID = if (event.mouse_button_down.window_id) |id| id else 0,
+                    .which = mouse.ID.toSdl(event.mouse_button_down.which),
+                    .button = finder: {
+                        inline for (std.meta.fields(mouse.ButtonFlags)) |field| {
+                            if (@field(event.mouse_button_down.button, field.name)) {
+                                break :finder 1;
+                            }
+                        }
+                        @panic("mouse button not have a match");
+                    },
+                    .down = event.mouse_button_down.down,
+                    .clicks = event.mouse_button_down.clicks,
+                    .x = event.mouse_button_down.x,
+                    .y = event.mouse_button_down.y,
+                },
+            },
             .padding => .{
                 .type = C.SDL_EVENT_ENUM_PADDING,
             },
