@@ -1637,7 +1637,7 @@ pub const Palette = struct {
 ///
 /// ## Version
 /// This struct is provided by zig-sdl3.
-pub const Pixel = struct {
+pub const Pixel = packed struct {
     value: u32,
 };
 
