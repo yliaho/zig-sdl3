@@ -352,6 +352,7 @@ pub const Display = packed struct {
     ) ![]DisplayMode {
         var count: c_int = undefined;
         const val = try errors.wrapCallCPtr([*c]c.SDL_DisplayMode, c.SDL_GetFullscreenDisplayModes(self.value, &count));
+        defer c.SDL_free(@ptrCast(val));
         var ret = try allocator.alloc(DisplayMode, @intCast(count));
         for (0..count) |ind| {
             ret[ind] = DisplayMode.fromSdl(val[ind].*);
