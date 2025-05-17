@@ -467,7 +467,7 @@ pub const MouseButton = struct {
     /// The mouse instance id in relative mode, or null.
     which: ?mouse.ID,
     /// The mouse button index.
-    button: mouse.ButtonFlags, //this is the one!!!!
+    button: mouse.ButtonFlags,
     /// true if the button is pressed.
     down: bool,
     /// 1 for single-click, 2 for double-click, etc.
@@ -583,16 +583,10 @@ pub const Event = union(Type) {
                 .mouse_button_down = .{
                     .common = Common.fromSdl(&event),
                     .window_id = if (event.button.windowID == 0) null else event.button.windowID,
-                    .which = .{
+                    .which = if (event.button.which == 0) null else .{
                         .value = event.button.which,
                     },
-                    .button = mouse.ButtonFlags{
-                        .left = event.button.button == C.SDL_BUTTON_LEFT,
-                        .middle = event.button.button == C.SDL_BUTTON_MIDDLE,
-                        .right = event.button.button == C.SDL_BUTTON_RIGHT,
-                        .side1 = event.button.button == C.SDL_BUTTON_X1,
-                        .side2 = event.button.button == C.SDL_BUTTON_X2,
-                    },
+                    .button = mouse.ButtonFlags.fromSdl(event.button.button),
                     .down = event.button.down,
                     .clicks = event.button.clicks,
                     .x = event.button.x,
@@ -603,16 +597,10 @@ pub const Event = union(Type) {
                 .mouse_button_up = .{
                     .common = Common.fromSdl(&event),
                     .window_id = if (event.button.windowID == 0) null else event.button.windowID,
-                    .which = .{
+                    .which = if (event.button.which == 0) null else .{
                         .value = event.button.which,
                     },
-                    .button = mouse.ButtonFlags{
-                        .left = event.button.button == C.SDL_BUTTON_LEFT,
-                        .middle = event.button.button == C.SDL_BUTTON_MIDDLE,
-                        .right = event.button.button == C.SDL_BUTTON_RIGHT,
-                        .side1 = event.button.button == C.SDL_BUTTON_X1,
-                        .side2 = event.button.button == C.SDL_BUTTON_X2,
-                    },
+                    .button = mouse.ButtonFlags.fromSdl(event.button.button),
                     .down = event.button.down,
                     .clicks = event.button.clicks,
                     .x = event.button.x,
@@ -732,44 +720,30 @@ pub const Event = union(Type) {
                 .down = val.down,
                 .repeat = val.repeat,
             } },
-            .mouse_button_up => .{
+            .mouse_button_up => |val| .{
                 .button = .{
                     .type = C.SDL_EVENT_MOUSE_BUTTON_UP,
-                    .timestamp = event.mouse_button_up.common.timestamp,
-                    .windowID = if (event.mouse_button_up.window_id) |id| id else 0,
-                    .which = mouse.ID.toSdl(event.mouse_button_up.which),
-                    .button = finder: {
-                        inline for (std.meta.fields(mouse.ButtonFlags), 1..) |field, idx| {
-                            if (@field(event.mouse_button_up.button, field.name)) {
-                                break :finder idx;
-                            }
-                        }
-                        @panic("mouse button not have a match");
-                    },
-                    .down = event.mouse_button_up.down,
-                    .clicks = event.mouse_button_up.clicks,
-                    .x = event.mouse_button_up.x,
-                    .y = event.mouse_button_up.y,
+                    .timestamp = val.common.timestamp,
+                    .windowID = if (val.window_id) |id| id else 0,
+                    .which = mouse.ID.toSdl(val.which),
+                    .button = @intCast(val.button.toSdl()),
+                    .down = val.down,
+                    .clicks = val.clicks,
+                    .x = val.x,
+                    .y = val.y,
                 },
             },
-            .mouse_button_down => .{
+            .mouse_button_down => |val| .{
                 .button = .{
                     .type = C.SDL_EVENT_MOUSE_BUTTON_DOWN,
-                    .timestamp = event.mouse_button_down.common.timestamp,
-                    .windowID = if (event.mouse_button_down.window_id) |id| id else 0,
-                    .which = mouse.ID.toSdl(event.mouse_button_down.which),
-                    .button = finder: {
-                        inline for (std.meta.fields(mouse.ButtonFlags), 1..) |field, idx| {
-                            if (@field(event.mouse_button_down.button, field.name)) {
-                                break :finder idx;
-                            }
-                        }
-                        @panic("mouse button not have a match");
-                    },
-                    .down = event.mouse_button_down.down,
-                    .clicks = event.mouse_button_down.clicks,
-                    .x = event.mouse_button_down.x,
-                    .y = event.mouse_button_down.y,
+                    .timestamp = val.common.timestamp,
+                    .windowID = if (val.window_id) |id| id else 0,
+                    .which = mouse.ID.toSdl(val.which),
+                    .button = @intCast(val.button.toSdl()),
+                    .down = val.down,
+                    .clicks = val.clicks,
+                    .x = val.x,
+                    .y = val.y,
                 },
             },
             .padding => .{
@@ -1335,6 +1309,8 @@ fn dummyFilter(
 
 // Test SDL events.
 test "Events" {
+    std.testing.refAllDeclsRecursive(@This());
+
     defer init.shutdown();
     try init.init(.{ .events = true });
     defer init.quit(.{ .events = true });
