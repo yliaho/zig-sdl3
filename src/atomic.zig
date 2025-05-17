@@ -1,13 +1,11 @@
-const c = @import("c.zig").C;
+const c = @import("c.zig").c;
 const std = @import("std");
-
-// TODO: DOCS!!!
 
 /// A type representing an atomic integer value.
 ///
 /// ## Remarks
-/// This can be used to manage a value that is synchronized across multiple CPUs without a race condition; when an app sets a value with SDL_SetAtomicInt all other threads,
-/// regardless of the CPU it is running on, will see that value when retrieved with SDL_GetAtomicInt, regardless of CPU caches, etc.
+/// This can be used to manage a value that is synchronized across multiple CPUs without a race condition; when an app sets a value with `atomic.Int.set()` all other threads,
+/// regardless of the CPU it is running on, will see that value when retrieved with `atomic.Int.get()`, regardless of CPU caches, etc.
 ///
 /// This is also useful for atomic compare-and-swap operations: a thread can change the value as long as its current value matches expectations.
 /// When done in a loop, one can guarantee data consistency across threads without a lock (but the usual warnings apply: if you don't know what you're doing,
@@ -219,7 +217,8 @@ pub const Spinlock = extern struct {
     /// Returns true if the lock succeeded, false if the lock is already held.
     ///
     /// ## Remarks
-    /// Please note that spinlocks are dangerous if you don't know what you're doing. Please be careful using any sort of spinlock!
+    /// Please note that spinlocks are dangerous if you don't know what you're doing.
+    /// Please be careful using any sort of spinlock!
     ///
     /// ## Thread Safety
     /// It is safe to call this function from any thread.
@@ -258,8 +257,8 @@ pub const Spinlock = extern struct {
 /// A type representing an atomic unsigned 32-bit value.
 ///
 /// ## Remarks
-/// This can be used to manage a value that is synchronized across multiple CPUs without a race condition; when an app sets a value with SDL_SetAtomicU32 all other threads,
-/// regardless of the CPU it is running on, will see that value when retrieved with SDL_GetAtomicU32, regardless of CPU caches, etc.
+/// This can be used to manage a value that is synchronized across multiple CPUs without a race condition; when an app sets a value with `atomic.U32.set()` all other threads,
+/// regardless of the CPU it is running on, will see that value when retrieved with `atomic.U32.get()`, regardless of CPU caches, etc.
 ///
 /// This is also useful for atomic compare-and-swap operations: a thread can change the value as long as its current value matches expectations.
 /// When done in a loop, one can guarantee data consistency across threads without a lock (but the usual warnings apply: if you don't know what you're doing,

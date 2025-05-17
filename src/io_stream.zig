@@ -565,7 +565,7 @@ pub const Stream = struct {
     ///
     /// ## Function Parameters
     /// * `self`: The stream to read all available data from.
-    /// * `close_io`: If true, close the stream before returning, even on error.
+    /// * `close_when_done`: If true, close the stream before returning, even on error.
     ///
     /// ## Return Value
     /// Returns the data.
@@ -581,13 +581,13 @@ pub const Stream = struct {
     /// This function is available since SDL 3.2.0.
     pub fn loadFile(
         self: Stream,
-        close_io: bool,
+        close_when_done: bool,
     ) ![:0]u8 {
         var len: usize = undefined;
         return @as([*:0]u8, @alignCast(@ptrCast(try errors.wrapNull(*anyopaque, c.SDL_LoadFile_IO(
             self.value,
             &len,
-            close_io,
+            close_when_done,
         )))))[0..len :0];
     }
 
@@ -1316,7 +1316,7 @@ pub const Stream = struct {
     /// ## Function Parameters
     /// * `self`: The stream to write all data to.
     /// * `data`: The data to be written.
-    /// * `close_io`: Close the stream before returning, even if an error occurs.
+    /// * `close_when_done`: Close the stream before returning, even if an error occurs.
     ///
     /// ## Thread Safety
     /// This function is not thread safe.
@@ -1326,13 +1326,13 @@ pub const Stream = struct {
     pub fn saveFile(
         self: Stream,
         data: []const u8,
-        close_io: bool,
+        close_when_done: bool,
     ) !void {
         return errors.wrapCallBool(c.SDL_SaveFile_IO(
             self.value,
             data.ptr,
             data.len,
-            close_io,
+            close_when_done,
         ));
     }
 

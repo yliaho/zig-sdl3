@@ -2040,38 +2040,38 @@ pub const Device = packed struct {
         );
     }
 
-    /// Call this to resume GPU operation on Xbox when you receive the `events.Type.will_enter_foreground` event.
-    ///
-    /// ## Function Parameters
-    /// * `self`: A GPU context.
-    ///
-    /// ## Remarks
-    /// When resuming, this function MUST be called before calling any other `gpu` functions.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn gdkResume(
-        self: Device,
-    ) void {
-        c.SDL_GDKResumeGPU(self.value);
-    }
+    // /// Call this to resume GPU operation on Xbox when you receive the `events.Type.will_enter_foreground` event.
+    // ///
+    // /// ## Function Parameters
+    // /// * `self`: A GPU context.
+    // ///
+    // /// ## Remarks
+    // /// When resuming, this function MUST be called before calling any other `gpu` functions.
+    // ///
+    // /// ## Version
+    // /// This function is available since SDL 3.2.0.
+    // pub fn gdkResume(
+    //     self: Device,
+    // ) void {
+    //     c.SDL_GDKResumeGPU(self.value);
+    // }
 
-    /// Call this to suspend GPU operation on Xbox when you receive the `events.Type.did_enter_background` event.
-    ///
-    /// ## Function Parameters
-    /// * `self`: A GPU context.
-    ///
-    /// ## Remarks
-    /// Do NOT call any `gpu` functions after calling this function!
-    /// This must also be called before calling `gpu.Device.gdkSuspendComplete()`.
-    ///
-    /// ## Version
-    /// This function is available since SDL 3.2.0.
-    pub fn gdkSuspend(
-        self: Device,
-    ) void {
-        c.SDL_GDKSuspendGPU(self.value);
-    }
+    // /// Call this to suspend GPU operation on Xbox when you receive the `events.Type.did_enter_background` event.
+    // ///
+    // /// ## Function Parameters
+    // /// * `self`: A GPU context.
+    // ///
+    // /// ## Remarks
+    // /// Do NOT call any `gpu` functions after calling this function!
+    // /// This must also be called before calling `gpu.Device.gdkSuspendComplete()`.
+    // ///
+    // /// ## Version
+    // /// This function is available since SDL 3.2.0.
+    // pub fn gdkSuspend(
+    //     self: Device,
+    // ) void {
+    //     c.SDL_GDKSuspendGPU(self.value);
+    // }
 
     /// Returns the name of the backend used to create this GPU context.
     ///
@@ -2118,7 +2118,7 @@ pub const Device = packed struct {
     ) ShaderFormatFlags {
         return ShaderFormatFlags.fromSdl(
             c.SDL_GetGPUShaderFormats(self.value),
-        );
+        ).?;
     }
 
     /// Obtains the texture format of the swapchain for the given window.
@@ -2233,7 +2233,7 @@ pub const Device = packed struct {
     pub fn queryFence(
         self: Device,
         fence: Fence,
-    ) void {
+    ) bool {
         return c.SDL_QueryGPUFence(
             self.value,
             fence.value,
@@ -4029,7 +4029,12 @@ pub const SwapchainComposition = enum(c_uint) {
 /// ## Version
 /// This struct is available since SDL 3.2.0.
 pub const Texture = packed struct {
-    value: *c.SDL_GPUTexture,
+    value: ?*c.SDL_GPUTexture,
+
+    // Size tests.
+    comptime {
+        std.debug.assert(@sizeOf(*c.SDL_GPUTexture) == @sizeOf(Texture));
+    }
 };
 
 /// A structure specifying the parameters of a texture.
@@ -4911,6 +4916,8 @@ pub fn supportsProperties(
 
 // Test the GPU.
 test "Gpu" {
+    std.testing.refAllDeclsRecursive(@This());
+
     _ = BufferBinding{
         .buffer = undefined,
         .offset = undefined,
