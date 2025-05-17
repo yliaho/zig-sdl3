@@ -5,7 +5,9 @@ A lightweight wrapper to zig-ify SDL3.
 
 > [!WARNING]
 > This is not production ready and currently in development!
+>
 > I'm hoping to be done soon, great progress has been made so far!
+>
 > See the [checklist](checklist.md) for more details on progress.
 
 # Documentation
@@ -27,7 +29,7 @@ zig fetch --save git+https://github.com/Gota7/zig-sdl3#master
 
 Then add zig-sdl3 as a dependency and import its modules and artifact in your `build.zig`:
 
-```sh
+```zig
 const sdl3 = b.dependency("sdl3", .{
     .target = target,
     .optimize = optimize,
@@ -37,7 +39,7 @@ const sdl3 = b.dependency("sdl3", .{
 ```
 Now add the modules and artifact to your target as you would normally:
 
-```sh
+```zig
 lib.root_module.addImport("sdl3", sdl3.module("sdl3"));
 ```
 
