@@ -1,4 +1,4 @@
-const C = @import("c.zig").C;
+const c = @import("c.zig").c;
 const errors = @import("errors.zig");
 const std = @import("std");
 
@@ -7,11 +7,11 @@ const std = @import("std");
 /// ## Version
 /// This struct is available since SDL 3.2.0.
 pub const Environment = packed struct {
-    value: *C.SDL_Environment,
+    value: *c.SDL_Environment,
 
     // Size tests.
     comptime {
-        std.debug.assert(@sizeOf(*C.SDL_Environment) == @sizeOf(Environment));
+        std.debug.assert(@sizeOf(*c.SDL_Environment) == @sizeOf(Environment));
     }
 };
 
@@ -30,7 +30,7 @@ fn sdlAlloc(ptr: *anyopaque, len: usize, alignment: std.mem.Alignment, ret_addr:
     _ = ptr;
     _ = alignment;
     _ = ret_addr;
-    const ret = C.SDL_malloc(len);
+    const ret = c.SDL_malloc(len);
     if (ret) |val| {
         return @as([*]u8, @alignCast(@ptrCast(val)));
     }
@@ -50,7 +50,7 @@ fn sdlRemap(ptr: *anyopaque, memory: []u8, alignment: std.mem.Alignment, new_len
     _ = ptr;
     _ = alignment;
     _ = ret_addr;
-    const ret = C.SDL_realloc(memory.ptr, new_len);
+    const ret = c.SDL_realloc(memory.ptr, new_len);
     if (ret) |val| {
         return @as([*]u8, @alignCast(@ptrCast(val)));
     }
@@ -61,7 +61,7 @@ fn sdlFree(ptr: *anyopaque, memory: []u8, alignment: std.mem.Alignment, ret_addr
     _ = ptr;
     _ = alignment;
     _ = ret_addr;
-    C.SDL_free(memory.ptr);
+    c.SDL_free(memory.ptr);
 }
 
 /// A callback used to implement `stdinc.calloc()`.
@@ -154,9 +154,9 @@ pub fn free(mem: anytype) void {
     switch (@typeInfo(@TypeOf(mem))) {
         .pointer => |pt| {
             if (pt.size == .slice) {
-                C.SDL_free(@ptrCast(mem.ptr));
+                c.SDL_free(@ptrCast(mem.ptr));
             } else {
-                C.SDL_free(@ptrCast(mem));
+                c.SDL_free(@ptrCast(mem));
             }
         },
         else => @compileError("Invalid argument to SDL free"),
@@ -183,7 +183,7 @@ pub fn getOriginalMemoryFunctions() struct { malloc: MallocFunc, calloc: CallocF
     var calloc_fn: ?CallocFunc = undefined;
     var realloc_fn: ?ReallocFunc = undefined;
     var free_fn: ?FreeFunc = undefined;
-    C.SDL_GetOriginalMemoryFunctions(
+    c.SDL_GetOriginalMemoryFunctions(
         &malloc_fn,
         &calloc_fn,
         &realloc_fn,
@@ -231,7 +231,7 @@ pub fn setMemoryFunctions(
     realloc_fn: ReallocFunc,
     free_fn: FreeFunc,
 ) !void {
-    const ret = C.SDL_SetMemoryFunctions(
+    const ret = c.SDL_SetMemoryFunctions(
         malloc_fn,
         calloc_fn,
         realloc_fn,

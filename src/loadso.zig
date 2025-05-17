@@ -1,4 +1,4 @@
-const C = @import("c.zig").C;
+const c = @import("c.zig").c;
 const errors = @import("errors.zig");
 const std = @import("std");
 
@@ -7,7 +7,7 @@ const std = @import("std");
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
 pub const SharedObject = packed struct {
-    value: *C.SDL_SharedObject,
+    value: *c.SDL_SharedObject,
 
     /// Dynamically load a shared object.
     ///
@@ -25,10 +25,10 @@ pub const SharedObject = packed struct {
     pub fn load(
         name: [:0]const u8,
     ) !SharedObject {
-        const ret = C.SDL_LoadObject(
+        const ret = c.SDL_LoadObject(
             name.ptr,
         );
-        return SharedObject{ .value = try errors.wrapNull(*C.SDL_SharedObject, ret) };
+        return SharedObject{ .value = try errors.wrapNull(*c.SDL_SharedObject, ret) };
     }
 
     /// Look up the address of the named function in a shared object.
@@ -69,7 +69,7 @@ pub const SharedObject = packed struct {
         self: SharedObject,
         name: [:0]const u8,
     ) !*const anyopaque {
-        const ret = C.SDL_LoadFunction(
+        const ret = c.SDL_LoadFunction(
             self.value,
             name.ptr,
         );
@@ -92,7 +92,7 @@ pub const SharedObject = packed struct {
     pub fn unload(
         self: SharedObject,
     ) void {
-        C.SDL_UnloadObject(
+        c.SDL_UnloadObject(
             self.value,
         );
     }

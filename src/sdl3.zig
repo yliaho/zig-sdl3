@@ -136,7 +136,7 @@ pub const blend_mode = @import("blend_mode.zig");
 ///
 /// Under most circumstances, you will never need to use this.
 /// This should only really be used for functions not yet implemented in zig-sdl3.
-pub const c = @import("c.zig").C;
+pub const c = @import("c.zig").c;
 
 /// CPU feature detection for SDL.
 ///

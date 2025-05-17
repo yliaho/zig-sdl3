@@ -1,37 +1,37 @@
 // This file was generated using `zig build bindings`. Do not manually edit!
 
-const C = @import("c.zig").C;
+const c = @import("c.zig").c;
 const std = @import("std");
 
 /// The access pattern allowed for a texture.
 pub const TextureAccess = enum(c_uint) {
     /// Changes rarely, not lockable.
-    Static = C.SDL_TEXTUREACCESS_STATIC,
+    Static = c.SDL_TEXTUREACCESS_STATIC,
     /// Changes frequently, lockable.
-    Streaming = C.SDL_TEXTUREACCESS_STREAMING,
+    Streaming = c.SDL_TEXTUREACCESS_STREAMING,
     /// Texture can be used as a render target.
-    Target = C.SDL_TEXTUREACCESS_TARGET,
+    Target = c.SDL_TEXTUREACCESS_TARGET,
 };
 
 /// How the logical size is mapped to the output.
 pub const LogicalPresentation = enum(c_uint) {
     /// The rendered content is stretched to the output resolution.
-    Stretch = C.SDL_LOGICAL_PRESENTATION_STRETCH,
+    Stretch = c.SDL_LOGICAL_PRESENTATION_STRETCH,
     /// The rendered content is fit to the largest dimension and the other dimension is letterboxed with black bars.
-    LetterBox = C.SDL_LOGICAL_PRESENTATION_LETTERBOX,
+    LetterBox = c.SDL_LOGICAL_PRESENTATION_LETTERBOX,
     /// The rendered content is fit to the smallest dimension and the other dimension extends beyond the output bounds.
-    Overscan = C.SDL_LOGICAL_PRESENTATION_OVERSCAN,
+    Overscan = c.SDL_LOGICAL_PRESENTATION_OVERSCAN,
     /// The rendered content is scaled up by integer multiples to fit the output resolution.
-    IntegerScale = C.SDL_LOGICAL_PRESENTATION_INTEGER_SCALE,
+    IntegerScale = c.SDL_LOGICAL_PRESENTATION_INTEGER_SCALE,
 };
 
 /// A structure representing rendering state.
 pub const Renderer = struct {
-    value: *C.SDL_Renderer,
+    value: *c.SDL_Renderer,
 
     /// Get the number of 2D rendering drivers available for the current display.
     pub fn numDrivers() usize {
-        const ret = C.SDL_GetNumRenderDrivers();
+        const ret = c.SDL_GetNumRenderDrivers();
         return @intCast(ret);
     }
 
@@ -39,7 +39,7 @@ pub const Renderer = struct {
     pub fn getDriverName(
         index: usize,
     ) ?[:0]const u8 {
-        const ret = C.SDL_GetRenderDriver(
+        const ret = c.SDL_GetRenderDriver(
             @intCast(index),
         );
         if (ret == null)
@@ -54,9 +54,9 @@ pub const Renderer = struct {
         height: usize,
         window_flags: video.WindowFlags,
     ) !struct { window: video.Window, renderer: Renderer } {
-        var window: ?*C.SDL_Window = undefined;
-        var renderer: ?*C.SDL_Renderer = undefined;
-        const ret = C.SDL_CreateWindowAndRenderer(
+        var window: ?*c.SDL_Window = undefined;
+        var renderer: ?*c.SDL_Renderer = undefined;
+        const ret = c.SDL_CreateWindowAndRenderer(
             title,
             @intCast(width),
             @intCast(height),
@@ -74,7 +74,7 @@ pub const Renderer = struct {
         window: video.Window,
         renderer_name: ?[:0]const u8,
     ) !Renderer {
-        const ret = C.SDL_CreateRenderer(
+        const ret = c.SDL_CreateRenderer(
             window.value,
             if (renderer_name) |str_capture| str_capture.ptr else null,
         );
@@ -87,7 +87,7 @@ pub const Renderer = struct {
     pub fn initWithProperties(
         props: properties.Group,
     ) !Renderer {
-        const ret = C.SDL_CreateRendererWithProperties(
+        const ret = c.SDL_CreateRendererWithProperties(
             props.value,
         );
         if (ret == null)
@@ -99,7 +99,7 @@ pub const Renderer = struct {
     pub fn initSoftwareRenderer(
         target_surface: surface.Surface,
     ) !Renderer {
-        const ret = C.SDL_CreateSoftwareRenderer(
+        const ret = c.SDL_CreateSoftwareRenderer(
             target_surface.value,
         );
         if (ret == null)
@@ -111,7 +111,7 @@ pub const Renderer = struct {
     pub fn getRenderer(
         window: video.Window,
     ) !Renderer {
-        const ret = C.SDL_GetRenderer(
+        const ret = c.SDL_GetRenderer(
             window.value,
         );
         if (ret == null)
@@ -123,7 +123,7 @@ pub const Renderer = struct {
     pub fn getWindow(
         self: Renderer,
     ) !video.Window {
-        const ret = C.SDL_GetRenderWindow(
+        const ret = c.SDL_GetRenderWindow(
             self.value,
         );
         if (ret == null)
@@ -135,7 +135,7 @@ pub const Renderer = struct {
     pub fn getName(
         self: Renderer,
     ) ![:0]const u8 {
-        const ret = C.SDL_GetRendererName(
+        const ret = c.SDL_GetRendererName(
             self.value,
         );
         if (ret == null)
@@ -147,7 +147,7 @@ pub const Renderer = struct {
     pub fn getProperties(
         self: Renderer,
     ) ![]properties.Group {
-        const ret = C.SDL_GetRendererProperties(
+        const ret = c.SDL_GetRendererProperties(
             self.value,
         );
         if (ret == 0)
@@ -161,7 +161,7 @@ pub const Renderer = struct {
     ) !struct { width: usize, height: usize } {
         var w: c_int = undefined;
         var h: c_int = undefined;
-        const ret = C.SDL_GetRenderOutputSize(
+        const ret = c.SDL_GetRenderOutputSize(
             self.value,
             &w,
             &h,
@@ -177,7 +177,7 @@ pub const Renderer = struct {
     ) !struct { width: usize, height: usize } {
         var w: c_int = undefined;
         var h: c_int = undefined;
-        const ret = C.SDL_GetCurrentRenderOutputSize(
+        const ret = c.SDL_GetCurrentRenderOutputSize(
             self.value,
             &w,
             &h,
@@ -195,7 +195,7 @@ pub const Renderer = struct {
         width: usize,
         height: usize,
     ) !Texture {
-        const ret = C.SDL_CreateTexture(
+        const ret = c.SDL_CreateTexture(
             self.value,
             format.value,
             @intFromEnum(texture_access),
@@ -212,7 +212,7 @@ pub const Renderer = struct {
         self: Renderer,
         surface_to_copy: surface.Surface,
     ) !Texture {
-        const ret = C.SDL_CreateTextureFromSurface(
+        const ret = c.SDL_CreateTextureFromSurface(
             self.value,
             surface_to_copy.value,
         );
@@ -226,7 +226,7 @@ pub const Renderer = struct {
         self: Renderer,
         props: properties.Group,
     ) !Texture {
-        const ret = C.SDL_CreateTextureWithProperties(
+        const ret = c.SDL_CreateTextureWithProperties(
             self.value,
             props.value,
         );
@@ -240,7 +240,7 @@ pub const Renderer = struct {
         self: Renderer,
         target: ?Texture,
     ) !void {
-        const ret = C.SDL_SetRenderTarget(
+        const ret = c.SDL_SetRenderTarget(
             self.value,
             if (target) |target_val| target_val.value else null,
         );
@@ -252,7 +252,7 @@ pub const Renderer = struct {
     pub fn getTarget(
         self: Renderer,
     ) ?Texture {
-        const ret = C.SDL_GetRenderTarget(
+        const ret = c.SDL_GetRenderTarget(
             self.value,
         );
         if (ret == null)
@@ -267,11 +267,11 @@ pub const Renderer = struct {
         height: usize,
         presentation_mode: ?LogicalPresentation,
     ) !void {
-        const ret = C.SDL_SetRenderLogicalPresentation(
+        const ret = c.SDL_SetRenderLogicalPresentation(
             self.value,
             @intCast(width),
             @intCast(height),
-            if (presentation_mode) |val| @intFromEnum(val) else C.SDL_LOGICAL_PRESENTATION_DISABLED,
+            if (presentation_mode) |val| @intFromEnum(val) else c.SDL_LOGICAL_PRESENTATION_DISABLED,
         );
         if (!ret)
             return error.SdlError;
@@ -283,8 +283,8 @@ pub const Renderer = struct {
     ) !struct { width: usize, height: usize, presentation_mode: ?LogicalPresentation } {
         var w: c_int = undefined;
         var h: c_int = undefined;
-        var presentation_mode: C.SDL_RendererLogicalPresentation = undefined;
-        const ret = C.SDL_GetRenderLogicalPresentation(
+        var presentation_mode: c.SDL_RendererLogicalPresentation = undefined;
+        const ret = c.SDL_GetRenderLogicalPresentation(
             self.value,
             &w,
             &h,
@@ -292,15 +292,15 @@ pub const Renderer = struct {
         );
         if (!ret)
             return error.SdlError;
-        return .{ .width = @intCast(w), .height = @intCast(h), .presentation_mode = if (presentation_mode == C.SDL_LOGICAL_PRESENTATION_DISABLED) null else @enumFromInt(presentation_mode) };
+        return .{ .width = @intCast(w), .height = @intCast(h), .presentation_mode = if (presentation_mode == c.SDL_LOGICAL_PRESENTATION_DISABLED) null else @enumFromInt(presentation_mode) };
     }
 
     /// Get the final presentation rectangle for rendering.
     pub fn getLogicalPresentationRect(
         self: Renderer,
     ) !rect.FRect {
-        var presentation_rect: C.SDL_FRect = undefined;
-        const ret = C.SDL_GetRenderLogicalPresentationRect(
+        var presentation_rect: c.SDL_FRect = undefined;
+        const ret = c.SDL_GetRenderLogicalPresentationRect(
             self.value,
             &presentation_rect,
         );
@@ -317,7 +317,7 @@ pub const Renderer = struct {
     ) !struct { x: f32, y: f32 } {
         var render_x: f32 = undefined;
         var render_y: f32 = undefined;
-        const ret = C.SDL_RenderCoordinatesFromWindow(
+        const ret = c.SDL_RenderCoordinatesFromWindow(
             self.value,
             @floatCast(x),
             @floatCast(y),
@@ -337,7 +337,7 @@ pub const Renderer = struct {
     ) !struct { x: f32, y: f32 } {
         var window_x: f32 = undefined;
         var window_y: f32 = undefined;
-        const ret = C.SDL_RenderCoordinatesToWindow(
+        const ret = c.SDL_RenderCoordinatesToWindow(
             self.value,
             @floatCast(x),
             @floatCast(y),
@@ -354,8 +354,8 @@ pub const Renderer = struct {
         self: Renderer,
         viewport: ?rect.IRect,
     ) !void {
-        const viewport_sdl: ?C.SDL_Rect = if (viewport == null) null else viewport.?.toSdl();
-        const ret = C.SDL_SetRenderViewport(
+        const viewport_sdl: ?c.SDL_Rect = if (viewport == null) null else viewport.?.toSdl();
+        const ret = c.SDL_SetRenderViewport(
             self.value,
             if (viewport_sdl == null) null else &(viewport_sdl.?),
         );
@@ -367,8 +367,8 @@ pub const Renderer = struct {
     pub fn getViewport(
         self: Renderer,
     ) ?rect.Rect {
-        var viewport: C.SDL_Rect = undefined;
-        const ret = C.SDL_GetRenderViewport(
+        var viewport: c.SDL_Rect = undefined;
+        const ret = c.SDL_GetRenderViewport(
             self.value,
             &viewport,
         );
@@ -381,7 +381,7 @@ pub const Renderer = struct {
     pub fn viewportSet(
         self: Renderer,
     ) bool {
-        const ret = C.SDL_RenderViewportSet(
+        const ret = c.SDL_RenderViewportSet(
             self.value,
         );
         return ret;
@@ -391,8 +391,8 @@ pub const Renderer = struct {
     pub fn getSafeArea(
         self: Renderer,
     ) ?rect.Rect {
-        var area: C.SDL_Rect = undefined;
-        const ret = C.SDL_GetRenderSafeArea(
+        var area: c.SDL_Rect = undefined;
+        const ret = c.SDL_GetRenderSafeArea(
             self.value,
             &area,
         );
@@ -406,8 +406,8 @@ pub const Renderer = struct {
         self: Renderer,
         clipping: ?rect.IRect,
     ) !void {
-        const clipping_sdl: ?C.SDL_Rect = if (clipping == null) null else clipping.?.toSdl();
-        const ret = C.SDL_SetRenderClipRect(
+        const clipping_sdl: ?c.SDL_Rect = if (clipping == null) null else clipping.?.toSdl();
+        const ret = c.SDL_SetRenderClipRect(
             self.value,
             if (clipping_sdl == null) null else &(clipping_sdl.?),
         );
@@ -419,8 +419,8 @@ pub const Renderer = struct {
     pub fn getClipRect(
         self: Renderer,
     ) ?rect.Rect {
-        var clipping: C.SDL_Rect = undefined;
-        const ret = C.SDL_GetRenderClipRect(
+        var clipping: c.SDL_Rect = undefined;
+        const ret = c.SDL_GetRenderClipRect(
             self.value,
             &clipping,
         );
@@ -435,7 +435,7 @@ pub const Renderer = struct {
     pub fn clipEnabled(
         self: Renderer,
     ) bool {
-        const ret = C.SDL_RenderClipEnabled(
+        const ret = c.SDL_RenderClipEnabled(
             self.value,
         );
         return ret;
@@ -447,7 +447,7 @@ pub const Renderer = struct {
         x: f32,
         y: f32,
     ) !void {
-        const ret = C.SDL_SetRenderScale(
+        const ret = c.SDL_SetRenderScale(
             self.value,
             @floatCast(x),
             @floatCast(y),
@@ -462,7 +462,7 @@ pub const Renderer = struct {
     ) !struct { x: f32, y: f32 } {
         var x: f32 = undefined;
         var y: f32 = undefined;
-        const ret = C.SDL_GetRenderScale(
+        const ret = c.SDL_GetRenderScale(
             self.value,
             &x,
             &y,
@@ -477,7 +477,7 @@ pub const Renderer = struct {
         self: Renderer,
         color: pixels.Color,
     ) !void {
-        const ret = C.SDL_SetRenderDrawColor(
+        const ret = c.SDL_SetRenderDrawColor(
             self.value,
             color.r,
             color.g,
@@ -493,7 +493,7 @@ pub const Renderer = struct {
         self: Renderer,
         color: pixels.FColor,
     ) !void {
-        const ret = C.SDL_SetRenderDrawColorFloat(
+        const ret = c.SDL_SetRenderDrawColorFloat(
             self.value,
             color.r,
             color.g,
@@ -512,7 +512,7 @@ pub const Renderer = struct {
         var g: u8 = undefined;
         var b: u8 = undefined;
         var a: u8 = undefined;
-        const ret = C.SDL_GetRenderDrawColor(
+        const ret = c.SDL_GetRenderDrawColor(
             self.value,
             &r,
             &g,
@@ -532,7 +532,7 @@ pub const Renderer = struct {
         var g: f32 = undefined;
         var b: f32 = undefined;
         var a: f32 = undefined;
-        const ret = C.SDL_GetRenderDrawColorFloat(
+        const ret = c.SDL_GetRenderDrawColorFloat(
             self.value,
             &r,
             &g,
@@ -549,7 +549,7 @@ pub const Renderer = struct {
         self: Renderer,
         scale: f32,
     ) !void {
-        const ret = C.SDL_SetRenderColorScale(
+        const ret = c.SDL_SetRenderColorScale(
             self.value,
             @floatCast(scale),
         );
@@ -562,7 +562,7 @@ pub const Renderer = struct {
         self: Renderer,
     ) !f32 {
         var scale: f32 = undefined;
-        const ret = C.SDL_GetRenderColorScale(
+        const ret = c.SDL_GetRenderColorScale(
             self.value,
             &scale,
         );
@@ -576,9 +576,9 @@ pub const Renderer = struct {
         self: Renderer,
         mode: ?blend_mode.Mode,
     ) !void {
-        const ret = C.SDL_SetRenderDrawBlendMode(
+        const ret = c.SDL_SetRenderDrawBlendMode(
             self.value,
-            if (mode) |mode_val| mode_val.value else C.SDL_BLENDMODE_NONE,
+            if (mode) |mode_val| mode_val.value else c.SDL_BLENDMODE_NONE,
         );
         if (!ret)
             return error.SdlError;
@@ -588,14 +588,14 @@ pub const Renderer = struct {
     pub fn getDrawBlendMode(
         self: Renderer,
     ) !?blend_mode.Mode {
-        var mode: C.SDL_BlendMode = undefined;
-        const ret = C.SDL_GetRenderDrawBlendMode(
+        var mode: c.SDL_BlendMode = undefined;
+        const ret = c.SDL_GetRenderDrawBlendMode(
             self.value,
             &mode,
         );
         if (!ret)
             return error.SdlError;
-        if (mode == C.SDL_BLENDMODE_NONE)
+        if (mode == c.SDL_BLENDMODE_NONE)
             return null;
         return .{ .value = mode };
     }
@@ -604,7 +604,7 @@ pub const Renderer = struct {
     pub fn clear(
         self: Renderer,
     ) !void {
-        const ret = C.SDL_RenderClear(
+        const ret = c.SDL_RenderClear(
             self.value,
         );
         if (!ret)
@@ -616,7 +616,7 @@ pub const Renderer = struct {
         self: Renderer,
         p1: rect.FPoint,
     ) !void {
-        const ret = C.SDL_RenderPoint(
+        const ret = c.SDL_RenderPoint(
             self.value,
             p1.x,
             p1.y,
@@ -630,7 +630,7 @@ pub const Renderer = struct {
         self: Renderer,
         points: []const rect.FPoint,
     ) !void {
-        const ret = C.SDL_RenderPoints(
+        const ret = c.SDL_RenderPoints(
             self.value,
             @ptrCast(points.ptr),
             @intCast(points.len),
@@ -645,7 +645,7 @@ pub const Renderer = struct {
         p1: rect.FPoint,
         p2: rect.FPoint,
     ) !void {
-        const ret = C.SDL_RenderLine(
+        const ret = c.SDL_RenderLine(
             self.value,
             p1.x,
             p1.y,
@@ -661,7 +661,7 @@ pub const Renderer = struct {
         self: Renderer,
         points: []const rect.FPoint,
     ) !void {
-        const ret = C.SDL_RenderLines(
+        const ret = c.SDL_RenderLines(
             self.value,
             @ptrCast(points.ptr),
             @intCast(points.len),
@@ -675,8 +675,8 @@ pub const Renderer = struct {
         self: Renderer,
         dst: ?rect.FRect,
     ) !void {
-        const dst_sdl: ?C.SDL_FRect = if (dst == null) null else dst.?.toSdl();
-        const ret = C.SDL_RenderRect(
+        const dst_sdl: ?c.SDL_FRect = if (dst == null) null else dst.?.toSdl();
+        const ret = c.SDL_RenderRect(
             self.value,
             if (dst_sdl == null) null else &(dst_sdl.?),
         );
@@ -689,7 +689,7 @@ pub const Renderer = struct {
         self: Renderer,
         rects: []const rect.FRect,
     ) !void {
-        const ret = C.SDL_RenderRects(
+        const ret = c.SDL_RenderRects(
             self.value,
             @ptrCast(rects.ptr),
             @intCast(rects.len),
@@ -703,8 +703,8 @@ pub const Renderer = struct {
         self: Renderer,
         dst: ?rect.FRect,
     ) !void {
-        const dst_sdl: ?C.SDL_FRect = if (dst == null) null else dst.?.toSdl();
-        const ret = C.SDL_RenderFillRect(
+        const dst_sdl: ?c.SDL_FRect = if (dst == null) null else dst.?.toSdl();
+        const ret = c.SDL_RenderFillRect(
             self.value,
             if (dst_sdl == null) null else &(dst_sdl.?),
         );
@@ -717,7 +717,7 @@ pub const Renderer = struct {
         self: Renderer,
         rects: []const rect.FRect,
     ) !void {
-        const ret = C.SDL_RenderFillRects(
+        const ret = c.SDL_RenderFillRects(
             self.value,
             @ptrCast(rects.ptr),
             @intCast(rects.len),
@@ -733,9 +733,9 @@ pub const Renderer = struct {
         src_rect: ?rect.FRect,
         dst_rect: ?rect.FRect,
     ) !void {
-        const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
-        const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
-        const ret = C.SDL_RenderTexture(
+        const src_rect_sdl: ?c.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+        const dst_rect_sdl: ?c.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+        const ret = c.SDL_RenderTexture(
             self.value,
             texture.value,
             if (src_rect_sdl == null) null else &(src_rect_sdl.?),
@@ -755,17 +755,17 @@ pub const Renderer = struct {
         center: ?rect.FPoint,
         flip_mode: ?surface.FlipMode,
     ) !void {
-        const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
-        const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
-        const center_sdl: ?C.SDL_FPoint = if (center == null) null else center.?.toSdl();
-        const ret = C.SDL_RenderTextureRotated(
+        const src_rect_sdl: ?c.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+        const dst_rect_sdl: ?c.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+        const center_sdl: ?c.SDL_FPoint = if (center == null) null else center.?.toSdl();
+        const ret = c.SDL_RenderTextureRotated(
             self.value,
             texture.value,
             if (src_rect_sdl == null) null else &(src_rect_sdl.?),
             if (dst_rect_sdl == null) null else &(dst_rect_sdl.?),
             @floatCast(angle),
             if (center_sdl == null) null else &(center_sdl.?),
-            if (flip_mode) |val| @intFromEnum(val) else C.SDL_FLIP_NONE,
+            if (flip_mode) |val| @intFromEnum(val) else c.SDL_FLIP_NONE,
         );
         if (!ret)
             return error.SdlError;
@@ -779,9 +779,9 @@ pub const Renderer = struct {
         scale: f32,
         dst_rect: ?rect.FRect,
     ) !void {
-        const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
-        const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
-        const ret = C.SDL_RenderTextureTiled(
+        const src_rect_sdl: ?c.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+        const dst_rect_sdl: ?c.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+        const ret = c.SDL_RenderTextureTiled(
             self.value,
             texture.value,
             if (src_rect_sdl == null) null else &(src_rect_sdl.?),
@@ -804,9 +804,9 @@ pub const Renderer = struct {
         scale: f32,
         dst_rect: ?rect.FRect,
     ) !void {
-        const src_rect_sdl: ?C.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
-        const dst_rect_sdl: ?C.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
-        const ret = C.SDL_RenderTexture9Grid(
+        const src_rect_sdl: ?c.SDL_FRect = if (src_rect == null) null else src_rect.?.toSdl();
+        const dst_rect_sdl: ?c.SDL_FRect = if (dst_rect == null) null else dst_rect.?.toSdl();
+        const ret = c.SDL_RenderTexture9Grid(
             self.value,
             texture.value,
             if (src_rect_sdl == null) null else &(src_rect_sdl.?),
@@ -830,7 +830,7 @@ pub const Renderer = struct {
         indices: ?[*]const c_int,
         num_indices: usize,
     ) !void {
-        const ret = C.SDL_RenderGeometry(
+        const ret = c.SDL_RenderGeometry(
             self.value,
             if (texture) |texture_val| texture_val.value else null,
             vertices,
@@ -857,7 +857,7 @@ pub const Renderer = struct {
         num_indices: usize,
         bytes_per_index: usize,
     ) !void {
-        const ret = C.SDL_RenderGeometryRaw(
+        const ret = c.SDL_RenderGeometryRaw(
             self.value,
             if (texture) |texture_val| texture_val.value else null,
             xy_positions,
@@ -880,8 +880,8 @@ pub const Renderer = struct {
         self: Renderer,
         capture_area: ?rect.IRect,
     ) !surface.Surface {
-        const capture_area_sdl: ?C.SDL_Rect = if (capture_area == null) null else capture_area.?.toSdl();
-        const ret = C.SDL_RenderReadPixels(
+        const capture_area_sdl: ?c.SDL_Rect = if (capture_area == null) null else capture_area.?.toSdl();
+        const ret = c.SDL_RenderReadPixels(
             self.value,
             if (capture_area_sdl == null) null else &(capture_area_sdl.?),
         );
@@ -894,7 +894,7 @@ pub const Renderer = struct {
     pub fn present(
         self: Renderer,
     ) !void {
-        const ret = C.SDL_RenderPresent(
+        const ret = c.SDL_RenderPresent(
             self.value,
         );
         if (!ret)
@@ -905,7 +905,7 @@ pub const Renderer = struct {
     pub fn deinit(
         self: Renderer,
     ) void {
-        const ret = C.SDL_DestroyRenderer(
+        const ret = c.SDL_DestroyRenderer(
             self.value,
         );
         _ = ret;
@@ -915,7 +915,7 @@ pub const Renderer = struct {
     pub fn flush(
         self: Renderer,
     ) !void {
-        const ret = C.SDL_FlushRenderer(
+        const ret = c.SDL_FlushRenderer(
             self.value,
         );
         if (!ret)
@@ -926,7 +926,7 @@ pub const Renderer = struct {
     pub fn getMetalLayer(
         self: Renderer,
     ) ?*anyopaque {
-        const ret = C.SDL_GetRenderMetalLayer(
+        const ret = c.SDL_GetRenderMetalLayer(
             self.value,
         );
         return ret;
@@ -936,7 +936,7 @@ pub const Renderer = struct {
     pub fn getMetalCommandEncoder(
         self: Renderer,
     ) ?*anyopaque {
-        const ret = C.SDL_GetRenderMetalCommandEncoder(
+        const ret = c.SDL_GetRenderMetalCommandEncoder(
             self.value,
         );
         return ret;
@@ -949,7 +949,7 @@ pub const Renderer = struct {
         wait_semaphore: i64,
         signal_semaphore: i64,
     ) !void {
-        const ret = C.SDL_AddVulkanRenderSemaphores(
+        const ret = c.SDL_AddVulkanRenderSemaphores(
             self.value,
             @intCast(wait_stage_mask),
             @intCast(wait_semaphore),
@@ -964,7 +964,7 @@ pub const Renderer = struct {
         self: Renderer,
         vsync: ?VSync,
     ) !void {
-        const ret = C.SDL_SetRenderVSync(self.value, VSync.toSdl(vsync));
+        const ret = c.SDL_SetRenderVSync(self.value, VSync.toSdl(vsync));
         if (!ret)
             return error.SdlError;
     }
@@ -974,7 +974,7 @@ pub const Renderer = struct {
         self: Renderer,
     ) !?VSync {
         var vsync: c_int = undefined;
-        const ret = C.SDL_GetRenderVSync(self.value, &vsync);
+        const ret = c.SDL_GetRenderVSync(self.value, &vsync);
         if (!ret)
             return error.SdlError;
         return VSync.fromSdl(vsync);
@@ -983,13 +983,13 @@ pub const Renderer = struct {
 
 /// An efficient driver-specific representation of pixel data.
 pub const Texture = struct {
-    value: *C.SDL_Texture,
+    value: *c.SDL_Texture,
 
     /// Get the properties associated with a texture.
     pub fn getProperties(
         self: Texture,
     ) !properties.Group {
-        const ret = C.SDL_GetTextureProperties(
+        const ret = c.SDL_GetTextureProperties(
             self.value,
         );
         if (ret == 0)
@@ -1001,7 +1001,7 @@ pub const Texture = struct {
     pub fn getRenderer(
         self: Texture,
     ) !Renderer {
-        const ret = C.SDL_GetRendererFromTexture(
+        const ret = c.SDL_GetRendererFromTexture(
             self.value,
         );
         if (ret == null)
@@ -1015,7 +1015,7 @@ pub const Texture = struct {
     ) !struct { width: f32, height: f32 } {
         var w: f32 = undefined;
         var h: f32 = undefined;
-        const ret = C.SDL_GetTextureSize(
+        const ret = c.SDL_GetTextureSize(
             self.value,
             &w,
             &h,
@@ -1032,7 +1032,7 @@ pub const Texture = struct {
         g: u8,
         b: u8,
     ) !void {
-        const ret = C.SDL_SetTextureColorMod(
+        const ret = c.SDL_SetTextureColorMod(
             self.value,
             @intCast(r),
             @intCast(g),
@@ -1049,7 +1049,7 @@ pub const Texture = struct {
         g: f32,
         b: f32,
     ) !void {
-        const ret = C.SDL_SetTextureColorModFloat(
+        const ret = c.SDL_SetTextureColorModFloat(
             self.value,
             @floatCast(r),
             @floatCast(g),
@@ -1066,7 +1066,7 @@ pub const Texture = struct {
         var r: u8 = undefined;
         var g: u8 = undefined;
         var b: u8 = undefined;
-        const ret = C.SDL_GetTextureColorMod(
+        const ret = c.SDL_GetTextureColorMod(
             self.value,
             &r,
             &g,
@@ -1084,7 +1084,7 @@ pub const Texture = struct {
         var r: f32 = undefined;
         var g: f32 = undefined;
         var b: f32 = undefined;
-        const ret = C.SDL_GetTextureColorModFloat(
+        const ret = c.SDL_GetTextureColorModFloat(
             self.value,
             &r,
             &g,
@@ -1100,7 +1100,7 @@ pub const Texture = struct {
         self: Texture,
         alpha: u8,
     ) !void {
-        const ret = C.SDL_SetTextureAlphaMod(
+        const ret = c.SDL_SetTextureAlphaMod(
             self.value,
             @intCast(alpha),
         );
@@ -1113,7 +1113,7 @@ pub const Texture = struct {
         self: Texture,
         alpha: f32,
     ) !void {
-        const ret = C.SDL_SetTextureAlphaModFloat(
+        const ret = c.SDL_SetTextureAlphaModFloat(
             self.value,
             @floatCast(alpha),
         );
@@ -1126,7 +1126,7 @@ pub const Texture = struct {
         self: Texture,
     ) !u8 {
         var alpha: u8 = undefined;
-        const ret = C.SDL_GetTextureAlphaMod(
+        const ret = c.SDL_GetTextureAlphaMod(
             self.value,
             &alpha,
         );
@@ -1140,7 +1140,7 @@ pub const Texture = struct {
         self: Texture,
     ) !f32 {
         var alpha: f32 = undefined;
-        const ret = C.SDL_GetTextureAlphaModFloat(
+        const ret = c.SDL_GetTextureAlphaModFloat(
             self.value,
             &alpha,
         );
@@ -1154,7 +1154,7 @@ pub const Texture = struct {
         self: Texture,
         mode: blend_mode.Mode,
     ) !void {
-        const ret = C.SDL_SetTextureBlendMode(
+        const ret = c.SDL_SetTextureBlendMode(
             self.value,
             mode.value,
         );
@@ -1166,14 +1166,14 @@ pub const Texture = struct {
     pub fn getBlendMode(
         self: Texture,
     ) !?blend_mode.Mode {
-        var mode: C.SDL_BlendMode = undefined;
-        const ret = C.SDL_GetTextureBlendMode(
+        var mode: c.SDL_BlendMode = undefined;
+        const ret = c.SDL_GetTextureBlendMode(
             self.value,
             &mode,
         );
         if (!ret)
             return error.SdlError;
-        if (mode == C.SDL_BLENDMODE_INVALID)
+        if (mode == c.SDL_BLENDMODE_INVALID)
             return null;
         return .{ .value = mode };
     }
@@ -1183,7 +1183,7 @@ pub const Texture = struct {
         self: Texture,
         mode: surface.ScaleMode,
     ) !void {
-        const ret = C.SDL_SetTextureScaleMode(
+        const ret = c.SDL_SetTextureScaleMode(
             self.value,
             @intFromEnum(mode),
         );
@@ -1195,8 +1195,8 @@ pub const Texture = struct {
     pub fn getScaleMode(
         self: Texture,
     ) !surface.ScaleMode {
-        var mode: C.SDL_ScaleMode = undefined;
-        const ret = C.SDL_GetTextureScaleMode(
+        var mode: c.SDL_ScaleMode = undefined;
+        const ret = c.SDL_GetTextureScaleMode(
             self.value,
             &mode,
         );
@@ -1211,8 +1211,8 @@ pub const Texture = struct {
         update_area: ?rect.IRect,
         data: []const u8,
     ) !void {
-        const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
-        const ret = C.SDL_UpdateTexture(
+        const update_area_sdl: ?c.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+        const ret = c.SDL_UpdateTexture(
             self.value,
             if (update_area_sdl == null) null else &(update_area_sdl.?),
             data.ptr,
@@ -1230,8 +1230,8 @@ pub const Texture = struct {
         u_data: []const u8,
         v_data: []const u8,
     ) !void {
-        const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
-        const ret = C.SDL_UpdateYUVTexture(
+        const update_area_sdl: ?c.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+        const ret = c.SDL_UpdateYUVTexture(
             self.value,
             if (update_area_sdl == null) null else &(update_area_sdl.?),
             y_data.ptr,
@@ -1252,8 +1252,8 @@ pub const Texture = struct {
         y_data: []const u8,
         uv_data: []const u8,
     ) !void {
-        const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
-        const ret = C.SDL_UpdateNVTexture(
+        const update_area_sdl: ?c.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+        const ret = c.SDL_UpdateNVTexture(
             self.value,
             if (update_area_sdl == null) null else &(update_area_sdl.?),
             y_data.ptr,
@@ -1270,10 +1270,10 @@ pub const Texture = struct {
         self: Texture,
         update_area: ?rect.IRect,
     ) ![]u8 {
-        const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+        const update_area_sdl: ?c.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
         var data: ?*anyopaque = undefined;
         var pitch: c_int = undefined;
-        const ret = C.SDL_LockTexture(
+        const ret = c.SDL_LockTexture(
             self.value,
             if (update_area_sdl == null) null else &(update_area_sdl.?),
             &data,
@@ -1289,9 +1289,9 @@ pub const Texture = struct {
         self: Texture,
         update_area: ?rect.IRect,
     ) !surface.Surface {
-        const update_area_sdl: ?C.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
-        var target_surface: C.SDL_Surface = undefined;
-        const ret = C.SDL_LockTextureToSurface(
+        const update_area_sdl: ?c.SDL_Rect = if (update_area == null) null else update_area.?.toSdl();
+        var target_surface: c.SDL_Surface = undefined;
+        const ret = c.SDL_LockTextureToSurface(
             self.value,
             if (update_area_sdl == null) null else &(update_area_sdl.?),
             &target_surface,
@@ -1305,7 +1305,7 @@ pub const Texture = struct {
     pub fn unlock(
         self: Texture,
     ) void {
-        const ret = C.SDL_UnlockTexture(
+        const ret = c.SDL_UnlockTexture(
             self.value,
         );
         _ = ret;
@@ -1315,7 +1315,7 @@ pub const Texture = struct {
     pub fn deinit(
         self: Texture,
     ) void {
-        const ret = C.SDL_DestroyTexture(
+        const ret = c.SDL_DestroyTexture(
             self.value,
         );
         _ = ret;
@@ -1323,7 +1323,7 @@ pub const Texture = struct {
 
     /// Get the pixel format for the texture.
     pub fn getPixelFormat(self: Texture) ?pixels.Format {
-        return if (self.value.format == C.SDL_PIXELFORMAT_UNKNOWN) null else @enumFromInt(self.value.format);
+        return if (self.value.format == c.SDL_PIXELFORMAT_UNKNOWN) null else @enumFromInt(self.value.format);
     }
 
     /// Get the width of the texture.
@@ -1372,7 +1372,7 @@ pub const VSync = union(enum) {
 };
 
 /// The name of the software renderer.
-pub const software_renderer_name = C.SDL_SOFTWARE_RENDERER;
+pub const software_renderer_name = c.SDL_SOFTWARE_RENDERER;
 
 const blend_mode = @import("blend_mode.zig");
 const video = @import("video.zig");
