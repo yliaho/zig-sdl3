@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (46/57)
+## Done (47/57)
 
 ### Basics
 * Main
@@ -38,6 +38,7 @@ For monitoring how close various subsystems are to completion.
 
 ### Threads
 * Thread
+* Atomic
 
 ### Time
 * Timer
@@ -86,14 +87,13 @@ For monitoring how close various subsystems are to completion.
 ### Additional Functionality
 * Standard Lib
 
-## Not Started (4/57)
+## Not Started (3/57)
 
 ### Haptic
 * Haptic
 
 ### Threads
 * Mutex
-* Atomic
 
 ### Additional Functionality
 * System
