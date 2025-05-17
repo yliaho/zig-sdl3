@@ -33,7 +33,7 @@ const video = @import("video.zig");
 ///
 /// ## Code Examples
 /// TODO!!!
-pub const FileCallback = *const fn (user_data: ?*anyopaque, file_list: [*c]const [*c]const u8, filter: c_int) callconv(.C) void;
+pub const FileCallback = *const fn (user_data: ?*anyopaque, file_list: [*c]const [*c]const u8, filter: c_int) callconv(.c) void;
 
 /// Data for a file callback.
 ///

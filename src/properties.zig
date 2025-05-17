@@ -24,7 +24,7 @@ const std = @import("std");
 pub const CleanupCallback = *const fn (
     user_data: ?*anyopaque,
     value: ?*anyopaque,
-) callconv(.C) void;
+) callconv(.c) void;
 
 /// A callback used to enumerate all the properties in a group of properties.
 ///
@@ -45,7 +45,7 @@ pub const EnumerateCallback = *const fn (
     user_data: ?*anyopaque,
     props: c.SDL_PropertiesID,
     name: [*c]const u8,
-) callconv(.C) void;
+) callconv(.c) void;
 
 /// SDL properties type.
 ///
@@ -196,7 +196,7 @@ pub const Group = packed struct {
     }
 
     /// Used for adding properties to a list.
-    fn getAllEnumerateCallback(user_data: ?*anyopaque, id: c.SDL_PropertiesID, name: [*c]const u8) callconv(.C) void {
+    fn getAllEnumerateCallback(user_data: ?*anyopaque, id: c.SDL_PropertiesID, name: [*c]const u8) callconv(.c) void {
         const group = Group{ .value = id };
         const data_ptr: *GetAllData = @ptrCast(@alignCast(user_data));
         const spanned_name = std.mem.span(name);
@@ -431,13 +431,13 @@ pub fn getGlobal() !Group {
     return Group{ .value = ret };
 }
 
-fn testPropertiesCleanupCb(user_data: ?*anyopaque, value: ?*anyopaque) callconv(.C) void {
+fn testPropertiesCleanupCb(user_data: ?*anyopaque, value: ?*anyopaque) callconv(.c) void {
     _ = user_data;
     const ptr: *std.ArrayList(u32) = @ptrCast(@alignCast(value));
     ptr.deinit();
 }
 
-fn testEnumeratePropertiesCb(user_data: ?*anyopaque, id: c.SDL_PropertiesID, name: [*c]const u8) callconv(.C) void {
+fn testEnumeratePropertiesCb(user_data: ?*anyopaque, id: c.SDL_PropertiesID, name: [*c]const u8) callconv(.c) void {
     _ = user_data;
     _ = id;
     _ = name;

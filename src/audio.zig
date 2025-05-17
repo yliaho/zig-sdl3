@@ -32,7 +32,7 @@ const std = @import("std");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const PostmixCallback = *const fn (user_data: ?*anyopaque, spec: [*c]const c.SDL_AudioSpec, buffer: [*c]f32, buffer_len: c_int) callconv(.C) void;
+pub const PostmixCallback = *const fn (user_data: ?*anyopaque, spec: [*c]const c.SDL_AudioSpec, buffer: [*c]f32, buffer_len: c_int) callconv(.c) void;
 
 /// A callback that fires when data passes through a `Stream`.
 ///
@@ -64,7 +64,7 @@ pub const PostmixCallback = *const fn (user_data: ?*anyopaque, spec: [*c]const c
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const StreamCallback = *const fn (user_data: ?*anyopaque, stream: ?*c.SDL_AudioStream, additional_amount: c_int, total_amount: c_int) callconv(.C) void;
+pub const StreamCallback = *const fn (user_data: ?*anyopaque, stream: ?*c.SDL_AudioStream, additional_amount: c_int, total_amount: c_int) callconv(.c) void;
 
 /// Audio format.
 ///

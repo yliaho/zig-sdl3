@@ -35,7 +35,7 @@ pub const Action = enum(c_uint) {
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const Filter = *const fn (user_data: ?*anyopaque, event: [*c]c.SDL_Event) callconv(.C) bool;
+pub const Filter = *const fn (user_data: ?*anyopaque, event: [*c]c.SDL_Event) callconv(.c) bool;
 
 /// For clearing out a group of events.
 ///
@@ -1186,7 +1186,7 @@ pub fn waitTimeout(
 fn dummyFilter(
     user_data: ?*anyopaque,
     event: [*c]c.SDL_Event,
-) callconv(.C) bool {
+) callconv(.c) bool {
     _ = user_data;
     _ = event;
     return true;

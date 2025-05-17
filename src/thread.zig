@@ -310,7 +310,7 @@ pub const Thread = packed struct {
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const ThreadFunction = *const fn (user_data: ?*anyopaque) callconv(.C) c_int;
+pub const ThreadFunction = *const fn (user_data: ?*anyopaque) callconv(.c) c_int;
 
 /// The callback used to cleanup data passed to `thread.TLSID.set()`.
 ///
@@ -322,7 +322,7 @@ pub const ThreadFunction = *const fn (user_data: ?*anyopaque) callconv(.C) c_int
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const TlsDestructorCallback = *const fn (value: ?*anyopaque) callconv(.C) void;
+pub const TlsDestructorCallback = *const fn (value: ?*anyopaque) callconv(.c) void;
 
 /// Thread local storage ID.
 ///
@@ -444,12 +444,12 @@ pub fn setCurrentPriority(
     return errors.wrapCallBool(c.SDL_SetCurrentThreadPriority(@intFromEnum(priority)));
 }
 
-fn threadFunc(user_data: ?*anyopaque) callconv(.C) c_int {
+fn threadFunc(user_data: ?*anyopaque) callconv(.c) c_int {
     _ = user_data;
     return 3;
 }
 
-fn tlsDestructor(value: ?*anyopaque) callconv(.C) void {
+fn tlsDestructor(value: ?*anyopaque) callconv(.c) void {
     _ = value;
 }
 

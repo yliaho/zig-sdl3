@@ -84,7 +84,7 @@ pub const Interface = struct {
     ///
     /// ## Return Value
     /// The total size of the data stream, or `-1` on error.
-    size: *const fn (user_data: ?*anyopaque) callconv(.C) i64,
+    size: *const fn (user_data: ?*anyopaque) callconv(.c) i64,
     /// Seek to `offset` relative to `whence`.
     ///
     /// ## Function Parameters
@@ -94,7 +94,7 @@ pub const Interface = struct {
     ///
     /// ## Return Value
     /// The final offset in the data stream, or `-1` on error.
-    seek: *const fn (user_data: ?*anyopaque, offset: i64, whence: c.SDL_IOWhence) callconv(.C) i64,
+    seek: *const fn (user_data: ?*anyopaque, offset: i64, whence: c.SDL_IOWhence) callconv(.c) i64,
     /// Read up to `size` bytes from the data stream to the area pointed at by `ptr`.
     ///
     /// ## Function Parameters
@@ -108,7 +108,7 @@ pub const Interface = struct {
     ///
     /// ## Return Value
     /// The number of bytes read.
-    read: *const fn (user_data: ?*anyopaque, ptr: ?*anyopaque, size: usize, status: [*c]c.SDL_IOStatus) callconv(.C) usize,
+    read: *const fn (user_data: ?*anyopaque, ptr: ?*anyopaque, size: usize, status: [*c]c.SDL_IOStatus) callconv(.c) usize,
     /// Write up to `size` bytes to the data stream from the area pointed at by `ptr`.
     ///
     /// ## Function Parameters
@@ -122,7 +122,7 @@ pub const Interface = struct {
     ///
     /// ## Return Value
     /// The number of bytes written.
-    write: *const fn (user_data: ?*anyopaque, ptr: ?*const anyopaque, size: usize, status: [*c]c.SDL_IOStatus) callconv(.C) usize,
+    write: *const fn (user_data: ?*anyopaque, ptr: ?*const anyopaque, size: usize, status: [*c]c.SDL_IOStatus) callconv(.c) usize,
     /// If the stream is buffering, make sure the data is written out.
     ///
     /// ## Function Parameters
@@ -133,7 +133,7 @@ pub const Interface = struct {
     ///
     /// ## Return Value
     /// True if successful.
-    flush: *const fn (user_data: ?*anyopaque, status: [*c]c.SDL_IOStatus) callconv(.C) bool,
+    flush: *const fn (user_data: ?*anyopaque, status: [*c]c.SDL_IOStatus) callconv(.c) bool,
     /// Close and free any allocated resources.
     ///
     /// ## Function Parameters
@@ -145,7 +145,7 @@ pub const Interface = struct {
     ///
     /// ## Return Value
     /// True if successful.
-    close: *const fn (user_data: ?*anyopaque) callconv(.C) bool,
+    close: *const fn (user_data: ?*anyopaque) callconv(.c) bool,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: c.SDL_IOStreamInterface) Interface {
@@ -1827,13 +1827,13 @@ const stream_source_interface = c.SDL_IOStreamInterface{
     .close = streamClose,
 };
 
-fn streamSize(data: ?*anyopaque) callconv(.C) i64 {
+fn streamSize(data: ?*anyopaque) callconv(.c) i64 {
     var stream: *std.io.StreamSource = @ptrCast(@alignCast(data.?));
     const end_pos = stream.getEndPos() catch return -1;
     return @intCast(end_pos);
 }
 
-fn streamSeek(data: ?*anyopaque, offset: i64, whence: c_uint) callconv(.C) i64 {
+fn streamSeek(data: ?*anyopaque, offset: i64, whence: c_uint) callconv(.c) i64 {
     var stream: *std.io.StreamSource = @ptrCast(@alignCast(data.?));
     switch (whence) {
         c.SDL_IO_SEEK_CUR => stream.seekBy(offset) catch return -1,
@@ -1850,7 +1850,7 @@ fn streamSeek(data: ?*anyopaque, offset: i64, whence: c_uint) callconv(.C) i64 {
     return @as(i64, @intCast(pos));
 }
 
-fn streamRead(data: ?*anyopaque, ptr: ?*anyopaque, size: usize, status: [*c]c_uint) callconv(.C) usize {
+fn streamRead(data: ?*anyopaque, ptr: ?*anyopaque, size: usize, status: [*c]c_uint) callconv(.c) usize {
     var stream: *std.io.StreamSource = @ptrCast(@alignCast(data.?));
     var dest: [*]u8 = @ptrCast(ptr.?);
     return stream.read(dest[0..size]) catch blk: {
@@ -1859,7 +1859,7 @@ fn streamRead(data: ?*anyopaque, ptr: ?*anyopaque, size: usize, status: [*c]c_ui
     };
 }
 
-fn streamWrite(data: ?*anyopaque, ptr: ?*const anyopaque, size: usize, status: [*c]c_uint) callconv(.C) usize {
+fn streamWrite(data: ?*anyopaque, ptr: ?*const anyopaque, size: usize, status: [*c]c_uint) callconv(.c) usize {
     var stream: *std.io.StreamSource = @ptrCast(@alignCast(data.?));
     var src: [*]const u8 = @ptrCast(ptr.?);
     return stream.write(src[0..size]) catch blk: {
@@ -1868,13 +1868,13 @@ fn streamWrite(data: ?*anyopaque, ptr: ?*const anyopaque, size: usize, status: [
     };
 }
 
-fn streamFlush(data: ?*anyopaque, status: [*c]c_uint) callconv(.C) bool {
+fn streamFlush(data: ?*anyopaque, status: [*c]c_uint) callconv(.c) bool {
     _ = data;
     _ = status;
     return true; // No flushing needed, idk.
 }
 
-fn streamClose(data: ?*anyopaque) callconv(.C) bool {
+fn streamClose(data: ?*anyopaque) callconv(.c) bool {
     _ = data;
     return true;
 }

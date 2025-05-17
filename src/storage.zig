@@ -140,27 +140,27 @@ pub const Path = struct {
 /// This struct is available since SDL 3.2.0.
 pub const Interface = struct {
     /// Called when storage is closed.
-    deinit: *const fn (user_data: ?*anyopaque) callconv(.C) bool,
+    deinit: *const fn (user_data: ?*anyopaque) callconv(.c) bool,
     /// Returns whether the storage is currently ready for access.
-    ready: ?*const fn (user_data: ?*anyopaque) callconv(.C) bool,
+    ready: ?*const fn (user_data: ?*anyopaque) callconv(.c) bool,
     /// Enumerate a directory, optional for write-only storage.
-    enumerate: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, callback: ?filesystem.EnumerateDirectoryCallback, callback_user_data: ?*anyopaque) callconv(.C) bool,
+    enumerate: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, callback: ?filesystem.EnumerateDirectoryCallback, callback_user_data: ?*anyopaque) callconv(.c) bool,
     /// Get path information, optional for write-only storage.
-    info: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, info: [*c]c.SDL_PathInfo) callconv(.C) bool,
+    info: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, info: [*c]c.SDL_PathInfo) callconv(.c) bool,
     /// Read a file from storage, optional for write-only storage.
-    read_file: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, destination: ?*anyopaque, length: u64) callconv(.C) bool,
+    read_file: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, destination: ?*anyopaque, length: u64) callconv(.c) bool,
     /// Write a file to storage, optional for read-only storage.
-    write_file: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, source: ?*const anyopaque, length: u64) callconv(.C) bool,
+    write_file: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8, source: ?*const anyopaque, length: u64) callconv(.c) bool,
     /// Create a directory, optional for read-only storage.
-    mkdir: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8) callconv(.C) bool,
+    mkdir: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8) callconv(.c) bool,
     /// Remove a file or empty directory, optional for read-only storage.
-    remove: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8) callconv(.C) bool,
+    remove: ?*const fn (user_data: ?*anyopaque, path: [*c]const u8) callconv(.c) bool,
     /// Rename a path, optional for read-only storage.
-    rename: ?*const fn (user_data: ?*anyopaque, old_path: [*c]const u8, new_path: [*c]const u8) callconv(.C) bool,
+    rename: ?*const fn (user_data: ?*anyopaque, old_path: [*c]const u8, new_path: [*c]const u8) callconv(.c) bool,
     /// Copy a file, optional for read-only storage.
-    copy: ?*const fn (user_data: ?*anyopaque, old_path: [*c]const u8, new_path: [*c]const u8) callconv(.C) bool,
+    copy: ?*const fn (user_data: ?*anyopaque, old_path: [*c]const u8, new_path: [*c]const u8) callconv(.c) bool,
     /// Get the space remaining, optional for read-only storage.
-    space_remaining: ?*const fn (user_data: ?*anyopaque) callconv(.C) u64,
+    space_remaining: ?*const fn (user_data: ?*anyopaque) callconv(.c) u64,
 };
 
 /// An abstract interface for filesystem access.
@@ -359,7 +359,7 @@ pub const Storage = packed struct {
     };
 
     /// Callback for getting all directory items.
-    fn getAllDirectoryItemsCb(user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.C) c.SDL_EnumerationResult {
+    fn getAllDirectoryItemsCb(user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.c) c.SDL_EnumerationResult {
         _ = dir_name;
         const data_ptr: *GetAllData = @ptrCast(@alignCast(user_data));
         const name_str = std.mem.span(name);

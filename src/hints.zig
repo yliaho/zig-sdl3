@@ -23,7 +23,7 @@ pub const Callback = *const fn (
     name: [*c]const u8,
     old_value: [*c]const u8,
     new_value: [*c]const u8,
-) callconv(.C) void;
+) callconv(.c) void;
 
 /// An enumeration of hint priorities.
 ///
@@ -389,7 +389,7 @@ pub fn setWithPriority(
     return errors.wrapCallBool(ret);
 }
 
-fn testHintCb(user_data: ?*anyopaque, name: [*c]const u8, old_value: [*c]const u8, new_value: [*c]const u8) callconv(.C) void {
+fn testHintCb(user_data: ?*anyopaque, name: [*c]const u8, old_value: [*c]const u8, new_value: [*c]const u8) callconv(.c) void {
     const ctr_ptr: *i32 = @ptrCast(@alignCast(user_data));
     _ = name;
     _ = old_value;

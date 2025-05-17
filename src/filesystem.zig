@@ -163,7 +163,7 @@ pub const Path = struct {
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const EnumerateDirectoryCallback = *const fn (user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.C) c.SDL_EnumerationResult;
+pub const EnumerateDirectoryCallback = *const fn (user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.c) c.SDL_EnumerationResult;
 
 /// Possible results from an enumeration callback.
 ///
@@ -413,7 +413,7 @@ const GetAllData = struct {
 };
 
 /// Callback for getting all directory items.
-fn getAllDirectoryItemsCb(user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.C) c.SDL_EnumerationResult {
+fn getAllDirectoryItemsCb(user_data: ?*anyopaque, dir_name: [*c]const u8, name: [*c]const u8) callconv(.c) c.SDL_EnumerationResult {
     _ = dir_name;
     const data_ptr: *GetAllData = @ptrCast(@alignCast(user_data));
     const name_str = std.mem.span(name);

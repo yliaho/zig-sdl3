@@ -10,7 +10,7 @@ const surface = @import("surface.zig");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const Callback = *const fn (user_data: ?*anyopaque, entry: ?*c.SDL_TrayEntry) callconv(.C) void;
+pub const Callback = *const fn (user_data: ?*anyopaque, entry: ?*c.SDL_TrayEntry) callconv(.c) void;
 
 /// An opaque handle representing an entry on a system tray object.
 ///

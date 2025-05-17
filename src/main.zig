@@ -13,7 +13,7 @@ const std = @import("std");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const MainCallback = *const fn (arg_count: c_int, arg_values: [*c][*c]u8) callconv(.C) c_int;
+pub const MainCallback = *const fn (arg_count: c_int, arg_values: [*c][*c]u8) callconv(.c) c_int;
 
 /// An entry point for SDL's use in main callbacks.
 ///
@@ -134,7 +134,7 @@ pub fn setMainReady() void {
 fn dummyMain(
     arg_count: c_int,
     arg_values: [*c][*c]u8,
-) callconv(.C) c_int {
+) callconv(.c) c_int {
     if (arg_count < 2)
         return -1;
     std.testing.expectEqualStrings("Hello", std.mem.span(arg_values[0])) catch return -1;
@@ -147,7 +147,7 @@ fn dummyInit(
     app_state: [*c]?*anyopaque,
     arg_count: c_int,
     arg_values: [*c][*c]u8,
-) callconv(.C) c_uint {
+) callconv(.c) c_uint {
     if (arg_count < 2)
         return c.SDL_APP_FAILURE;
     std.testing.expectEqualStrings("Hello", std.mem.span(arg_values[0])) catch return c.SDL_APP_FAILURE;
@@ -159,7 +159,7 @@ fn dummyInit(
 
 fn dummyIterate(
     app_state: ?*anyopaque,
-) callconv(.C) c_uint {
+) callconv(.c) c_uint {
     if (app_state) |val| {
         std.testing.expectEqual(5, @intFromPtr(val)) catch return c.SDL_APP_FAILURE;
         return c.SDL_APP_SUCCESS;
@@ -170,7 +170,7 @@ fn dummyIterate(
 fn dummyEvent(
     app_state: ?*anyopaque,
     event: [*c]c.SDL_Event,
-) callconv(.C) c_uint {
+) callconv(.c) c_uint {
     _ = app_state;
     _ = event;
     return c.SDL_APP_CONTINUE;
@@ -179,7 +179,7 @@ fn dummyEvent(
 fn dummyQuit(
     app_state: ?*anyopaque,
     result: c_uint,
-) callconv(.C) void {
+) callconv(.c) void {
     _ = app_state;
     _ = result;
 }

@@ -62,7 +62,7 @@ pub const SharedObject = packed struct {
     /// const lib = try sdl3.SharedObject.load("mylib.so");
     /// defer lib.unload();
     ///
-    /// const my_func: *const fn(num: c_int) callconv(.C) void = @alignCast(@ptrCast(try lib.loadFunction("myfunc")));
+    /// const my_func: *const fn(num: c_int) callconv(.c) void = @alignCast(@ptrCast(try lib.loadFunction("myfunc")));
     /// return my_func(15);
     /// ```
     pub fn loadFunction(

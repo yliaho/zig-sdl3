@@ -11,7 +11,7 @@ const stdinc = @import("stdinc.zig");
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub const CleanupCallback = *const fn (user_data: ?*anyopaque) callconv(.C) void;
+pub const CleanupCallback = *const fn (user_data: ?*anyopaque) callconv(.c) void;
 
 /// Callback function that will be called when data for the specified mime-type is requested by the OS.
 ///
@@ -33,7 +33,7 @@ pub const CleanupCallback = *const fn (user_data: ?*anyopaque) callconv(.C) void
 ///
 /// ## Version
 /// This function is available since SDL 3.2.0.
-pub const DataCallback = *const fn (user_data: ?*anyopaque, mime_type: [*c]const u8, size: [*c]usize) callconv(.C) ?*anyopaque;
+pub const DataCallback = *const fn (user_data: ?*anyopaque, mime_type: [*c]const u8, size: [*c]usize) callconv(.c) ?*anyopaque;
 
 /// Clear the clipboard data.
 ///
@@ -272,7 +272,7 @@ pub fn setText(
 
 fn cleanup_cb(
     user_data: ?*anyopaque,
-) callconv(.C) void {
+) callconv(.c) void {
     _ = user_data;
 }
 
@@ -280,7 +280,7 @@ fn data_cb(
     user_data: ?*anyopaque,
     mime_type: [*c]const u8,
     size: [*c]usize,
-) callconv(.C) ?*anyopaque {
+) callconv(.c) ?*anyopaque {
     _ = user_data;
     _ = mime_type;
     size.* = 1;

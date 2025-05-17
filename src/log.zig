@@ -25,7 +25,7 @@ pub const LogOutputFunction = *const fn (
     category: c_int,
     priority: c.SDL_LogPriority,
     message: [*c]const u8,
-) callconv(.C) void;
+) callconv(.c) void;
 
 /// The predefined log priorities.
 ///
@@ -496,7 +496,7 @@ const TestLogCallbackData = struct {
     last_priority: ?Priority = null,
 };
 
-fn testLogCallback(user_data: ?*anyopaque, category: c_int, priority: c.SDL_LogPriority, message: [*c]const u8) callconv(.C) void {
+fn testLogCallback(user_data: ?*anyopaque, category: c_int, priority: c.SDL_LogPriority, message: [*c]const u8) callconv(.c) void {
     var data: *TestLogCallbackData = @ptrCast(@alignCast(user_data));
     data.last_str = data.buf.items.len;
     data.last_category = Category.fromSdl(category);

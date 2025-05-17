@@ -12,7 +12,7 @@ const stdinc = @import("stdinc.zig");
 /// This datatype is available since SDL 3.2.0.
 pub const MainThreadCallback = *const fn (
     user_data: ?*anyopaque,
-) callconv(.C) void;
+) callconv(.c) void;
 
 /// These are the flags which may be passed to `init.init()`.
 ///
@@ -372,7 +372,7 @@ pub fn wasInit(
     return Flags.fromSdl(ret);
 }
 
-fn testRunOnMainThreadCb(user_data: ?*anyopaque) callconv(.C) void {
+fn testRunOnMainThreadCb(user_data: ?*anyopaque) callconv(.c) void {
     const ptr: *i32 = @ptrCast(@alignCast(user_data.?));
     ptr.* = -1;
 }

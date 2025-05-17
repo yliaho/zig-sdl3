@@ -29,7 +29,7 @@ const video = @import("video.zig");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.6.
-pub const MotionTransformCallback = *const fn (user_data: ?*anyopaque, timestamp: u64, window: ?*c.SDL_Window, id: c.SDL_MouseID, x: ?*f32, y: ?*f32) callconv(.C) void;
+pub const MotionTransformCallback = *const fn (user_data: ?*anyopaque, timestamp: u64, window: ?*c.SDL_Window, id: c.SDL_MouseID, x: ?*f32, y: ?*f32) callconv(.c) void;
 
 /// A bitmask of pressed mouse buttons, as reported by `mouse.getState()`, etc.
 ///

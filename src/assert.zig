@@ -19,7 +19,7 @@ const std = @import("std");
 pub const Handler = *const fn (
     assert_data: [*c]const c.SDL_AssertData,
     user_data: ?*anyopaque,
-) callconv(.C) c.SDL_AssertState;
+) callconv(.c) c.SDL_AssertState;
 
 /// Possible outcomes from a triggered assertion.
 ///
@@ -190,7 +190,7 @@ const TestHandlerCallbackData = struct {
     last_data: ?*const c.SDL_AssertData = null,
 };
 
-fn testAssertCallback(assert_data: [*c]const c.SDL_AssertData, user_data: ?*anyopaque) callconv(.C) c.SDL_AssertState {
+fn testAssertCallback(assert_data: [*c]const c.SDL_AssertData, user_data: ?*anyopaque) callconv(.c) c.SDL_AssertState {
     var data: *TestHandlerCallbackData = @ptrCast(@alignCast(user_data));
     data.last_data = assert_data;
     return @intFromEnum(State.ignore);

@@ -518,7 +518,7 @@ pub const egl = struct {
     ///
     /// ## Version
     /// This datatype is available since SDL 3.2.0.
-    pub const EglAttribArrayCallback = *const fn (user_data: ?*anyopaque) callconv(.C) [*c]EglAttrib;
+    pub const EglAttribArrayCallback = *const fn (user_data: ?*anyopaque) callconv(.c) [*c]EglAttrib;
 
     /// Opaque type for an EGL config.
     ///
@@ -562,7 +562,7 @@ pub const egl = struct {
     ///
     /// ## Version
     /// This datatype is available since SDL 3.2.0.
-    pub const EglIntArrayCallback = *const fn (user_data: ?*anyopaque, display: c.SDL_EGLDisplay, config: c.SDL_EGLConfig) callconv(.C) [*c]EglInt;
+    pub const EglIntArrayCallback = *const fn (user_data: ?*anyopaque, display: c.SDL_EGLDisplay, config: c.SDL_EGLConfig) callconv(.c) [*c]EglInt;
 
     /// Opaque type for an EGL surface.
     ///

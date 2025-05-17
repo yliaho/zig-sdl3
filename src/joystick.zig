@@ -1428,14 +1428,14 @@ pub const VirtualJoystickDescription = struct {
     user_data: ?*anyopaque = null,
 
     // TODO!!!
-    update: ?*const fn (user_data: ?*anyopaque) callconv(.C) void = null,
-    set_player_index: ?*const fn (user_data: ?*anyopaque, player_index: c_int) callconv(.C) void = null,
-    rumble: ?*const fn (user_data: ?*anyopaque, low_frequency_rumble: u16, high_frequency_rumble: u16) callconv(.C) bool = null,
-    rumble_triggers: ?*const fn (user_data: ?*anyopaque, left_rumble: u16, right_rumble: u16) callconv(.C) bool = null,
-    set_led: ?*const fn (user_data: ?*anyopaque, red: u8, green: u8, blue: u8) callconv(.C) bool = null,
-    send_effect: ?*const fn (user_data: ?*anyopaque, data: ?*const anyopaque, size: c_int) callconv(.C) bool = null,
-    set_sensors_enabled: ?*const fn (user_data: ?*anyopaque, enabled: bool) callconv(.C) bool = null,
-    cleanup: ?*const fn (user_data: ?*anyopaque) callconv(.C) void = null,
+    update: ?*const fn (user_data: ?*anyopaque) callconv(.c) void = null,
+    set_player_index: ?*const fn (user_data: ?*anyopaque, player_index: c_int) callconv(.c) void = null,
+    rumble: ?*const fn (user_data: ?*anyopaque, low_frequency_rumble: u16, high_frequency_rumble: u16) callconv(.c) bool = null,
+    rumble_triggers: ?*const fn (user_data: ?*anyopaque, left_rumble: u16, right_rumble: u16) callconv(.c) bool = null,
+    set_led: ?*const fn (user_data: ?*anyopaque, red: u8, green: u8, blue: u8) callconv(.c) bool = null,
+    send_effect: ?*const fn (user_data: ?*anyopaque, data: ?*const anyopaque, size: c_int) callconv(.c) bool = null,
+    set_sensors_enabled: ?*const fn (user_data: ?*anyopaque, enabled: bool) callconv(.c) bool = null,
+    cleanup: ?*const fn (user_data: ?*anyopaque) callconv(.c) void = null,
 
     /// Convert from an SDL value.
     pub fn fromSdl(value: c.SDL_VirtualJoystickDesc) VirtualJoystickDescription {
