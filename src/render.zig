@@ -135,6 +135,43 @@ pub const Renderer = struct {
     // CreateGPURenderer added in 3.4.0.
 
     // CreateGPURenderState added in 3.4.0.
+
+    /// Create a texture from an existing surface.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The rendering context.
+    /// * `surface_to_copy`: Surface containing pixel data used to fill the texture.
+    ///
+    /// ## Return Value
+    /// Returns the created texture.
+    ///
+    /// ## Remarks
+    /// The surface is not modified or freed by this function.
+    ///
+    /// The `render.TextureAccess` hint for the created texture is `render.TextureAccess.static`.
+    ///
+    /// The pixel format of the created texture may be different from the pixel format of the surface,
+    /// and can be queried using the `render.Texture.getProperties().format` property.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    ///
+    /// ## Code Examples
+    /// TODO!!!
+    pub fn createTextureFromSurface(
+        self: Renderer,
+        surface_to_copy: surface.Surface,
+    ) !Texture {
+        const ret = c.SDL_CreateTextureFromSurface(
+            self.value,
+            surface_to_copy.value,
+        );
+        return Texture{ .value = try errors.wrapNull(*c.SDL_Texture, ret) };
+    }
+
     // SetGPURenderStateFragmentUniforms for render state is added in 3.4.0.
     // SDL_DestroyGPURenderState is added in 3.4.0.
 
@@ -157,6 +194,41 @@ pub const Renderer = struct {
         c.SDL_DestroyRenderer(
             self.value,
         );
+    }
+
+    /// Force the rendering context to flush any pending commands and state.
+    ///
+    /// ## Function Parameters
+    /// * `self`: The rendering context.
+    ///
+    /// ## Remarks
+    /// You do not need to (and in fact, shouldn't) call this function unless you are planning to call into OpenGL/Direct3D/Metal/whatever directly,
+    /// in addition to using a renderer.
+    ///
+    /// This is for a very-specific case: if you are using SDL's render API, and you plan to make OpenGL/D3D/whatever calls in addition to SDL render API calls.
+    /// If this applies, you should call this function between calls to SDL's render API and the low-level API you're using in cooperation.
+    ///
+    /// In all other cases, you can ignore this function.
+    ///
+    /// This call makes SDL flush any pending rendering work it was queueing up to do later in a single batch, and marks any internal cached state as invalid,
+    /// so it'll prepare all its state again later, from scratch.
+    ///
+    /// This means you do not need to save state in your rendering code to protect the SDL renderer.
+    /// However, there lots of arbitrary pieces of Direct3D and OpenGL state that can confuse things;
+    /// you should use your best judgment and be prepared to make changes if specific state needs to be protected.
+    ///
+    /// ## Thread Safety
+    /// This function should only be called on the main thread.
+    ///
+    /// ## Version
+    /// This function is available since SDL 3.2.0.
+    pub fn flush(
+        self: Renderer,
+    ) !void {
+        const ret = c.SDL_FlushRenderer(
+            self.value,
+        );
+        return errors.wrapCallBool(ret);
     }
 
     /// Create a 2D rendering context for a window.
@@ -796,20 +868,6 @@ pub const Renderer = struct {
         return Texture{ .value = ret };
     }
 
-    /// Create a texture from an existing surface.
-    pub fn createTextureFromSurface(
-        self: Renderer,
-        surface_to_copy: surface.Surface,
-    ) !Texture {
-        const ret = c.SDL_CreateTextureFromSurface(
-            self.value,
-            surface_to_copy.value,
-        );
-        if (ret == null)
-            return error.SdlError;
-        return Texture{ .value = ret };
-    }
-
     /// Create a texture for a rendering context with the specified properties.
     pub fn createTextureWithProperties(
         self: Renderer,
@@ -1316,17 +1374,6 @@ pub const Renderer = struct {
         if (ret == null)
             return error.SdlError;
         return surface.Surface{ .value = ret };
-    }
-
-    /// Force the rendering context to flush any pending commands and state.
-    pub fn flush(
-        self: Renderer,
-    ) !void {
-        const ret = c.SDL_FlushRenderer(
-            self.value,
-        );
-        if (!ret)
-            return error.SdlError;
     }
 
     /// Get the CAMetalLayer associated with the given Metal renderer.

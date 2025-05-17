@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (47/57)
+## Done (48/57)
 
 ### Basics
 * Main
@@ -32,6 +32,9 @@ For monitoring how close various subsystems are to completion.
 * Pen
 * Sensor
 * HIDAPI
+
+### Haptic
+* Haptic
 
 ### Audio
 * Audio
@@ -87,10 +90,7 @@ For monitoring how close various subsystems are to completion.
 ### Additional Functionality
 * Standard Lib
 
-## Not Started (3/57)
-
-### Haptic
-* Haptic
+## Not Started (2/57)
 
 ### Threads
 * Mutex

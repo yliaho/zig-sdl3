@@ -294,6 +294,24 @@ pub const gpu = @import("gpu.zig");
 /// SDL provides functions to convert a GUID to/from a stri
 pub const GUID = @import("guid.zig").GUID;
 
+/// The SDL haptic subsystem manages haptic (force feedback) devices.
+///
+/// The basic usage is as follows:
+/// * Initialize the subsystem `init.InitFlags.haptic`.
+/// * Open a haptic device.
+/// * `haptic.Haptic.init()` to open from index.
+/// * `haptic.Haptic.initFromJoystick()` to open from an existing joystick.
+/// * Create an effect (`haptic.Effect`).
+/// * Upload the effect with `haptic.Haptic.createEffect()`.
+/// * Run the effect with `haptic.Haptic.runEffect()`.
+/// * (Optional) Free the effect with `haptic.Haptic.destroyEffect()`.
+/// * Close the haptic device with `haptic.Haptic.deinit()`.
+///
+/// TODO: CODE EXAMPLE!
+///
+/// Note that the SDL haptic subsystem is not thread-safe.
+pub const haptic = @import("haptic.zig");
+
 /// File for SDL HID API functions.
 ///
 /// This is an adaptation of the original HIDAPI interface by Alan Ott, and includes source code licensed under the following license:
