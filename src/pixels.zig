@@ -700,10 +700,10 @@ pub const Format = struct {
     /// Define a format using 4 characters (Ex: YV12).
     ///
     /// ## Function Parameters
-    /// * `a`: The first character of the FourCC code.
-    /// * `b`: The second character of the FourCC code.
-    /// * `c`: The third character of the FourCC code.
-    /// * `d`: The fourth character of the FourCC code.
+    /// * `c1`: The first character of the FourCC code.
+    /// * `c2`: The second character of the FourCC code.
+    /// * `c3`: The third character of the FourCC code.
+    /// * `c4`: The fourth character of the FourCC code.
     ///
     /// ## Return Value
     /// Return a pixel format.
