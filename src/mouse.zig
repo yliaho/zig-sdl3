@@ -1,4 +1,4 @@
-const C = @import("c.zig").C;
+const c = @import("c.zig").c;
 const errors = @import("errors.zig");
 const init = @import("init.zig");
 const rect = @import("rect.zig");
@@ -29,7 +29,7 @@ const video = @import("video.zig");
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.6.
-pub const MotionTransformCallback = *const fn (user_data: ?*anyopaque, timestamp: u64, window: ?*C.SDL_Window, id: C.SDL_MouseID, x: ?*f32, y: ?*f32) callconv(.C) void;
+pub const MotionTransformCallback = *const fn (user_data: ?*anyopaque, timestamp: u64, window: ?*c.SDL_Window, id: c.SDL_MouseID, x: ?*f32, y: ?*f32) callconv(.c) void;
 
 /// A bitmask of pressed mouse buttons, as reported by `mouse.getState()`, etc.
 ///
@@ -43,29 +43,29 @@ pub const ButtonFlags = struct {
     side2: bool,
 
     /// Get button flags from an SDL value.
-    pub fn fromSdl(value: C.SDL_MouseButtonFlags) ButtonFlags {
+    pub fn fromSdl(value: c.SDL_MouseButtonFlags) ButtonFlags {
         return .{
-            .left = value & C.SDL_BUTTON_LEFT > 0,
-            .middle = value & C.SDL_BUTTON_MIDDLE > 0,
-            .right = value & C.SDL_BUTTON_RIGHT > 0,
-            .side1 = value & C.SDL_BUTTON_X1 > 0,
-            .side2 = value & C.SDL_BUTTON_X2 > 0,
+            .left = value & c.SDL_BUTTON_LEFT > 0,
+            .middle = value & c.SDL_BUTTON_MIDDLE > 0,
+            .right = value & c.SDL_BUTTON_RIGHT > 0,
+            .side1 = value & c.SDL_BUTTON_X1 > 0,
+            .side2 = value & c.SDL_BUTTON_X2 > 0,
         };
     }
 
     /// Get this as an SDL value.
-    pub fn toSdl(self: ButtonFlags) C.SDL_MouseButtonFlags {
-        var ret: C.SDL_MouseButtonFlags = 0;
+    pub fn toSdl(self: ButtonFlags) c.SDL_MouseButtonFlags {
+        var ret: c.SDL_MouseButtonFlags = 0;
         if (self.left)
-            ret |= C.SDL_BUTTON_LEFT;
+            ret |= c.SDL_BUTTON_LEFT;
         if (self.middle)
-            ret |= C.SDL_BUTTON_MIDDLE;
+            ret |= c.SDL_BUTTON_MIDDLE;
         if (self.right)
-            ret |= C.SDL_BUTTON_RIGHT;
+            ret |= c.SDL_BUTTON_RIGHT;
         if (self.side1)
-            ret |= C.SDL_BUTTON_X1;
+            ret |= c.SDL_BUTTON_X1;
         if (self.side2)
-            ret |= C.SDL_BUTTON_X2;
+            ret |= c.SDL_BUTTON_X2;
         return ret;
     }
 };
@@ -79,34 +79,34 @@ pub const ButtonFlags = struct {
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
 pub const ID = packed struct {
-    value: C.SDL_MouseID,
+    value: c.SDL_MouseID,
 
     // Size tests.
     comptime {
-        std.debug.assert(@sizeOf(C.SDL_MouseID) == @sizeOf(ID));
+        std.debug.assert(@sizeOf(c.SDL_MouseID) == @sizeOf(ID));
     }
 
     /// The `mouse.ID` for mouse events simulated with pen input.
     ///
     /// ## Version
     /// This constant is available since SDL 3.2.0.
-    pub const pen = ID{ .value = C.SDL_PEN_MOUSEID };
+    pub const pen = ID{ .value = c.SDL_PEN_MOUSEID };
 
     /// The `mouse.ID` for mouse events simulated with touch input.
     ///
     /// ## Version
     /// This constant is available since SDL 3.2.0.
-    pub const touch = ID{ .value = C.SDL_TOUCH_MOUSEID };
+    pub const touch = ID{ .value = c.SDL_TOUCH_MOUSEID };
 
     /// Get from an SDL value.
-    pub fn fromSdl(value: C.SDL_MouseID) ?ID {
+    pub fn fromSdl(value: c.SDL_MouseID) ?ID {
         if (value == 0)
             return null;
         return .{ .value = value };
     }
 
     /// Get an SDL value.
-    pub fn toSdl(self: ?ID) C.SDL_MouseID {
+    pub fn toSdl(self: ?ID) c.SDL_MouseID {
         if (self) |val| {
             return val.value;
         }
@@ -129,7 +129,7 @@ pub const ID = packed struct {
     pub fn getName(
         self: ID,
     ) !?[:0]const u8 {
-        const ret = try errors.wrapCallCString(C.SDL_GetMouseNameForID(self.value));
+        const ret = try errors.wrapCallCString(c.SDL_GetMouseNameForID(self.value));
         if (std.mem.eql(u8, ret, ""))
             return null;
         return ret;
@@ -142,45 +142,45 @@ pub const ID = packed struct {
 /// This enum is available since SDL 3.2.0.
 pub const SystemCursor = enum(c_uint) {
     /// Default cursor. Usually an arrow.
-    default = C.SDL_SYSTEM_CURSOR_DEFAULT,
+    default = c.SDL_SYSTEM_CURSOR_DEFAULT,
     /// Text selection. Usually an I-beam.
-    text = C.SDL_SYSTEM_CURSOR_TEXT,
+    text = c.SDL_SYSTEM_CURSOR_TEXT,
     /// Wait. Usually an hourglass or watch or spinning ball.
-    wait = C.SDL_SYSTEM_CURSOR_WAIT,
+    wait = c.SDL_SYSTEM_CURSOR_WAIT,
     /// Crosshair.
-    crosshair = C.SDL_SYSTEM_CURSOR_CROSSHAIR,
+    crosshair = c.SDL_SYSTEM_CURSOR_CROSSHAIR,
     /// Program is busy but still interactive. Usually it's `mouse.SystemCursor.wait` with an arrow.
-    progress = C.SDL_SYSTEM_CURSOR_PROGRESS,
+    progress = c.SDL_SYSTEM_CURSOR_PROGRESS,
     /// Double arrow pointing northwest and southeast.
-    northwest_southeast_resize = C.SDL_SYSTEM_CURSOR_NWSE_RESIZE,
+    northwest_southeast_resize = c.SDL_SYSTEM_CURSOR_NWSE_RESIZE,
     /// Double arrow pointing northeast and southwest.
-    northeast_southwest_resize = C.SDL_SYSTEM_CURSOR_NESW_RESIZE,
+    northeast_southwest_resize = c.SDL_SYSTEM_CURSOR_NESW_RESIZE,
     /// Double arrow pointing west and east.
-    east_west_resize = C.SDL_SYSTEM_CURSOR_EW_RESIZE,
+    east_west_resize = c.SDL_SYSTEM_CURSOR_EW_RESIZE,
     /// Double arrow pointing north and south.
-    north_south_resize = C.SDL_SYSTEM_CURSOR_NS_RESIZE,
+    north_south_resize = c.SDL_SYSTEM_CURSOR_NS_RESIZE,
     /// Four pointed arrow pointing north, south, east, and west.
-    move = C.SDL_SYSTEM_CURSOR_MOVE,
+    move = c.SDL_SYSTEM_CURSOR_MOVE,
     /// Not permitted. Usually a slashed circle or crossbones.
-    not_allowed = C.SDL_SYSTEM_CURSOR_NOT_ALLOWED,
+    not_allowed = c.SDL_SYSTEM_CURSOR_NOT_ALLOWED,
     /// Pointer that indicates a link. Usually a pointing hand.
-    pointer = C.SDL_SYSTEM_CURSOR_POINTER,
+    pointer = c.SDL_SYSTEM_CURSOR_POINTER,
     /// Window resize top-left. This may be a single arrow or a double arrow like `mouse.SystemCursor.resize`.
-    north_west_resize = C.SDL_SYSTEM_CURSOR_NW_RESIZE,
+    north_west_resize = c.SDL_SYSTEM_CURSOR_NW_RESIZE,
     /// Window resize top. May be `mouse.SystemCursor.north_south_resize`.
-    north_resize = C.SDL_SYSTEM_CURSOR_N_RESIZE,
+    north_resize = c.SDL_SYSTEM_CURSOR_N_RESIZE,
     /// Window resize top-right. May be `mouse.SystemCursor.northeast_southwest_resize`.
-    north_east_resize = C.SDL_SYSTEM_CURSOR_NE_RESIZE,
+    north_east_resize = c.SDL_SYSTEM_CURSOR_NE_RESIZE,
     /// Window resize right. May be `mouse.SystemCursor.east_west_resize`.
-    east_resize = C.SDL_SYSTEM_CURSOR_E_RESIZE,
+    east_resize = c.SDL_SYSTEM_CURSOR_E_RESIZE,
     /// Window resize bottom-right. May be `mouse.SystemCursor.northwest_southeast_resize`.
-    southeast_resize = C.SDL_SYSTEM_CURSOR_SE_RESIZE,
+    southeast_resize = c.SDL_SYSTEM_CURSOR_SE_RESIZE,
     /// Window resize bottom. May be `mouse.SystemCursor.north_south_resize`.
-    south_resize = C.SDL_SYSTEM_CURSOR_S_RESIZE,
+    south_resize = c.SDL_SYSTEM_CURSOR_S_RESIZE,
     /// Window resize bottom-left. May be `mouse.SystemCursor.northeast_southwest_resize`.
-    southwest_resize = C.SDL_SYSTEM_CURSOR_SW_RESIZE,
+    southwest_resize = c.SDL_SYSTEM_CURSOR_SW_RESIZE,
     /// Window resize left. May be `mouse.SystemCursor.east_west_resize`.
-    west_resize = C.SDL_SYSTEM_CURSOR_W_RESIZE,
+    west_resize = c.SDL_SYSTEM_CURSOR_W_RESIZE,
 };
 
 /// Scroll direction types for the `events.Type.scroll` event.
@@ -202,7 +202,7 @@ pub const WheelDirection = enum(c_uint) {
 /// ## Version
 /// This struct is available since SDL 3.2.0.
 pub const Cursor = packed struct {
-    value: *C.SDL_Cursor,
+    value: *c.SDL_Cursor,
 
     /// Free a previously-created cursor.
     ///
@@ -222,7 +222,7 @@ pub const Cursor = packed struct {
     pub fn deinit(
         self: Cursor,
     ) void {
-        C.SDL_DestroyCursor(self.value);
+        c.SDL_DestroyCursor(self.value);
     }
 
     /// Create a cursor using the specified bitmap data and mask (in MSB format).
@@ -272,7 +272,7 @@ pub const Cursor = packed struct {
         hot_x: usize,
         hot_y: usize,
     ) !Cursor {
-        return .{ .value = try errors.wrapNull(*C.SDL_Cursor, C.SDL_CreateCursor(
+        return .{ .value = try errors.wrapNull(*c.SDL_Cursor, c.SDL_CreateCursor(
             data,
             mask,
             @intCast(width),
@@ -315,7 +315,7 @@ pub const Cursor = packed struct {
         hot_x: usize,
         hot_y: usize,
     ) !Cursor {
-        return .{ .value = try errors.wrapNull(*C.SDL_Cursor, C.SDL_CreateColorCursor(
+        return .{ .value = try errors.wrapNull(*c.SDL_Cursor, c.SDL_CreateColorCursor(
             cursor_surface.value,
             @intCast(hot_x),
             @intCast(hot_y),
@@ -345,8 +345,8 @@ pub const Cursor = packed struct {
         id: SystemCursor,
     ) !Cursor {
         return .{ .value = try errors.wrapNull(
-            *C.SDL_Cursor,
-            C.SDL_CreateSystemCursor(@intFromEnum(id)),
+            *c.SDL_Cursor,
+            c.SDL_CreateSystemCursor(@intFromEnum(id)),
         ) };
     }
 };
@@ -391,7 +391,7 @@ pub const Cursor = packed struct {
 pub fn capture(
     enable: bool,
 ) !void {
-    return errors.wrapCallBool(C.SDL_CaptureMouse(enable));
+    return errors.wrapCallBool(c.SDL_CaptureMouse(enable));
 }
 
 /// Get the active cursor.
@@ -409,7 +409,7 @@ pub fn capture(
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn get() ?Cursor {
-    const ret = C.SDL_GetCursor();
+    const ret = c.SDL_GetCursor();
     if (ret) |val| {
         return .{ .value = val };
     }
@@ -431,7 +431,7 @@ pub fn get() ?Cursor {
 /// This function is available since SDL 3.2.0.
 pub fn getDefault() !Cursor {
     return .{
-        .value = try errors.wrapNull(*C.SDL_Cursor, C.SDL_GetDefaultCursor()),
+        .value = try errors.wrapNull(*c.SDL_Cursor, c.SDL_GetDefaultCursor()),
     };
 }
 
@@ -446,7 +446,7 @@ pub fn getDefault() !Cursor {
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn getFocus() ?video.Window {
-    if (C.SDL_GetMouseFocus()) |val| {
+    if (c.SDL_GetMouseFocus()) |val| {
         return .{
             .value = val,
         };
@@ -478,7 +478,7 @@ pub fn getFocus() ?video.Window {
 pub fn getGlobalState() struct { flags: ButtonFlags, x: f32, y: f32 } {
     var x: f32 = undefined;
     var y: f32 = undefined;
-    const flags = C.SDL_GetGlobalMouseState(&x, &y);
+    const flags = c.SDL_GetGlobalMouseState(&x, &y);
     return .{
         .flags = ButtonFlags.fromSdl(flags),
         .x = x,
@@ -503,7 +503,7 @@ pub fn getGlobalState() struct { flags: ButtonFlags, x: f32, y: f32 } {
 /// This function is available since SDL 3.2.0.
 pub fn getMice() ![]ID {
     var len: c_int = undefined;
-    const val = C.SDL_GetMice(&len);
+    const val = c.SDL_GetMice(&len);
     const ret: [*]ID = @ptrCast(try errors.wrapCallCPtr(u32, val));
     return ret[0..@intCast(len)];
 }
@@ -533,7 +533,7 @@ pub fn getMice() ![]ID {
 pub fn getRelativeState() struct { flags: ButtonFlags, x: f32, y: f32 } {
     var x: f32 = undefined;
     var y: f32 = undefined;
-    const flags = C.SDL_GetRelativeMouseState(&x, &y);
+    const flags = c.SDL_GetRelativeMouseState(&x, &y);
     return .{
         .flags = ButtonFlags.fromSdl(flags),
         .x = x,
@@ -562,7 +562,7 @@ pub fn getRelativeState() struct { flags: ButtonFlags, x: f32, y: f32 } {
 pub fn getState() struct { flags: ButtonFlags, x: f32, y: f32 } {
     var x: f32 = undefined;
     var y: f32 = undefined;
-    const flags = C.SDL_GetMouseState(&x, &y);
+    const flags = c.SDL_GetMouseState(&x, &y);
     return .{
         .flags = ButtonFlags.fromSdl(flags),
         .x = x,
@@ -586,7 +586,7 @@ pub fn getState() struct { flags: ButtonFlags, x: f32, y: f32 } {
 pub fn getWindowGrab(
     window: video.Window,
 ) bool {
-    return C.SDL_GetWindowMouseGrab(window.value);
+    return c.SDL_GetWindowMouseGrab(window.value);
 }
 
 /// Get the mouse confinement rectangle of a window
@@ -605,7 +605,7 @@ pub fn getWindowGrab(
 pub fn getWindowRect(
     window: video.Window,
 ) ?rect.IRect {
-    const ret = C.SDL_GetWindowMouseRect(window.value);
+    const ret = c.SDL_GetWindowMouseRect(window.value);
     if (ret) |val| {
         return rect.IRect.fromSdl(val.*);
     }
@@ -628,7 +628,7 @@ pub fn getWindowRect(
 pub fn getWindowRelativeMode(
     window: video.Window,
 ) bool {
-    return C.SDL_GetWindowRelativeMouseMode(window.value);
+    return c.SDL_GetWindowRelativeMouseMode(window.value);
 }
 
 /// Return whether a mouse is currently connected.
@@ -642,7 +642,7 @@ pub fn getWindowRelativeMode(
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn has() bool {
-    return C.SDL_HasMouse();
+    return c.SDL_HasMouse();
 }
 
 /// Hide the cursor.
@@ -653,7 +653,7 @@ pub fn has() bool {
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn hide() !void {
-    return errors.wrapCallBool(C.SDL_HideCursor());
+    return errors.wrapCallBool(c.SDL_HideCursor());
 }
 
 /// Set the active cursor.
@@ -674,7 +674,7 @@ pub fn hide() !void {
 pub fn set(
     cursor: ?Cursor,
 ) !void {
-    return errors.wrapCallBool(C.SDL_SetCursor(if (cursor) |val| val.value else null));
+    return errors.wrapCallBool(c.SDL_SetCursor(if (cursor) |val| val.value else null));
 }
 
 // TODO: ADD THIS WHEN SDL IS UPDATED!
@@ -697,7 +697,7 @@ pub fn set(
 //     callback: MotionTransformCallback,
 //     user_data: ?*anyopaque,
 // ) !void {
-//     return errors.wrapCallBool(C.SDL_SetRelativeMouseTransform(callback, user_data));
+//     return errors.wrapCallBool(c.SDL_SetRelativeMouseTransform(callback, user_data));
 // }
 
 /// Set a window's mouse grab mode.
@@ -718,7 +718,7 @@ pub fn setWindowGrab(
     window: video.Window,
     grabbed: bool,
 ) !void {
-    return errors.wrapCallBool(C.SDL_SetWindowMouseGrab(window.value, grabbed));
+    return errors.wrapCallBool(c.SDL_SetWindowMouseGrab(window.value, grabbed));
 }
 
 /// Confines the cursor to the specified area of a window.
@@ -741,9 +741,9 @@ pub fn setWindowRect(
 ) !void {
     if (area) |val| {
         const c_val = val.toSdl();
-        return errors.wrapCallBool(C.SDL_SetWindowMouseRect(window.value, &c_val));
+        return errors.wrapCallBool(c.SDL_SetWindowMouseRect(window.value, &c_val));
     }
-    return errors.wrapCallBool(C.SDL_SetWindowMouseRect(window.value, null));
+    return errors.wrapCallBool(c.SDL_SetWindowMouseRect(window.value, null));
 }
 
 /// Set relative mouse mode for a window.
@@ -770,7 +770,7 @@ pub fn setWindowRelativeMode(
     window: video.Window,
     enabled: bool,
 ) !void {
-    return errors.wrapCallBool(C.SDL_SetWindowRelativeMouseMode(window.value, enabled));
+    return errors.wrapCallBool(c.SDL_SetWindowRelativeMouseMode(window.value, enabled));
 }
 
 /// Show the cursor.
@@ -781,7 +781,7 @@ pub fn setWindowRelativeMode(
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn show() !void {
-    return errors.wrapCallBool(C.SDL_ShowCursor());
+    return errors.wrapCallBool(c.SDL_ShowCursor());
 }
 
 /// Return whether the cursor is currently being shown.
@@ -795,7 +795,7 @@ pub fn show() !void {
 /// ## Version
 /// This function is available since SDL 3.2.0.
 pub fn visible() bool {
-    return C.SDL_CursorVisible();
+    return c.SDL_CursorVisible();
 }
 
 /// Move the mouse to the given position in global screen space.
@@ -820,7 +820,7 @@ pub fn warpGlobal(
     x: f32,
     y: f32,
 ) !void {
-    return errors.wrapCallBool(C.SDL_WarpMouseGlobal(x, y));
+    return errors.wrapCallBool(c.SDL_WarpMouseGlobal(x, y));
 }
 
 /// Move the mouse cursor to the given position within the window.
@@ -846,7 +846,7 @@ pub fn warpInWindow(
     x: f32,
     y: f32,
 ) void {
-    C.SDL_WarpMouseInWindow(if (window) |val| val.value else null, x, y);
+    c.SDL_WarpMouseInWindow(if (window) |val| val.value else null, x, y);
 }
 
 // Mouse related tests.

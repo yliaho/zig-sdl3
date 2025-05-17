@@ -157,7 +157,7 @@ pub const blend_mode = @import("blend_mode.zig");
 ///
 /// Under most circumstances, you will never need to use this.
 /// This should only really be used for functions not yet implemented in zig-sdl3.
-pub const c = @import("c.zig").C;
+pub const c = @import("c.zig").c;
 
 /// CPU feature detection for SDL.
 ///
@@ -764,7 +764,7 @@ pub const AppResult = enum(c_uint) {
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const AppEventCallback = *const fn (app_state: ?*anyopaque, event: [*c]c.SDL_Event) callconv(.C) c_uint;
+pub const AppEventCallback = *const fn (app_state: ?*anyopaque, event: [*c]c.SDL_Event) callconv(.c) c_uint;
 
 /// Function pointer typedef for `SDL_AppInit()`.
 ///
@@ -783,7 +783,7 @@ pub const AppEventCallback = *const fn (app_state: ?*anyopaque, event: [*c]c.SDL
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const AppInitCallback = *const fn (app_state: [*c]?*anyopaque, arg_count: c_int, arg_values: [*c][*c]u8) callconv(.C) c_uint;
+pub const AppInitCallback = *const fn (app_state: [*c]?*anyopaque, arg_count: c_int, arg_values: [*c][*c]u8) callconv(.c) c_uint;
 
 /// Function pointer typedef for `SDL_AppIterate()`.
 ///
@@ -800,7 +800,7 @@ pub const AppInitCallback = *const fn (app_state: [*c]?*anyopaque, arg_count: c_
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const AppIterateCallback = *const fn (app_state: ?*anyopaque) callconv(.C) c_uint;
+pub const AppIterateCallback = *const fn (app_state: ?*anyopaque) callconv(.c) c_uint;
 
 /// Function pointer typedef for `SDL_AppQuit()`.
 ///
@@ -815,7 +815,7 @@ pub const AppIterateCallback = *const fn (app_state: ?*anyopaque) callconv(.C) c
 ///
 /// ## Version
 /// This datatype is available since SDL 3.2.0.
-pub const AppQuitCallback = *const fn (app_state: ?*anyopaque, result: c_uint) callconv(.C) void;
+pub const AppQuitCallback = *const fn (app_state: ?*anyopaque, result: c_uint) callconv(.c) void;
 
 // Add all tests from subsystems.
 test {
