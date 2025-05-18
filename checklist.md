@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (49/57)
+## Done (50/57)
 
 ### Basics
 * Main
@@ -69,6 +69,7 @@ For monitoring how close various subsystems are to completion.
 * File Dialogs
 * System Tray
 * Locale
+* System
 * GUID
 * Misc
 
@@ -90,8 +91,3 @@ For monitoring how close various subsystems are to completion.
 
 ### Additional Functionality
 * Standard Lib
-
-## Not Started (1/57)
-
-### Additional Functionality
-* System

@@ -688,6 +688,13 @@ pub const storage = @import("storage.zig");
 /// https://github.com/libsdl-org/SDL_image
 pub const surface = @import("surface.zig");
 
+/// Platform-specific SDL API functions. These are functions that deal with needs of specific operating systems,
+/// that didn't make sense to offer as platform-independent, generic APIs.
+///
+/// Most apps can make do without these functions, but they can be useful for integrating with other parts of a specific system,
+/// adding platform-specific polish to an app, or solving problems that only affect one target.
+pub const system = @import("system.zig");
+
 /// SDL offers cross-platform thread management functions.
 /// These are mostly concerned with starting threads, setting their priority, and dealing with their termination.
 ///
