@@ -526,6 +526,19 @@ pub const MetalView = @import("metal.zig").View;
 /// Apps that care about touch/pen separately from mouse input should filter out events with a which field of `mouse.ID.touch` and `mouse.ID.pen`.
 pub const mouse = @import("mouse.zig");
 
+/// SDL offers several thread synchronization primitives.
+/// This document can't cover the complicated topic of thread safety, but reading up on what each of these primitives are, why they are useful,
+/// and how to correctly use them is vital to writing correct and safe multithreaded programs.
+///
+/// * Mutexes: `mutex.Mutex.init()`.
+/// * Read/Write locks: `mutex.RwLock.init()`.
+/// * Semaphores: `mutex.Semaphore.init()`.
+/// * Condition variables: `mutex.Condition.init()`.
+///
+/// SDL also offers a datatype, `mutex.InitState`, which can be used to make sure only one thread initializes/deinitializes some resource
+/// that several threads might try to use for the first time simultaneously.
+pub const mutex = @import("mutex.zig");
+
 /// SDL API functions that don't fit elsewhere.
 pub const openURL = @import("misc.zig").openURL;
 

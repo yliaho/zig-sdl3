@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (48/57)
+## Done (49/57)
 
 ### Basics
 * Main
@@ -41,6 +41,7 @@ For monitoring how close various subsystems are to completion.
 
 ### Threads
 * Thread
+* Mutex
 * Atomic
 
 ### Time
@@ -90,10 +91,7 @@ For monitoring how close various subsystems are to completion.
 ### Additional Functionality
 * Standard Lib
 
-## Not Started (2/57)
-
-### Threads
-* Mutex
+## Not Started (1/57)
 
 ### Additional Functionality
 * System
