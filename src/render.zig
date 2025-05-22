@@ -730,9 +730,9 @@ pub const Renderer = struct {
     /// This function is available since SDL 3.2.0.
     pub fn setVSync(
         self: Renderer,
-        vsync: ?VSync,
+        vsync: ?video.VSync,
     ) !void {
-        const ret = c.SDL_SetRenderVSync(self.value, VSync.toSdl(vsync));
+        const ret = c.SDL_SetRenderVSync(self.value, video.VSync.toSdl(vsync));
         return errors.wrapCallBool(ret);
     }
 
@@ -2158,35 +2158,6 @@ pub const Vertex = extern struct {
     // Size tests.
     comptime {
         errors.assertStructsEqual(c.SDL_Vertex, Vertex);
-    }
-};
-
-/// VSync mode.
-///
-/// ## Version
-/// This function is provided by zig-sdl3.
-pub const VSync = union(enum) {
-    on_each_num_refresh: usize,
-    adaptive: void,
-
-    /// Convert from an SDL value.
-    pub fn fromSdl(val: c_int) ?VSync {
-        return switch (val) {
-            0 => null,
-            -1 => VSync{ .adaptive = {} },
-            else => VSync{ .on_each_num_refresh = @intCast(val) },
-        };
-    }
-
-    /// Convert to an SDL value.
-    pub fn toSdl(self: ?VSync) c_int {
-        return if (self) |sync|
-            switch (sync) {
-                .on_each_num_refresh => |val| @intCast(val),
-                .adaptive => -1,
-            }
-        else
-            0;
     }
 };
 

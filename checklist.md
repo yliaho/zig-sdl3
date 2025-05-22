@@ -1,7 +1,7 @@
 # Checklist
 For monitoring how close various subsystems are to completion.
 
-## Done (50/57)
+## Done (51/57)
 
 ### Basics
 * Main
@@ -13,6 +13,7 @@ For monitoring how close various subsystems are to completion.
 * Version
 
 ### Video
+* Video
 * Pixels
 * Blend Mode
 * Rect
@@ -73,13 +74,12 @@ For monitoring how close various subsystems are to completion.
 * GUID
 * Misc
 
-## In Progress (7/57)
+## In Progress (6/57)
 
 ### Basics
 * Hints
 
 ### Video
-* Video
 * Render
 
 ### Input
