@@ -7,6 +7,7 @@ const keyboard = @import("keyboard.zig");
 const keycode = @import("keycode.zig");
 const scancode = @import("scancode.zig");
 const mouse = @import("mouse.zig");
+const joystick = @import("joystick.zig");
 
 /// The type of action to request from `events.peep()`.
 ///
@@ -286,7 +287,7 @@ pub const Type = enum(c.SDL_EventType) {
     // JoystickBatteryUpdated,
     // JoystickUpdateComplete,
     // GamepadAxisMotion,
-    // GamepadButtonDown,
+    gamepad_button_down = c.SDL_EVENT_GAMEPAD_BUTTON_DOWN,
     // GamepadButtonUp,
     // GamepadAdded,
     // GamepadRemoved,
@@ -478,6 +479,17 @@ pub const MouseButton = struct {
     y: f32,
 };
 
+pub const GamePadButton = struct {
+    /// Common event information.
+    common: Common,
+    /// The gamepad instance id.
+    which: ?keyboard.ID,
+    /// The gamepad button.
+    button: u8,
+    /// True if the button is pressed.
+    down: bool,
+};
+
 /// The "quit requested" event.
 pub const Quit = struct {
     /// Common event information.
@@ -510,6 +522,7 @@ pub const Event = union(Type) {
     mouse_button_down: MouseButton,
     /// A mouse released event.
     mouse_button_up: MouseButton,
+    gamepad_button_down: GamePadButton,
     /// A user event.
     user: User,
     /// An unknown event.
@@ -605,6 +618,16 @@ pub const Event = union(Type) {
                     .clicks = event.button.clicks,
                     .x = event.button.x,
                     .y = event.button.y,
+                },
+            },
+            c.SDL_EVENT_GAMEPAD_BUTTON_DOWN => .{
+                .gamepad_button_down = .{
+                    .common = Common.fromSdl(&event),
+                    .which = if (event.gbutton.which == 0) null else .{
+                        .value = event.gbutton.which,
+                    },
+                    .button = event.gbutton.button,
+                    .down = event.gbutton.down,
                 },
             },
             c.SDL_EVENT_ENUM_PADDING => .{
